@@ -1,0 +1,464 @@
+import 'package:get/get.dart';
+import 'package:pibro/constants/storage_keys.dart';
+import 'package:pibro/core/login/model/login_data.dart';
+import 'package:pibro/network/models/platform_user/platform_user.dart';
+import 'package:pibro/network/models/request/claim_request.dart';
+import 'package:pibro/network/models/request/client_note_request.dart';
+import 'package:pibro/network/models/request/create_receipt_request.dart';
+import 'package:pibro/network/models/response/customer_policy_claims_response.dart';
+import 'package:pibro/network/models/response/customer_policy_response.dart';
+import 'package:pibro/network/models/response/quotes_response.dart';
+import 'package:pibro/utils/app_utils.dart';
+
+class ApiUtils {
+  static Map<String, dynamic> receiptPayload(CreateReceiptRequest requestData) {
+    PlatformUser user = PlatformUser.fromJson(
+        convertToJsonStringQuotes(StorageKeys.profileData));
+    return {
+      'CompanyID': '',
+      'DivisionID': '',
+      'DepartmentID': '',
+      'ReceiptID': requestData.receiptID,
+      'ReceiptTypeID': requestData.channel!.capitalizeFirst,
+      'ReceiptClassID': 'Customer',
+      'CheckNumber': requestData.checkNumber,
+      'CustomerID': user.customerID,
+      'Memorize': false,
+      'TransactionDate': requestData.transactionDate,
+      'SystemDate': requestData.systemDate,
+      'DueToDate': null,
+      'OrderDate': null,
+      'CurrencyID': 'NGN',
+      'CurrencyExchangeRate': 1.0,
+      'Amount': requestData.amount,
+      'UnAppliedAmount': 0.0000,
+      'GLBankAccount': '',
+      'BankID': 'PayStack',
+      'Status': '',
+      'NSF': false,
+      'Notes': 'Premium Amount Paid',
+      'CreditAmount': 0.0000,
+      'Cleared': false,
+      'Posted': false,
+      'Reconciled': false,
+      'Deposited': false,
+      'HeaderMemo1': null,
+      'HeaderMemo2': null,
+      'HeaderMemo3': null,
+      'HeaderMemo4': null,
+      'HeaderMemo5': null,
+      'HeaderMemo6': null,
+      'HeaderMemo7': null,
+      'HeaderMemo8': null,
+      'HeaderMemo9': null,
+      'Approved': false,
+      'ApprovedBy': null,
+      'ApprovedDate': null,
+      'EnteredBy': null,
+      'BatchControlNumber': null,
+      'BatchControlTotal': null,
+      'Signature': null,
+      'SignaturePassword': null,
+      'SupervisorSignature': null,
+      'SupervisorPassword': null,
+      'ManagerSignature': null,
+      'ManagerPassword': null,
+      'LockedBy': null,
+      'LockTS': null,
+      'TaxGroupID': null,
+      'TaxAmount': null,
+      'CustomerName': null,
+      'BranchCode': null,
+      'customerReceiptsDetail': [
+        {
+          'CompanyID': '',
+          'DivisionID': '',
+          'DepartmentID': '',
+          'ReceiptID': requestData.receiptID ?? '',
+          'ReceiptDetailID': 0,
+          'DocumentNumber': requestData.documentNumber,
+          'DocumentDate': requestData.documentDate,
+          'PaymentID': null,
+          'PayedID': null,
+          'CurrencyID': null,
+          'CurrencyExchangeRate': null,
+          'DiscountTaken': 0.0000,
+          'WriteOffAmount': 0.0000,
+          'AppliedAmount': requestData.amount,
+          'Cleared': false,
+          'ProjectID': null,
+          'DetailMemo1': null,
+          'DetailMemo2': null,
+          'DetailMemo3': null,
+          'DetailMemo4': null,
+          'DetailMemo5': null,
+          'LockedBy': null,
+          'LockTS': null,
+          'TaxGroupID': null,
+          'TaxAmount': null,
+          'TaxRate': null,
+          'GLAnalysisType1': null,
+          'GLAnalysisType2': null,
+          'AssetID': null,
+          'CommissionRate': null,
+          'CommissionType': null,
+          'PaidAmount': null,
+          'BranchCode': null
+        }
+      ]
+    };
+  }
+
+  static Map<String, dynamic> notePayload(ClientNoteRequest requestData) {
+    PlatformUser user = PlatformUser.fromJson(
+        convertToJsonStringQuotes(StorageKeys.profileData));
+    return {
+      'CompanyID': '',
+      'DivisionID': '',
+      'DepartmentID': '',
+      'InvoiceNumber': requestData.invoiceNumber ?? '',
+      'NoteTypeID': 'DBN',
+      'PolicyBrokerID': requestData.policyBrokerID,
+      'ActualPolicyBrokerID': 'HOGGNIG/GPA/2017/MAR/10018',
+      'PolicyUnderwriterID': 'NGPA/600021/KD ',
+      'PackagePololicyID': null,
+      'EndorsementID': null,
+      'CustomerID': user.customerID,
+      'VendorID': 'NEM',
+      'BusinessClassID': 'GPA',
+      'RiskTypeID': 'GPA',
+      'InvoiceDate': requestData.invoiceDate,
+      'StartDate': requestData.startDate,
+      'EndDate': requestData.endDate,
+      'Renewaldate': requestData.renewalDate,
+      'PremiumDescription': 'PREMIUM PAID',
+      'SumInsured': requestData.sumInsured,
+      'BasicRate': 0.0000,
+      'PremiumFomular': 'FLAT',
+      'PremiumDue': requestData.premiumDue,
+      'BrokerCommissionRate': 20.0000,
+      'BrokerCommisson': 625.0000,
+      'VATRate': 5.0000,
+      'VATDue': 420.6200,
+      'NetDue': 33228.9800,
+      'PremiumTypeID': null,
+      'ContractTypeID': 'ANN',
+      'IncomeTypeID': 'RNL',
+      'NoteStatus': null,
+      'GenerateBy': 'AJALAO',
+      'ApprovedBy': 'ADMIN',
+      'ProjectTypeID': 'KD2010',
+      'ProjectID': 'KD20101',
+      'CurrencyID': 'NGN',
+      'CurrencyExchangeRate': 1.0000,
+      'TaxGroupID': null,
+      'Cleared': true,
+      'ClearedBy': 'AJALAO',
+      'ClearedDate': '2019-01-08T09:39:44.813',
+      'Void': false,
+      'VoidBy': null,
+      'VoidDate': null,
+      'Posted': true,
+      'PostedBy': null,
+      'PostedDate': '2019-01-08T10:20:13.577',
+      'FlatAmount': false,
+      'EnteredDate': null,
+      'CoverStart': '2017-04-01T00:00:00',
+      'NoteFormularDesc': null,
+      'CustomerName': 'UNITEX LIMITED',
+      'EmployeeID': 'AKINADER',
+      'ReceiptID': '30748',
+      'ReceiptAmount': 42062.0,
+      'BankID': null,
+      'PaymentDueDate': null,
+      'InvoiceDueDate': null,
+      'DiscountPercentage': 0.0,
+      'DebitNoteFullID': 'DBN/103325/01/19',
+      'PremiumWithoutDiscount': 42062.0000,
+      'PremiumAfterDiscount': 42062.0000,
+      'PremiumAfterAllDeductions': null,
+      'PremiumAfterDiscountPlusPPD': 42062.0000,
+      'DiscountValue': 0.0000,
+      'Quotation': false,
+      'PostingDate': null,
+      'QuotationCleared': null,
+      'QuotationClearedDate': null,
+      'QuotationClearedBy': null,
+      'ReportHeaderDescription': null,
+      'ReInsurance': null,
+      'InsuranceNoteGeneratedDetails': [
+        {
+          'CompanyID': '',
+          'DivisionID': '',
+          'DepartmentID': '',
+          'InvoiceNumber': '',
+          'InvoiceLineNumber': 0,
+          'PolicyBrokerID': requestData.policyBrokerID,
+          'NoteTypeID': 'DBN',
+          'ActualPolicyBrokerID': null,
+          'PolicyUnderwriterID': null,
+          'DetailDescription': 'PREMIUM PAID',
+          'PremiumFomular': null,
+          'SumInsured': requestData.sumInsured,
+          'PremiumDue': requestData.premiumDue,
+          'Discount1': 0.0,
+          'BrokerCommissionRate': 20.0000,
+          'BrokerCommisson': null,
+          'VATRate': 5.0000,
+          'VATDue': 420.6200,
+          'NetDue': 33228.9800,
+          'FlatAmount': true,
+          'ProjectTypeID': null,
+          'ProjectID': null
+        }
+      ]
+    };
+  }
+
+  static Map<String, dynamic> createClaim(ClaimRequest requestData) {
+    return {
+      "CompanyID": requestData.policy.companyID,
+      "DivisionID": requestData.policy.divisionID,
+      "DepartmentID": requestData.policy.departmentID,
+      "BrokerClaimID": requestData.claimsID,
+      "PolicyBrokerID": requestData.policy.policyBrokerID,
+      "ActualBrokerClaimID": null,
+      "ActualPolicyBrokerID": null,
+      "TransactionID": 0,
+      "UnderwriterClaimID": null,
+      "BusinessClassID": requestData.policy.businessClassID,
+      "RiskTypeID": requestData.policy.riskTypeID,
+      "CustomerID": requestData.policy.customerID,
+      "CustomerName": requestData.policy.customerName,
+      "VendorID": requestData.policy.vendorID,
+      "StartDate": requestData.policy.policyStartDate,
+      "EndDate": requestData.policy.policyEndDate,
+      "AccidentDate": requestData.accidentDate,
+      "AccidentDetails": requestData.accidentDetails,
+      "ThirdPartyInvolved": null,
+      "ThirdPartyClaimNo": null,
+      "CustomerReportDate": requestData.customerReportDate,
+      "BrokerUnderwriterDate": null,
+      "AdjusterAppointedDate": null,
+      "AdjusterReportDate": null,
+      "AdjusterReportApproveDate": null,
+      "DVNumber": null,
+      "DVReceiveBrokerDate": null,
+      "DvReceivedBroker": null,
+      "DVReceiveCustomerDate": null,
+      "DVReceiveCustomer": null,
+      "DVReturnCustomerDate": null,
+      "DVReturnedCustomer": null,
+      "DVBackVendorDate": null,
+      "DVBackVendor": null,
+      "DVPaymentReceiveCustomer": null,
+      "DVCustomerPayments": null,
+      "CustomerEstimate": null,
+      "AdjusterEstimate": null,
+      "DVAmount": null,
+      "TotalReceived": null,
+      "ClaimsStatus": null,
+      "Settlementdelayby": null,
+      "ReasonforDelay": null,
+      "ClaimsRepudated": null,
+      "RepudateReason": null,
+      "RepudateDate": null,
+      "EnteredBy": requestData.policy.enteredBy,
+      "EnteredBy2": null,
+      "DocumentsRequired": 0,
+      "DocumentsDelivered": 0,
+      "DocumentsOutstanding": 0,
+      "DocumentStutus": "",
+      "DVTO": null,
+      "DVAttn": null,
+      "DvLetterDate": null,
+      "FirSignPost": null,
+      "SecSignPost": null,
+      "ReportSubmitted": null,
+      "NotificationName": null,
+      "Individual": null,
+      "InspectionSite": null,
+      "SecondSignatory": null,
+      "ProjectTypeID": null,
+      "ProjectID": null,
+      "RegisteredDate": null,
+      "Closed": null,
+      "ClosedBY": null,
+      "ClosedDate": null,
+      "BrokerID": null,
+      "ClaimCloseTypeID": null,
+      "LastUpdateDate": DateTime.now().toString(),
+      "Cleared": null,
+      "ClearedBy": null,
+      "ClearedDate": null,
+      "Approved": null,
+      "ApprovedBy": null,
+      "ApprovedDate": null,
+      "Void": null,
+      "VoidBy": null,
+      "VoidDate": null,
+      "UnderwriterPolicyID": null,
+      "InsuranceCategoryID": null,
+      "BranchCode": null,
+      "SubmitClaim": null,
+      "InsuranceClaimsDocument": requestData.claimDocuments,
+    };
+  }
+
+  static Map<String, dynamic> createQuote(
+    String product,
+    String businessClass,
+    String startDate,
+    String endDate,
+    String renewalDate,
+    List<Map<String, dynamic>> itemsToInsure,
+  ) {
+    String userId = '';
+    LoginData loginData =
+        LoginData.fromJson(convertToJsonStringQuotes(StorageKeys.loginData));
+    if (loginData == LoginData()) {
+      userId = decryptData(StorageKeys.signupData);
+    }
+    return {
+      "CompanyID": "",
+      "DivisionID": "",
+      "DepartmentID": "",
+      "CaseId": "",
+      "CustomerId": loginData.customerID ?? userId,
+      "ProductId": product,
+      "SupportDate": DateTime.now().toIso8601String(),
+      "SupportKeywords": "Quote, $businessClass, $product",
+      "SupportDescription":
+          "Start Date: $startDate, End Date: $endDate, Renewal Date: $renewalDate",
+      "SupportScreenShotURL": "",
+      "SupportEnquiryDate": startDate,
+      "SupportEnquiryLapseDate": endDate,
+      "SupportPriority": 64,
+      "SupportApproved": true,
+      "SupportApprovedBy": "Admin",
+      "SupportAssigned": true,
+      "SupportType": "Quote",
+      "SupportStatus": "Pending",
+      "ContactName": loginData.customerID ?? "",
+      "ContactPhone": loginData.phone ?? "",
+      "ContactEmail": loginData.email ?? "",
+      "QuoteRequest": true,
+      "RequestDetails": itemsToInsure,
+    };
+  }
+
+  static Map<String, dynamic> sendClaimToBroker(
+    PolicyClaim claim,
+  ) {
+    LoginData loginData = LoginData.fromJson(
+      convertToJsonStringQuotes(StorageKeys.loginData),
+    );
+    final itemList =
+        claim.claimsDocuments!.map((item) => item.toBrokerJson()).toList();
+    InsurancePolicyUnderwriter? writer =
+        claim.insurancePolicyUnderwriters!.reduce((current, next) {
+      return (current.apportionment! > next.apportionment!) ? current : next;
+    });
+    return {
+      "CompanyID": claim.companyID,
+      "DivisionID": claim.divisionID,
+      "DepartmentID": claim.departmentID,
+      "CaseId": "",
+      "CustomerId": loginData.customerID,
+      "ProductId": claim.riskTypeID,
+      "SupportDate": DateTime.now().toIso8601String(),
+      "SupportKeywords":
+          "Claims lodgement ${claim.brokerClaimID} for ${claim.businessClassID} class: ${claim.riskTypeID}",
+      "SupportDescription":
+          "PolicyBrokerID: ${claim.policyBrokerID}, Occurrence Date: ${claim.accidentDate}, Lead insurer: ${writer.vendorName}, Lodgement date: ${claim.customerReportDate}, Narration: ${claim.accidentDetails}",
+      "SupportScreenShotURL": "",
+      "SupportEnquiryDate": claim.startDate,
+      "SupportEnquiryLapseDate": claim.endDate,
+      "SupportPriority": 64,
+      "SupportApproved": true,
+      "SupportType": "Claims",
+      "SupportStatus": "Pending",
+      "SupportApprovedBy": "Admin",
+      "SupportAssigned": true,
+      "ContactName": loginData.customerID,
+      "ContactPhone": loginData.phone,
+      "ContactEmail": loginData.email,
+      "QuoteRequest": true,
+      "RequestDetails": itemList,
+    };
+  }
+
+  static Map<String, dynamic> sendPolicyToBroker(PolicyData policyData) {
+    String userId = '';
+    LoginData loginData =
+        LoginData.fromJson(convertToJsonStringQuotes(StorageKeys.loginData));
+    if (loginData == LoginData()) {
+      userId = decryptData(StorageKeys.signupData);
+    }
+    final itemList =
+        policyData.itemsToInsure!.map((item) => item.toJson()).toList();
+    return {
+      "CompanyID": policyData.companyID,
+      "DivisionID": policyData.divisionID,
+      "DepartmentID": policyData.departmentID,
+      "CaseId": "",
+      "CustomerId": loginData.customerID ?? userId,
+      "ProductId": policyData.riskTypeID,
+      "SupportDate": DateTime.now().toIso8601String(),
+      "SupportKeywords":
+          "Quote, ${policyData.businessClassID}, ${policyData.riskTypeID}",
+      "SupportDescription":
+          "Start Date: ${policyData.policyStartDate}, End Date: ${policyData.policyEndDate}, Renewal Date: ${policyData.renewalDate}",
+      "SupportScreenShotURL": "",
+      "SupportEnquiryDate": policyData.policyStartDate,
+      "SupportEnquiryLapseDate": policyData.policyEndDate,
+      "SupportPriority": 64,
+      "SupportApproved": true,
+      "SupportApprovedBy": "Admin",
+      "SupportAssigned": true,
+      "SupportType": "Quote",
+      "SupportStatus": "Pending",
+      "ContactName": loginData.customerID ?? "",
+      "ContactPhone": loginData.phone ?? "",
+      "ContactEmail": loginData.email ?? "",
+      "QuoteRequest": true,
+      "RequestDetails": itemList,
+    };
+  }
+}
+
+String getQuoteClass(QuoteInfo quote) {
+  return quote.supportKeywords!.split(', ')[1];
+}
+
+List<String> getQuoteItemsData(RequestDetails details) {
+  List<String> splittedMessage = details.message!.split(', ');
+  return [
+    splittedMessage[1].split(': ')[1],
+    splittedMessage[2].split(': ')[1],
+    splittedMessage[3].split(': ')[1],
+  ];
+}
+
+List<String> getQuoteDates(QuoteInfo quote) {
+  RegExp datePattern = RegExp(r'([A-Za-z]{3} \d{1,2}, \d{4})');
+  Iterable<Match> matches = datePattern.allMatches(quote.supportDescription!);
+
+  List<String> dates = matches.map((match) => match.group(0)!).toList();
+
+  String startDate = dates.isNotEmpty ? dates[0] : '';
+  String endDate = dates.length > 1 ? dates[1] : '';
+  String renewalDate = dates.length > 2 ? dates[2] : '';
+  return [
+    startDate,
+    endDate,
+    renewalDate,
+  ];
+}
+
+double getQuoteSum(QuoteInfo quote) {
+  return quote.requestDetails!.isEmpty
+      ? 0.0
+      : quote.requestDetails!
+          .fold(0.0, (sum, item) => sum + (item.value ?? 0.0));
+}

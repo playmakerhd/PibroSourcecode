@@ -1,0 +1,361 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:developer';
+
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:get_storage/get_storage.dart';
+import 'package:pibro/constants/storage_keys.dart';
+import 'package:pibro/core/login/model/login_data.dart';
+import 'package:pibro/network/models/platform_user/platform_user.dart';
+import 'package:pibro/network/models/request/auth_request.dart';
+import 'package:pibro/network/models/request/change_password_request.dart';
+import 'package:pibro/network/models/request/claim_request.dart';
+import 'package:pibro/network/models/request/client_note_request.dart';
+import 'package:pibro/network/models/request/create_receipt_request.dart';
+import 'package:pibro/network/models/request/get_premium_amount_request.dart';
+import 'package:pibro/network/models/request/renew_policy_requesst.dart';
+import 'package:pibro/network/models/response/base_response.dart';
+import 'package:pibro/network/models/response/business_policy_response.dart';
+import 'package:pibro/network/models/response/claim_document_response.dart';
+import 'package:pibro/network/models/response/company_data_response.dart';
+import 'package:pibro/network/models/response/company_info_response.dart';
+import 'package:pibro/network/models/response/customer_policy_claims_response.dart';
+import 'package:pibro/network/models/response/customer_policy_response.dart';
+import 'package:pibro/network/models/response/insurance_risk_type_response.dart';
+import 'package:pibro/network/models/response/message_response.dart';
+import 'package:pibro/network/models/response/payment_init_response.dart';
+import 'package:pibro/network/models/response/payment_verfication_response.dart';
+import 'package:pibro/network/models/response/profile_response.dart';
+import 'package:pibro/network/models/response/quotes_response.dart';
+import 'package:pibro/utils/api_utils.dart';
+import 'package:pibro/utils/app_utils.dart';
+
+import 'package:http/http.dart' as http;
+
+import 'base_provider.dart';
+import 'endpoints.dart';
+
+class ApiProvider extends BaseProvider {
+  final String _baseApiPath = dotenv.env['BASE_URL']!;
+  final String _acessToken = dotenv.env['ACCESS_TOKEN']!;
+  final String _paystackBaseUrl = 'https://api.paystack.co/transaction';
+  GetStorage box = GetStorage();
+
+  Future<CustomMessageResponse> callLoginApi(AuthRequest body) async {
+    dynamic endpoint = body.isOtherOption
+        ? '$_baseApiPath${Endpoints.otherLogin}/${body.email}/${body.phoneNumber}/${body.password}/$_acessToken'
+        : '$_baseApiPath${Endpoints.login}/${body.username}/${body.password}/$_acessToken';
+    final responseData = await makeGetCall(Uri.parse(endpoint), false);
+    return CustomMessageResponse(responseData!);
+  }
+
+  Future<CustomMessageResponse> callSignUpApi(AuthRequest body) async {
+    final responseData = await makePostCall(
+      Uri.parse('$_baseApiPath${Endpoints.signup}?token=$_acessToken'),
+      json.encode(body.toSignUpJson()),
+      false,
+    );
+    return CustomMessageResponse(responseData);
+  }
+
+  Future<CustomMessageResponse> callChangePasswordApi(
+      ChangePasswordRequest body) async {
+    PlatformUser data = PlatformUser.fromJson(
+        convertToJsonStringQuotes(StorageKeys.profileData));
+    dynamic endpoint =
+        '$_baseApiPath${Endpoints.changePassword}?EntityID=${data.customerID}&OldPassword=${body.oldPassword}&NewPassword=${body.newPassword}&ConfirmPassword=${body.confirmPassword}&token=$_acessToken';
+    final responseData = await makeGetCall(Uri.parse(endpoint), false);
+    return CustomMessageResponse(responseData!);
+  }
+
+  Future<ProfileResponse> callGetProfile() async {
+    LoginData data =
+        LoginData.fromJson(convertToJsonStringQuotes(StorageKeys.loginData));
+    print('Data $data');
+    dynamic endpoint = data.customerID!.isNotEmpty
+        ? '$_baseApiPath${Endpoints.profile}/${data.customerID}/$_acessToken'
+        : '$_baseApiPath${Endpoints.profileByEmail}/${data.email}/${data.phone}/$_acessToken';
+    final responseData = await makeGetCall(Uri.parse(endpoint), false);
+    return ProfileResponse(responseData!);
+  }
+
+  Future<CustomerPolicyResponse> callGetCustomerPolicies() async {
+    PlatformUser data = PlatformUser.fromJson(
+        convertToJsonStringQuotes(StorageKeys.profileData));
+    dynamic endpoint =
+        '$_baseApiPath${Endpoints.customerPolicies}/${data.customerID}/$_acessToken';
+    final responseData = await makeGetCall(Uri.parse(endpoint), false);
+    return CustomerPolicyResponse(responseData!);
+  }
+
+  Future<QuotesResponse> callGetQuotes() async {
+    PlatformUser data = PlatformUser.fromJson(
+        convertToJsonStringQuotes(StorageKeys.profileData));
+    dynamic endpoint =
+        '$_baseApiPath${Endpoints.quotes}/${data.customerID}/$_acessToken?PageNum=1&Size=50&SupportType=Quote';
+    final responseData = await makeGetCall(Uri.parse(endpoint), false);
+    return QuotesResponse(responseData!);
+  }
+
+  Future<CustomerPolicyClaimsResponse> callGetCustomerClaims() async {
+    PlatformUser data = PlatformUser.fromJson(
+        convertToJsonStringQuotes(StorageKeys.profileData));
+    dynamic endpoint =
+        '$_baseApiPath${Endpoints.customerClaims}/${data.customerID}/$_acessToken';
+    final responseData = await makeGetCall(Uri.parse(endpoint), false);
+    return CustomerPolicyClaimsResponse(responseData!);
+  }
+
+  Future<BusinessPolicyResponse> callGetInsuranceBusinessClass() async {
+    dynamic endpoint =
+        '$_baseApiPath${Endpoints.getInsuranceBusinessClass}/$_acessToken?PageNum=1&Size=100';
+    final responseData = await makeGetCall(Uri.parse(endpoint), false);
+    return BusinessPolicyResponse(responseData!);
+  }
+
+  Future<InsuranceRiskTypeResponse> callGetInsuranceRiskType(
+      String businessID) async {
+    dynamic endpoint =
+        '$_baseApiPath${Endpoints.getInsuranceRiskType}/$businessID/$_acessToken';
+    final responseData = await makeGetCall(Uri.parse(endpoint), false);
+    return InsuranceRiskTypeResponse(responseData!);
+  }
+
+  Future<CustomMessageResponse> callRenewPolicy(PolicyData data) async {
+    inspect(data);
+    dynamic endpoint =
+        '$_baseApiPath${Endpoints.renewPolicy}?token=$_acessToken';
+    final responseData = await makePostCall(
+        Uri.parse(endpoint), jsonEncode(data.toJson()), false);
+    return CustomMessageResponse(responseData);
+  }
+
+  Future<CustomMessageResponse> callUpdatePolicy(
+      RenewPolicyRequest data) async {
+    dynamic endpoint =
+        '$_baseApiPath${Endpoints.updateInsurancePolicy}?token=$_acessToken';
+    final responseData = await makePostCall(
+        Uri.parse(endpoint), jsonEncode(data.toJson()), false);
+    return CustomMessageResponse(responseData);
+  }
+
+  Future<CustomMessageResponse> callBookPolicy(RenewPolicyRequest data) async {
+    dynamic endpoint =
+        '$_baseApiPath${Endpoints.bookPolicy}?token=$_acessToken';
+    final responseData = await makePostCall(
+        Uri.parse(endpoint), jsonEncode(data.toJson()), false);
+    return CustomMessageResponse(responseData);
+  }
+
+  Future<CustomMessageResponse> callPostPolicy(RenewPolicyRequest data) async {
+    inspect(data);
+    dynamic endpoint =
+        '$_baseApiPath${Endpoints.postPolicy}?token=$_acessToken';
+    final responseData = await makePostCall(
+        Uri.parse(endpoint), jsonEncode(data.toJson()), false);
+    return CustomMessageResponse(responseData);
+  }
+
+  Future<CustomMessageResponse> callCreateClientNote(
+      ClientNoteRequest data) async {
+    dynamic endpoint =
+        '$_baseApiPath${Endpoints.createClientNote}?token=$_acessToken';
+    final requestBody = ApiUtils.notePayload(data);
+    final responseData =
+        await makePostCall(Uri.parse(endpoint), jsonEncode(requestBody), false);
+    return CustomMessageResponse(responseData);
+  }
+
+  Future<CustomMessageResponse> callBookClientNote(
+      ClientNoteRequest data) async {
+    dynamic endpoint =
+        '$_baseApiPath${Endpoints.bookClientNote}?token=$_acessToken';
+    final requestBody = ApiUtils.notePayload(data);
+    final responseData =
+        await makePostCall(Uri.parse(endpoint), jsonEncode(requestBody), false);
+    return CustomMessageResponse(responseData);
+  }
+
+  Future<CustomMessageResponse> callPostClientNote(
+      ClientNoteRequest data) async {
+    dynamic endpoint =
+        '$_baseApiPath${Endpoints.postClientNote}?token=$_acessToken';
+    final requestBody = ApiUtils.notePayload(data);
+    final responseData =
+        await makePostCall(Uri.parse(endpoint), jsonEncode(requestBody), false);
+    return CustomMessageResponse(responseData);
+  }
+
+  Future<CustomMessageResponse> callGetPremiumAmount(
+      GetPremiumAmountRequest data) async {
+    dynamic endpoint =
+        '$_baseApiPath${Endpoints.getPremiumAmount}/$_acessToken?PolicyBrokerId=${data.brokerId}&PolicyStartDate=${data.startDate}&PolicyEndDate=${data.endDate}';
+    final responseData = await makeGetCall(Uri.parse(endpoint), false);
+    return CustomMessageResponse(responseData!);
+  }
+
+  Future<CustomMessageResponse> callGetPaymentToken() async {
+    dynamic endpoint = '$_baseApiPath${Endpoints.getPaymentToken}/$_acessToken';
+    final responseData = await makeGetCall(Uri.parse(endpoint), false);
+    return CustomMessageResponse(responseData!);
+  }
+
+  Future<CustomMessageResponse> callCreateReceipt(
+      CreateReceiptRequest data) async {
+    dynamic endpoint =
+        '$_baseApiPath${Endpoints.createReceipt}?token=$_acessToken';
+    final requestBody = ApiUtils.receiptPayload(data);
+    final responseData =
+        await makePostCall(Uri.parse(endpoint), jsonEncode(requestBody), false);
+    return CustomMessageResponse(responseData);
+  }
+
+  Future<CustomMessageResponse> callAddOrUpdateItemToInsure(
+      ItemToInsure data, bool isNew) async {
+    dynamic endpoint =
+        '$_baseApiPath${isNew ? Endpoints.createPolicyItem : Endpoints.updatePolicyItem}?token=$_acessToken';
+    final responseData = await makePostCall(
+        Uri.parse(endpoint), jsonEncode(data.toJson()), false);
+    return CustomMessageResponse(responseData);
+  }
+
+  Future<CustomMessageResponse> callPostReceipt(
+      CreateReceiptRequest data) async {
+    dynamic endpoint =
+        '$_baseApiPath${Endpoints.postReceipt}?token=$_acessToken';
+    final requestBody = ApiUtils.receiptPayload(data);
+    final responseData =
+        await makePostCall(Uri.parse(endpoint), jsonEncode(requestBody), false);
+    return CustomMessageResponse(responseData);
+  }
+
+  Future<PaymentInitResponse> callInitializePayment(
+      String accessToken, int amount) async {
+    PlatformUser data = PlatformUser.fromJson(
+      convertToJsonStringQuotes(StorageKeys.profileData),
+    );
+    var resData = ResponseData();
+    dynamic endpoint = '$_paystackBaseUrl/initialize';
+    final responseData = await http.post(
+      Uri.parse(endpoint),
+      headers: {
+        'Authorization': 'Bearer $accessToken',
+        'Content-Type': 'application/json',
+      },
+      body: json.encode(
+        {
+          'email': data.customerEmail,
+          'amount': amount,
+          'currency': 'NGN',
+        },
+      ),
+    );
+    resData.response = responseData;
+    return PaymentInitResponse(resData);
+  }
+
+  Future<PaymentVerificationResponse> callVerifyPayment(
+      String accessToken, String reference) async {
+    var resData = ResponseData();
+    dynamic endpoint = '$_paystackBaseUrl/verify/$reference';
+    final responseData = await http.get(
+      Uri.parse(endpoint),
+      headers: {
+        'Authorization': 'Bearer $accessToken',
+        'Content-Type': 'application/json',
+      },
+    );
+    resData.response = responseData;
+    return PaymentVerificationResponse(resData);
+  }
+
+  Future<CustomMessageResponse> callCreateClaim(ClaimRequest data) async {
+    dynamic endpoint =
+        '$_baseApiPath${Endpoints.createClaims}?token=$_acessToken';
+    final requestBody = ApiUtils.createClaim(data);
+    final responseData =
+        await makePostCall(Uri.parse(endpoint), jsonEncode(requestBody), false);
+    return CustomMessageResponse(responseData);
+  }
+
+  Future<CustomMessageResponse> callUpdateClaim(ClaimRequest data) async {
+    dynamic endpoint =
+        '$_baseApiPath${Endpoints.updateClaims}?token=$_acessToken';
+    final requestBody = ApiUtils.createClaim(data);
+    final responseData =
+        await makePutCall(Uri.parse(endpoint), jsonEncode(requestBody), false);
+    return CustomMessageResponse(responseData);
+  }
+
+  Future<CustomMessageResponse> callClaimRecalc(ClaimRequest data) async {
+    dynamic endpoint =
+        '$_baseApiPath${Endpoints.claimRecalc}?token=$_acessToken';
+    final requestBody = ApiUtils.createClaim(data);
+    final responseData =
+        await makePostCall(Uri.parse(endpoint), jsonEncode(requestBody), false);
+    return CustomMessageResponse(responseData);
+  }
+
+  Future<CustomMessageResponse> callUploadClaimDoc(ClaimDocument data) async {
+    dynamic endpoint =
+        '$_baseApiPath${Endpoints.uploadClaimDoc}?token=$_acessToken';
+    // final requestBody = data.map((element) => element.toJson()).toList();
+    final responseData = await makePostCall(
+        Uri.parse(endpoint), jsonEncode(data.toJson()), false);
+    return CustomMessageResponse(responseData);
+  }
+
+  Future<ClaimDocumentResponse> callGetClaimDocuments(String id) async {
+    dynamic endpoint =
+        '$_baseApiPath${Endpoints.getClaimDocuments}/$_acessToken?BrokerClaimID=$id';
+    final responseData = await makeGetCall(Uri.parse(endpoint), false);
+    return ClaimDocumentResponse(responseData!);
+  }
+
+  Future<PolicyClaimResponse> callGetClaim(String id) async {
+    dynamic endpoint =
+        '$_baseApiPath${Endpoints.getClaim}/$_acessToken?BrokerClaimID=$id';
+    final responseData = await makeGetCall(Uri.parse(endpoint), false);
+    return PolicyClaimResponse(responseData!);
+  }
+
+  Future<CompanyInfoResponse> callGetCompanyInformation() async {
+    dynamic endpoint = '$_baseApiPath${Endpoints.getCompanyInfo}/$_acessToken';
+    final responseData = await makeGetCall(Uri.parse(endpoint), false);
+    return CompanyInfoResponse(responseData!);
+  }
+
+  Future<CompanyDataResponse> callGetCompanyFaq() async {
+    dynamic endpoint = '$_baseApiPath${Endpoints.getCompanyFaq}/$_acessToken';
+    final responseData = await makeGetCall(Uri.parse(endpoint), false);
+    return CompanyDataResponse(responseData!);
+  }
+
+  Future<CompanyDataResponse> callGetCompanyChat() async {
+    dynamic endpoint = '$_baseApiPath${Endpoints.getCompanyChat}/$_acessToken';
+    final responseData = await makeGetCall(Uri.parse(endpoint), false);
+    return CompanyDataResponse(responseData!);
+  }
+
+  Future<CustomMessageResponse> callSendToBroker(dynamic data) async {
+    dynamic endpoint = '$_baseApiPath${Endpoints.sendToBroker}/$_acessToken';
+    final responseData =
+        await makePostCall(Uri.parse(endpoint), jsonEncode(data), false);
+    return CustomMessageResponse(responseData);
+  }
+
+  Future<CustomMessageResponse> callSendClaimToBroker(dynamic data) async {
+    dynamic endpoint = '$_baseApiPath${Endpoints.sendToBroker}/$_acessToken';
+    final responseData =
+        await makePostCall(Uri.parse(endpoint), jsonEncode(data), false);
+    return CustomMessageResponse(responseData);
+  }
+
+  Future<CustomMessageResponse> callSubmitClaim(String claimId) async {
+    dynamic endpoint =
+        '$_baseApiPath${Endpoints.submitClaim}?token=$_acessToken';
+    final responseData =
+        await makePostCall(Uri.parse(endpoint), jsonEncode(claimId), false);
+    return CustomMessageResponse(responseData);
+  }
+}
