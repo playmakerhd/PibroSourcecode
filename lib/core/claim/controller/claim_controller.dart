@@ -63,9 +63,7 @@ class ClaimController extends GetxController {
 
   Future<void> sendToBroker() async {
     submitLoading.value = true;
-    print('Started');
     try {
-      print(ApiUtils.sendClaimToBroker(selectedClaim.value!));
       final response = await pibroRepository
           .sendClaimToBroker(ApiUtils.sendClaimToBroker(selectedClaim.value!));
       if (response.messageResponse.status != AppConstants.responseSuccess) {

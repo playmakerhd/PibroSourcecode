@@ -8,7 +8,6 @@ class CustomMessageResponse extends CustomBaseResponse {
   @override
   parseResponseData() {
     try {
-      print(getResponseBody());
       messageResponse = MessageResponse.fromJson(getResponseBody());
     } catch (e) {
       handleParsingError(e);

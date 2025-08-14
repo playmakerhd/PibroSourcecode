@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:get/get.dart' hide Response;
 import 'package:http/http.dart';
 import 'package:pibro/internalization/app_strings.dart';
+import 'package:pibro/navigation/routes.dart';
 import 'package:pibro/network/models/response/base_response.dart';
 import 'package:pibro/utils/pibro_logger.dart';
 import 'package:pibro/utils/view_utils.dart';
@@ -177,6 +178,13 @@ abstract class BaseProvider {
           isSuccess: false,
         );
       }
+      if (response.statusCode == 404) {
+        showSnackbarMessage(
+          message: AppStrings.configIncorrect.tr,
+          isSuccess: false,
+        );
+        Get.offAllNamed(AppRoutes.serviceConfig);
+      }
 
       if (response.statusCode < 200 || response.statusCode >= 300) {
         responseData.hasError = true;
@@ -198,13 +206,20 @@ abstract class BaseProvider {
             break;
           default:
             responseData.errorMessage =
-                'Error occurred while communication with server, StatusCode : ${response.statusCode}';
+                'Error occurred while communicating with server, StatusCode : ${response.statusCode}';
         }
       }
       responseData.response = response;
     } catch (e) {
       responseData.hasError = true;
       responseData.errorMessage = e.toString();
+      if (e.toString().contains('No host specified')) {
+        showSnackbarMessage(
+          message: AppStrings.configError.tr,
+          isSuccess: false,
+        );
+        Get.offAllNamed(AppRoutes.serviceConfig);
+      }
       debugPrint('Error calling $urlSuffix\n${e.toString()}');
     }
 
@@ -219,10 +234,6 @@ abstract class BaseProvider {
     Map<String, String> headers = {};
     headers["Content-type"] = "application/json";
     headers["Accept"] = "application/json";
-    // if (authenticated) {
-    //   final apiToken = decryptData(AppConstants.accessToken);
-    //   headers["Authorization"] = 'Bearer $apiToken';
-    // }
 
     return headers;
   }

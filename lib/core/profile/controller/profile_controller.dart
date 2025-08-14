@@ -6,6 +6,8 @@ import 'package:pibro/constants/app_colors.dart';
 import 'package:pibro/constants/app_constants.dart';
 import 'package:pibro/constants/app_images.dart';
 import 'package:pibro/constants/app_styles.dart';
+import 'package:pibro/constants/storage_keys.dart';
+import 'package:pibro/core/config/model/config_model.dart';
 import 'package:pibro/core/profile/widget/notification_item_row.dart';
 import 'package:pibro/core/profile/widget/profile_button.dart';
 import 'package:pibro/internalization/app_strings.dart';
@@ -15,6 +17,7 @@ import 'package:pibro/network/models/request/change_password_request.dart';
 import 'package:pibro/network/repository/pibro_repository.dart';
 import 'package:pibro/shared/custom_button.dart';
 import 'package:pibro/shared/custom_input/custom_input.dart';
+import 'package:pibro/utils/app_utils.dart';
 import 'package:pibro/utils/image_factory.dart';
 import 'package:pibro/utils/validators.dart';
 import 'package:pibro/utils/view_utils.dart';
@@ -38,6 +41,7 @@ class ProfileController extends GetxController {
   final TextEditingController confirmPasswordController =
       TextEditingController();
   final GlobalKey<FormState> changePasswordFormKey = GlobalKey<FormState>();
+  final GlobalKey<FormState> configFormKey = GlobalKey<FormState>();
 
   final TextEditingController serviceURLController = TextEditingController();
   final TextEditingController tokenController = TextEditingController();
@@ -86,7 +90,12 @@ class ProfileController extends GetxController {
   }
 
   void _logout() {
-    GetStorage().erase();
+    GetStorage().remove(StorageKeys.loginData);
+    GetStorage().remove(StorageKeys.rememberMe);
+    GetStorage().remove(StorageKeys.profileData);
+    GetStorage().remove(StorageKeys.quoteConfirmation);
+    GetStorage().remove(StorageKeys.signupData);
+    // GetStorage().erase();
     Get.deleteAll();
     Get.offAllNamed(AppRoutes.login);
   }
@@ -368,6 +377,15 @@ class ProfileController extends GetxController {
     oldPasswordController.clear();
     newPasswordController.clear();
     confirmPasswordController.clear();
+  }
+
+  @override
+  void onInit() {
+    super.onInit();
+    ConfigData configData =
+        ConfigData.fromJson(convertToJsonStringQuotes(StorageKeys.configData));
+    serviceURLController.text = configData.url!;
+    tokenController.text = configData.token!;
   }
 
   @override

@@ -1,4 +1,3 @@
-import 'dart:developer';
 import 'dart:math';
 
 import 'base_response.dart';
@@ -11,7 +10,6 @@ class CustomerPolicyResponse extends CustomBaseResponse {
   @override
   parseResponseData() {
     try {
-      inspect(getResponseBody()[0]);
       policies = getResponseBody() != []
           ? List.from(getResponseBody())
               .map((item) => PolicyData.fromJson(item))
@@ -151,7 +149,7 @@ class PolicyData implements PolicyDetails {
     this.currencyExchangeRate,
     this.sourcecode,
     // all lower case from backend
-    // this.branchcode,
+    this.branchcode,
     this.approvedDate,
     this.legalCession,
     this.reInsurance,
@@ -524,7 +522,7 @@ class PolicyData implements PolicyDetails {
       currencyID: json['CurrencyID'],
       currencyExchangeRate: json['CurrencyExchangeRate'],
       sourcecode: json['Sourcecode'],
-      // branchcode: json['branchcode'],
+      branchcode: json['branchcode'],
       approvedDate: json['ApprovedDate'],
       legalCession: json['LegalCession'],
       reInsurance: json['ReInsurance'],
@@ -1102,7 +1100,7 @@ class ItemToInsure implements PolicyDetails {
     String computedMessage =
         '$manualNumbering, Value: N$sumInsured, Location: $itemLocation, Description: $itemsDescription';
     final map = <String, dynamic>{};
-    map['CaseID'] = policyBrokerID.toString() ?? '';
+    map['CaseID'] = policyBrokerID.toString();
     map['Subject'] = manualNumbering;
     map['Message'] = computedMessage;
     map['ScreenShotURL'] = policyItems ?? '';

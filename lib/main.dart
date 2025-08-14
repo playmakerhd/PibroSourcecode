@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:pibro/constants/app_colors.dart';
 import 'package:pibro/constants/app_constants.dart';
 import 'package:pibro/constants/storage_keys.dart';
+import 'package:pibro/core/config/view/service_config_screen.dart';
 import 'package:pibro/core/main_screen/view/main_screen.dart';
 import 'package:pibro/core/splash/splash_screen.dart';
 import 'package:pibro/internalization/app_strings.dart';
@@ -16,7 +16,6 @@ import 'package:pibro/utils/pibro_logger.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load(fileName: AppConstants.envPath);
   await GetStorage.init();
   PibroLogger.init();
   await initializeDateFormatting('en_US', null);
@@ -33,9 +32,6 @@ class MyApp extends StatelessWidget {
       DeviceOrientation.portraitDown
     ];
     SystemChrome.setPreferredOrientations(orientations);
-    // LoginData? data = GetStorage().read(StorageKeys.loginData) != null
-    //     ? LoginData.fromJson(convertToJsonStringQuotes(StorageKeys.loginData))
-    //     : null;
     return GetMaterialApp(
       title: AppConstants.appName,
       locale: AppConstants.engLocale,
@@ -63,9 +59,12 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
         fontFamily: AppConstants.fontFamily,
       ),
-      home: decryptData(StorageKeys.profileData) != null
-          ? MainScreen()
-          : SplashScreen(),
+      home: decryptData(StorageKeys.configData) == null
+          ? ServiceConfigScreen()
+          : GetStorage().read(StorageKeys.profileData) != null
+              // : decryptData(StorageKeys.profileData) != null
+              ? MainScreen()
+              : SplashScreen(),
     );
   }
 }

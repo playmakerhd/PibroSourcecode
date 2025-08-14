@@ -1,5 +1,5 @@
-class LoginData {
-  LoginData({
+class ConfigData {
+  ConfigData({
     this.url,
     this.token,
   });
@@ -7,8 +7,8 @@ class LoginData {
   String? url;
   String? token;
 
-  factory LoginData.fromJson(dynamic json) {
-    return LoginData(
+  factory ConfigData.fromJson(dynamic json) {
+    return ConfigData(
       url: json["url"],
       token: json["token"],
     );

@@ -32,6 +32,7 @@ class AppStrings extends Translations {
   static const String activePolicies = 'activePolicies';
   static const String expiredPolicies = 'expiredPolicies';
   static const String quote = 'quote';
+  static const String quoteId = 'quoteId';
   static const String quotes = 'quotes';
   static const String renewPolicy = 'renewPolicy';
   static const String lodgeClaims = 'lodgeClaims';
@@ -176,6 +177,11 @@ class AppStrings extends Translations {
   static const String settled = 'settled';
   static const String processing = 'processing';
   static const String preview = 'preview';
+  static const String addImage = 'addImage';
+
+  // Configuration
+  static const String configError = 'configError';
+  static const String configIncorrect = 'configIncorrect';
 
   @override
   Map<String, Map<String, String>> get keys => {

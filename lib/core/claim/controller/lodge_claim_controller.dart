@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:developer';
 import 'dart:io';
 
 import 'package:dotted_border/dotted_border.dart';
@@ -75,7 +74,7 @@ class LodgeClaimController extends GetxController {
   List<ClaimDocument> claimDocumentsToSend = [];
 
   void updateIndex(int index) {
-    if (tabIndex.value > 1 || isEdit) {
+    if (tabIndex.value > 1 || isEdit || selectedClaim.value != null) {
       tabIndex.value = index;
     }
   }
@@ -163,35 +162,6 @@ class LodgeClaimController extends GetxController {
     }
   }
 
-  // Future<void> sendToBroker() async {
-  //   if (claimFormKey.currentState!.validate()) {
-  //     // saveAndContinue_.value = saveAndContinue;
-  //     sendToBrokerLoading.value = true;
-  //     try {
-  //       final ClaimRequest requestData = ClaimRequest(
-  //         accidentDate: occurenceDate.value!.toIso8601String(),
-  //         accidentDetails: narrationController.text,
-  //         customerReportDate: lodgementDate.value!.toIso8601String(),
-  //         policy: selectedPolicy.value!,
-  //       );
-  //       final response = await pibroRepository.createClaim(requestData);
-  //       if (response.messageResponse.status != AppConstants.responseSuccess) {
-  //         submitLoading.value = false;
-  //         showSnackbarMessage(
-  //             message: response.messageResponse.message, isSuccess: false);
-  //       } else {
-  //         brokerClaimID = response.messageResponse.message;
-  //         requestData.claimsID = response.messageResponse.message;
-  //         claimsRecalc(requestData);
-  //       }
-  //     } catch (e) {
-  //       submitLoading.value = false;
-  //       showSnackbarMessage(
-  //           message: AppStrings.genericErrorMessage.tr, isSuccess: false);
-  //     }
-  //   }
-  // }
-
   Future<void> sendToBroker() async {
     sendToBrokerLoading.value = true;
     try {
@@ -258,7 +228,10 @@ class LodgeClaimController extends GetxController {
       if (!isEdit && !isSendToBroker) {
         tabIndex.value++;
       }
-      sendToBrokerLoading.value = false;
+      if (isSendToBroker) {
+        sendToBrokerLoading.value = false;
+        _showSuccessDialog();
+      }
       submitLoading.value = false;
     } catch (e) {
       sendToBrokerLoading.value = false;
@@ -266,6 +239,55 @@ class LodgeClaimController extends GetxController {
       showSnackbarMessage(
           message: AppStrings.genericErrorMessage.tr, isSuccess: false);
     }
+  }
+
+  void _showSuccessDialog() {
+    showAppDialog(
+      dismissible: false,
+      willPop: false,
+      Padding(
+        padding: const EdgeInsets.only(top: 20),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            ImageFactory.getImage(AppImages.passwordSuccess).render(
+              height: 65,
+              width: 65,
+            ),
+            Column(
+              children: [
+                Text(
+                  AppStrings.submitClaim.tr,
+                  style: Styles.semiBoldTextStyle(
+                    color: AppColors.primaryColor,
+                  ),
+                ),
+                SizedBox(
+                  height: 5,
+                ),
+                Text(
+                  AppStrings.claimSuccess.tr,
+                  style: Styles.mediumTextStyle(
+                    size: 12,
+                    color: AppColors.primaryColor,
+                  ),
+                ),
+              ],
+            ),
+            GestureDetector(
+              onTap: () => Get.offAllNamed(AppRoutes.main),
+              child: ProfileButton(
+                text: AppStrings.ok.tr,
+                height: 25,
+                width: 80,
+                textColor: AppColors.activeGreen,
+                bgColor: AppColors.white,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   void pickImage() async {
@@ -282,7 +304,7 @@ class LodgeClaimController extends GetxController {
         selectedFile.value = null;
       }
     } catch (e) {
-      print("Error picking file: $e");
+      debugPrint("Error picking file: $e");
     } finally {
       isPickingFile.value = false;
     }
@@ -458,12 +480,6 @@ class LodgeClaimController extends GetxController {
     );
   }
 
-  Future<String> convertFileToBase64(File file) async {
-    final bytes = await file.readAsBytes(); // read file as byte array
-    String base64String = base64Encode(bytes); // encode to base64
-    return base64String;
-  }
-
   Future<void> updateDocument(int index) async {
     isPickingFile.value = false;
     isUploading.value = true;
@@ -478,7 +494,6 @@ class LodgeClaimController extends GetxController {
       uploadDoc(index);
       // Get.forceAppUpdate();
       // Get.back();
-      inspect(claimDocumentsToSend[index]);
     }
   }
 
@@ -512,7 +527,6 @@ class LodgeClaimController extends GetxController {
   Future<void> uploadDoc(int index) async {
     updateLoading.value = true;
     updateDocStatus();
-    inspect(claimDocumentsToSend);
     try {
       final response =
           await pibroRepository.uploadClaimDoc(claimDocumentsToSend[index]);
@@ -539,7 +553,6 @@ class LodgeClaimController extends GetxController {
   // Future<void> uploadDoc() async {
   //   updateLoading.value = true;
   //   updateDocStatus();
-  //   inspect(claimDocumentsToSend);
   //   print(claimDocumentsToSend[2].dateSubmited);
   //   print(claimDocumentsToSend[3].dateSubmited);
   //   try {
@@ -643,16 +656,24 @@ class LodgeClaimController extends GetxController {
 
   @override
   void onInit() {
-    // getInsuranceBusinessClass();
     if (Get.arguments != null) {
-      selectedClaim.value = Get.arguments as PolicyClaim;
-      isEdit = true;
+      if (Get.arguments is PolicyData) {
+        policies.add(Get.arguments);
+        selectPolicy(Get.arguments);
+        lodgementDate.value = DateTime.now();
+        lodgementDateController.text =
+            formatClaimDate(DateTime.now().toIso8601String());
+      } else {
+        selectedClaim.value = Get.arguments;
+        getCustomerPolicies();
+        isEdit = true;
+      }
     } else {
       lodgementDate.value = DateTime.now();
       lodgementDateController.text =
           formatClaimDate(DateTime.now().toIso8601String());
+      getCustomerPolicies();
     }
-    getCustomerPolicies();
 
     super.onInit();
   }

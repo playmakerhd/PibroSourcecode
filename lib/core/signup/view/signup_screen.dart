@@ -52,7 +52,7 @@ class SignupScreen extends StatelessWidget {
                     inputType: TextInputType.phone,
                   ),
                   CustomInput(
-                    hint: AppStrings.username.tr,
+                    hint: AppStrings.name.tr,
                     controller: controller.nameController,
                     validator: (value) => Validators.requiredValidator(
                       value,

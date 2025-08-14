@@ -1,11 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:developer';
 
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:pibro/constants/storage_keys.dart';
+import 'package:pibro/core/config/model/config_model.dart';
 import 'package:pibro/core/login/model/login_data.dart';
+import 'package:pibro/internalization/app_strings.dart';
+import 'package:pibro/navigation/routes.dart';
 import 'package:pibro/network/models/platform_user/platform_user.dart';
 import 'package:pibro/network/models/request/auth_request.dart';
 import 'package:pibro/network/models/request/change_password_request.dart';
@@ -31,15 +33,30 @@ import 'package:pibro/utils/api_utils.dart';
 import 'package:pibro/utils/app_utils.dart';
 
 import 'package:http/http.dart' as http;
+import 'package:pibro/utils/view_utils.dart';
 
 import 'base_provider.dart';
 import 'endpoints.dart';
 
 class ApiProvider extends BaseProvider {
-  final String _baseApiPath = dotenv.env['BASE_URL']!;
-  final String _acessToken = dotenv.env['ACCESS_TOKEN']!;
+  String _baseApiPath = '';
+  String _acessToken = '';
   final String _paystackBaseUrl = 'https://api.paystack.co/transaction';
-  GetStorage box = GetStorage();
+
+  ApiProvider() {
+    ConfigData configData =
+        ConfigData.fromJson(convertToJsonStringQuotes(StorageKeys.configData));
+    if (configData.url == null || configData.token == null) {
+      showSnackbarMessage(
+        message: AppStrings.configError.tr,
+        isSuccess: false,
+      );
+      Get.offAllNamed(AppRoutes.serviceConfig);
+    } else {
+      _baseApiPath = configData.url!;
+      _acessToken = configData.token!;
+    }
+  }
 
   Future<CustomMessageResponse> callLoginApi(AuthRequest body) async {
     dynamic endpoint = body.isOtherOption
@@ -60,8 +77,10 @@ class ApiProvider extends BaseProvider {
 
   Future<CustomMessageResponse> callChangePasswordApi(
       ChangePasswordRequest body) async {
-    PlatformUser data = PlatformUser.fromJson(
-        convertToJsonStringQuotes(StorageKeys.profileData));
+    // PlatformUser data = PlatformUser.fromJson(
+    //     convertToJsonStringQuotes(StorageKeys.profileData));
+    PlatformUser data =
+        PlatformUser.fromJson(GetStorage().read(StorageKeys.profileData) ?? {});
     dynamic endpoint =
         '$_baseApiPath${Endpoints.changePassword}?EntityID=${data.customerID}&OldPassword=${body.oldPassword}&NewPassword=${body.newPassword}&ConfirmPassword=${body.confirmPassword}&token=$_acessToken';
     final responseData = await makeGetCall(Uri.parse(endpoint), false);
@@ -71,7 +90,6 @@ class ApiProvider extends BaseProvider {
   Future<ProfileResponse> callGetProfile() async {
     LoginData data =
         LoginData.fromJson(convertToJsonStringQuotes(StorageKeys.loginData));
-    print('Data $data');
     dynamic endpoint = data.customerID!.isNotEmpty
         ? '$_baseApiPath${Endpoints.profile}/${data.customerID}/$_acessToken'
         : '$_baseApiPath${Endpoints.profileByEmail}/${data.email}/${data.phone}/$_acessToken';
@@ -80,8 +98,10 @@ class ApiProvider extends BaseProvider {
   }
 
   Future<CustomerPolicyResponse> callGetCustomerPolicies() async {
-    PlatformUser data = PlatformUser.fromJson(
-        convertToJsonStringQuotes(StorageKeys.profileData));
+    // PlatformUser data = PlatformUser.fromJson(
+    //     convertToJsonStringQuotes(StorageKeys.profileData));
+    PlatformUser data =
+        PlatformUser.fromJson(GetStorage().read(StorageKeys.profileData) ?? {});
     dynamic endpoint =
         '$_baseApiPath${Endpoints.customerPolicies}/${data.customerID}/$_acessToken';
     final responseData = await makeGetCall(Uri.parse(endpoint), false);
@@ -89,8 +109,10 @@ class ApiProvider extends BaseProvider {
   }
 
   Future<QuotesResponse> callGetQuotes() async {
-    PlatformUser data = PlatformUser.fromJson(
-        convertToJsonStringQuotes(StorageKeys.profileData));
+    // PlatformUser data = PlatformUser.fromJson(
+    //     convertToJsonStringQuotes(StorageKeys.profileData));
+    PlatformUser data =
+        PlatformUser.fromJson(GetStorage().read(StorageKeys.profileData) ?? {});
     dynamic endpoint =
         '$_baseApiPath${Endpoints.quotes}/${data.customerID}/$_acessToken?PageNum=1&Size=50&SupportType=Quote';
     final responseData = await makeGetCall(Uri.parse(endpoint), false);
@@ -98,8 +120,10 @@ class ApiProvider extends BaseProvider {
   }
 
   Future<CustomerPolicyClaimsResponse> callGetCustomerClaims() async {
-    PlatformUser data = PlatformUser.fromJson(
-        convertToJsonStringQuotes(StorageKeys.profileData));
+    // PlatformUser data = PlatformUser.fromJson(
+    //     convertToJsonStringQuotes(StorageKeys.profileData));
+    PlatformUser data =
+        PlatformUser.fromJson(GetStorage().read(StorageKeys.profileData) ?? {});
     dynamic endpoint =
         '$_baseApiPath${Endpoints.customerClaims}/${data.customerID}/$_acessToken';
     final responseData = await makeGetCall(Uri.parse(endpoint), false);
@@ -122,7 +146,6 @@ class ApiProvider extends BaseProvider {
   }
 
   Future<CustomMessageResponse> callRenewPolicy(PolicyData data) async {
-    inspect(data);
     dynamic endpoint =
         '$_baseApiPath${Endpoints.renewPolicy}?token=$_acessToken';
     final responseData = await makePostCall(
@@ -148,7 +171,6 @@ class ApiProvider extends BaseProvider {
   }
 
   Future<CustomMessageResponse> callPostPolicy(RenewPolicyRequest data) async {
-    inspect(data);
     dynamic endpoint =
         '$_baseApiPath${Endpoints.postPolicy}?token=$_acessToken';
     final responseData = await makePostCall(
@@ -231,9 +253,11 @@ class ApiProvider extends BaseProvider {
 
   Future<PaymentInitResponse> callInitializePayment(
       String accessToken, int amount) async {
-    PlatformUser data = PlatformUser.fromJson(
-      convertToJsonStringQuotes(StorageKeys.profileData),
-    );
+    // PlatformUser data = PlatformUser.fromJson(
+    //   convertToJsonStringQuotes(StorageKeys.profileData),
+    // );
+    PlatformUser data =
+        PlatformUser.fromJson(GetStorage().read(StorageKeys.profileData) ?? {});
     var resData = ResponseData();
     dynamic endpoint = '$_paystackBaseUrl/initialize';
     final responseData = await http.post(

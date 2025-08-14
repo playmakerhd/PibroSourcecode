@@ -30,6 +30,7 @@ class PlatformUser {
     this.customerSpecialInstructions,
     this.customerRegionID,
     this.customerPassword,
+    this.customerContacts,
     // this.customerTransactions,
   });
 
@@ -63,6 +64,7 @@ class PlatformUser {
   String? customerSpecialInstructions;
   String? customerRegionID;
   String? customerPassword;
+  late List<CustomerContact>? customerContacts;
   // late List<CustomerTransaction>? customerTransactions;
 
   factory PlatformUser.fromJson(dynamic json) {
@@ -81,12 +83,12 @@ class PlatformUser {
       customerAddress1: json["CustomerAddress1"],
       customerAddress2: json["CustomerAddress2"],
       customerAddress3: json["CustomerAddress3"],
-      customerCity: json["CustomerCity"],
-      customerState: json["CustomerState"],
+      customerCity: json["CustomerCity"] ?? '',
+      customerState: json["CustomerState"] ?? '',
       customerZip: json["CustomerZip"],
-      customerCountry: json["CustomerCountry"],
-      customerPhone: json["CustomerPhone"],
-      customerEmail: json["CustomerEmail"],
+      customerCountry: json["CustomerCountry"] ?? '',
+      customerPhone: json["CustomerPhone"] ?? '',
+      customerEmail: json["CustomerEmail"] ?? '',
       customerDateOfBirth: json["CustomerDateOfBirth"] ?? '',
       termsID: json["TermsID"],
       termsStart: json["TermsStart"],
@@ -97,6 +99,12 @@ class PlatformUser {
       customerSpecialInstructions: json["CustomerSpecialInstructions"],
       customerRegionID: json["CustomerRegionID"],
       customerPassword: json["CustomerPassword"],
+      customerContacts:
+          json["CustomerContacts"] != null && json["CustomerContacts"] != []
+              ? List.from(json["CustomerContacts"])
+                  .map((item) => CustomerContact.fromJson(item))
+                  .toList()
+              : [],
       // customerTransactions: json["CustomerTransactions"] != null &&
       //         json["CustomerTransactions"] != []
       //     ? List.from(json["CustomerTransactions"])
@@ -139,6 +147,10 @@ class PlatformUser {
     map['CustomerRegionID'] = customerRegionID;
     map['CustomerPassword'] = customerPassword;
     map['CompanyID'] = companyID;
+    map['CustomerContacts'] =
+        customerContacts != null && customerContacts!.isNotEmpty
+            ? customerContacts?.map((v) => v.toJson()).toList()
+            : [];
     // map['CustomerTransactions'] =
     //     customerTransactions != null && customerTransactions!.isNotEmpty
     //         ? customerTransactions?.map((v) => v.toJson()).toList()
@@ -211,6 +223,58 @@ class CustomerTransaction {
     map['Posted'] = posted;
     map['TargetForm'] = targetForm;
     map['KeyField'] = keyField;
+    return map;
+  }
+}
+
+class CustomerContact {
+  CustomerContact({
+    this.companyID,
+    this.divisionID,
+    this.customerID,
+    this.contactID,
+    this.contactType,
+    this.contactFirstName,
+    this.contactLastName,
+    this.contactPhone,
+    this.contactEmail,
+  });
+
+  late String? companyID;
+  late String? divisionID;
+  late String? customerID;
+  late String? contactID;
+  late String? contactType;
+  late String? contactFirstName;
+  late String? contactLastName;
+  late String? contactPhone;
+  late String? contactEmail;
+
+  factory CustomerContact.fromJson(dynamic json) {
+    return CustomerContact(
+      companyID: json['CompanyID'],
+      divisionID: json['DivisionID'],
+      customerID: json['CustomerID'],
+      contactID: json['ContactID'],
+      contactType: json['ContactType'],
+      contactFirstName: json['ContactFirstName'],
+      contactLastName: json['ContactLastName'],
+      contactPhone: json['ContactPhone'],
+      contactEmail: json['ContactEmail'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    final map = <String, dynamic>{};
+    map['CompanyID'] = companyID;
+    map['DivisionID'] = divisionID;
+    map['CustomerID'] = customerID;
+    map['ContactID'] = contactID;
+    map['ContactType'] = contactType;
+    map['ContactFirstName'] = contactFirstName;
+    map['ContactLastName'] = contactLastName;
+    map['ContactPhone'] = contactPhone;
+    map['ContactEmail'] = contactEmail;
     return map;
   }
 }

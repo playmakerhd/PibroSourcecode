@@ -16,7 +16,7 @@ class PolicyList extends StatelessWidget {
       child: Obx(
         () => ListView.builder(
           itemCount: controller.displayPolicies.length,
-          padding: EdgeInsets.only(top: 30, bottom: 20),
+          padding: EdgeInsets.only(top: 30, bottom: 50),
           itemBuilder: (BuildContext context, int index) {
             final PolicyData policy = controller.displayPolicies[index];
             return GestureDetector(

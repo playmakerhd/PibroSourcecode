@@ -7,15 +7,21 @@ import 'package:pibro/utils/image_factory.dart';
 import 'package:pibro/utils/view_utils.dart';
 
 class AuthBg extends StatelessWidget {
-  const AuthBg({super.key, required this.title, required this.child});
+  const AuthBg(
+      {super.key,
+      required this.title,
+      required this.child,
+      this.floatingButton});
 
   final String title;
   final Widget child;
+  final Widget? floatingButton;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: true,
+      floatingActionButton: floatingButton,
       backgroundColor: AppColors.tileColor,
       body: SafeArea(
         bottom: false,

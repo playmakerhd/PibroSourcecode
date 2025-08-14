@@ -20,6 +20,12 @@ class LoginScreen extends StatelessWidget {
     final LoginController controller = Get.put(LoginController());
     return AuthBg(
       title: AppStrings.welcomeBack.tr,
+      // floatingButton: FloatingActionButton(
+      //   child: Icon(Icons.settings),
+      //   onPressed: () {
+      //     Get.offAllNamed(AppRoutes.serviceConfig);
+      //   },
+      // ),
       child: Column(
         children: [
           Padding(
@@ -33,9 +39,20 @@ class LoginScreen extends StatelessWidget {
                 children: [
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 30),
-                    child: Text(
-                      AppStrings.login.tr,
-                      style: Styles.boldTextStyle(size: 20),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          AppStrings.login.tr,
+                          style: Styles.boldTextStyle(size: 20),
+                        ),
+                        GestureDetector(
+                          child: Icon(Icons.settings, size: 20),
+                          onTap: () {
+                            Get.offAllNamed(AppRoutes.serviceConfig);
+                          },
+                        ),
+                      ],
                     ),
                   ),
                   Obx(

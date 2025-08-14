@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import 'package:pibro/core/claim/views/claim_details_screen.dart';
 import 'package:pibro/core/claim/views/claim_screen.dart';
 import 'package:pibro/core/claim/views/lodge_claims_screen.dart';
+import 'package:pibro/core/config/view/service_config_screen.dart';
 import 'package:pibro/core/landing/views/about_us_screen.dart';
 import 'package:pibro/core/landing/views/contact_us_screen.dart';
 import 'package:pibro/core/landing/views/faq_screen.dart';
@@ -22,6 +23,7 @@ import 'package:pibro/core/quote/views/quote_details_screen.dart';
 import 'package:pibro/core/quote/views/quote_screen.dart';
 import 'package:pibro/core/quote/views/quotes_list_screen.dart';
 import 'package:pibro/core/signup/view/signup_screen.dart';
+import 'package:pibro/core/splash/splash_screen.dart';
 
 class AppRoutes {
   AppRoutes._();
@@ -30,6 +32,7 @@ class AppRoutes {
   static const String contactUs = '/contact-us';
   static const String faq = '/faq';
   static const String landing = '/landing';
+  static const String splash = '/splash';
 
   static const String main = '/main';
   static const String login = '/login';
@@ -44,6 +47,7 @@ class AppRoutes {
   static const String myInfo = '/my-info';
   static const String accountHandler = '/account-handler';
   static const String configuration = '/configuration';
+  static const String serviceConfig = '/service-config';
   static const String quote = '/quote';
   static const String quoteList = '/quote-list';
   static const String getQuote = '/get-quote';
@@ -55,6 +59,10 @@ class AppRoutes {
   static const String lodgeClaims = '/lodge-claims';
 
   static final routes = [
+    GetPage(
+      name: splash,
+      page: () => const SplashScreen(),
+    ),
     GetPage(
       name: aboutUs,
       page: () => const AboutUsScreen(),
@@ -146,6 +154,10 @@ class AppRoutes {
     GetPage(
       name: landing,
       page: () => LandingScreen(),
+    ),
+    GetPage(
+      name: serviceConfig,
+      page: () => ServiceConfigScreen(),
     ),
   ];
 }

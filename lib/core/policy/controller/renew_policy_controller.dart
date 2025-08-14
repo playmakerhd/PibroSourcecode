@@ -1,8 +1,10 @@
-import 'dart:developer';
+import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:get/get.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:pibro/constants/app_colors.dart';
 import 'package:pibro/constants/app_constants.dart';
 import 'package:pibro/constants/app_images.dart';
@@ -28,6 +30,10 @@ import 'package:pibro/utils/app_utils.dart';
 import 'package:pibro/utils/image_factory.dart';
 import 'package:pibro/utils/validators.dart';
 import 'package:pibro/utils/view_utils.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:screenshot/screenshot.dart';
+import 'package:share_plus/share_plus.dart';
 
 class RenewPolicyController extends GetxController {
   PibroRepository pibroRepository =
@@ -71,6 +77,7 @@ class RenewPolicyController extends GetxController {
 
   // PAYMENT
   late InAppWebViewController webViewController;
+  final ScreenshotController screenshotController = ScreenshotController();
 
   Future<void> getInsuranceBusinessClass() async {
     businessLoading.value = true;
@@ -117,11 +124,6 @@ class RenewPolicyController extends GetxController {
   Future<void> getPremiumAmount() async {
     getPremiumAmountLoading.value = true;
     try {
-      inspect(GetPremiumAmountRequest(
-        brokerId: policy.value!.policyBrokerID,
-        startDate: startDateController.text,
-        endDate: endDateController.text,
-      ));
       final response = await pibroRepository.getPremiumAmount(
         GetPremiumAmountRequest(
           brokerId: policy.value!.policyBrokerID,
@@ -522,7 +524,6 @@ class RenewPolicyController extends GetxController {
 
   Future<void> renewPolicy() async {
     PolicyData dataToSend = policy.value!;
-    debugPrint(dataToSend.toString());
     try {
       final response = await pibroRepository.renewPolicy(dataToSend);
       if (response.messageResponse.status != AppConstants.responseSuccess) {
@@ -659,6 +660,58 @@ class RenewPolicyController extends GetxController {
       paymentLoading.value = false;
       showSnackbarMessage(
           message: AppStrings.genericErrorMessage.tr, isSuccess: false);
+    }
+  }
+
+  Future<void> savePageAsPdf() async {
+    try {
+      // 1. Capture the widget as an image
+      final Uint8List? imageBytes = await screenshotController.capture(
+        delay: const Duration(milliseconds: 10),
+      );
+
+      if (imageBytes == null) {
+        showSnackbarMessage(
+            message: 'Failed to capture widget.', isSuccess: false);
+        return;
+      }
+
+      // 2. Create a PDF document
+      final pdf = pw.Document();
+      final image = pw.MemoryImage(imageBytes);
+
+      pdf.addPage(
+        pw.Page(
+          pageFormat: PdfPageFormat.a4,
+          build: (pw.Context context) {
+            return pw.Center(
+              child: pw.Image(image),
+            );
+          },
+        ),
+      );
+
+      // 3. Get the temporary directory
+      final Directory tempDir = await getTemporaryDirectory();
+      final String fileName =
+          'invoice_${DateTime.now().millisecondsSinceEpoch}.pdf';
+      final String filePath = '${tempDir.path}/$fileName';
+      final File file = File(filePath);
+
+      // 4. Save the PDF to the temporary file
+      await file.writeAsBytes(await pdf.save());
+
+      // 5. Share the file
+      final xFile = XFile(filePath);
+
+      await Share.shareXFiles(
+        [xFile],
+        text: 'Here is the exported invoice!',
+        subject: 'Invoice PDF',
+      );
+    } catch (e) {
+      showSnackbarMessage(
+          message: 'Failed to export invoice as PDF: $e', isSuccess: false);
     }
   }
 

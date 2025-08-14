@@ -4,7 +4,6 @@ import 'package:pibro/constants/app_colors.dart';
 import 'package:pibro/constants/app_constants.dart';
 import 'package:pibro/constants/app_styles.dart';
 import 'package:pibro/core/policy/controller/renew_policy_controller.dart';
-import 'package:pibro/core/policy/views/renew_policy_confirmation_screen.dart';
 import 'package:pibro/core/policy/widget/items_insured_list.dart';
 import 'package:pibro/core/policy/widget/policy_button.dart';
 import 'package:pibro/core/quote/controller/get_quote_controller.dart';
@@ -130,116 +129,34 @@ class ItemsToInsureScreen extends StatelessWidget {
                                   ]
                                 ],
                               ),
-                        // Column(
-                        //     children: controller.items.reversed
-                        //         .map(
-                        //           (item) => Row(
-                        //             children: [
-                        //               Expanded(
-                        //                 child: ItemRowContainer(
-                        //                   isPolicyRenew: true,
-                        //                   child: Column(
-                        //                     mainAxisAlignment:
-                        //                         MainAxisAlignment.spaceEvenly,
-                        //                     children: [
-                        //                       TitleValueRow(
-                        //                         title:
-                        //                             '${AppStrings.description.tr}:',
-                        //                         value: item.itemsDescription!,
-                        //                       ),
-                        //                       TitleValueRow(
-                        //                         title:
-                        //                             '${AppStrings.sumInsured.tr}:',
-                        //                         value: item.sumInsured!,
-                        //                       ),
-                        //                       TitleValueRow(
-                        //                         title:
-                        //                             '${AppStrings.location.tr}:',
-                        //                         value: item.itemLocation!,
-                        //                       ),
-
-                        //                       // TitleValueRow(
-                        //                       //   title:
-                        //                       //       '${AppStrings.regNo.tr}: ${item.regId}',
-                        //                       //   value:
-                        //                       //       '${AppStrings.vehicleMake.tr}: ${item.vehicleMake}',
-                        //                       // ),
-                        //                       // TitleValueRow(
-                        //                       //   title:
-                        //                       //       '${AppStrings.chasisId.tr}: ${item.chasisID}',
-                        //                       //   value:
-                        //                       //       '${AppStrings.value.tr}: ${item.value}',
-                        //                       // ),
-                        //                       // TitleValueRow(
-                        //                       //   title:
-                        //                       //       '${AppStrings.engineNo.tr}: ${item.engineNo}',
-                        //                       //   value:
-                        //                       //       '${AppStrings.location.tr}: ${item.location}',
-                        //                       // ),
-                        //                     ],
-                        //                   ),
-                        //                 ),
-                        //               ),
-                        //               Container(
-                        //                 width: 25,
-                        //                 padding:
-                        //                     const EdgeInsets.only(right: 4.0),
-                        //                 child: Column(
-                        //                   spacing: 15,
-                        //                   children: [
-                        //                     GestureDetector(
-                        //                       onTap: () => controller
-                        //                           .showAddOrUpdateItemSheet(
-                        //                               data: item),
-                        //                       child: Icon(
-                        //                         Icons.edit,
-                        //                         size: 20,
-                        //                       ),
-                        //                     ),
-                        //                     GestureDetector(
-                        //                       onTap: () => controller
-                        //                           .removeItemFromList(item),
-                        //                       child: Icon(
-                        //                         Icons.delete,
-                        //                         color: Colors.red,
-                        //                         size: 20,
-                        //                       ),
-                        //                     )
-                        //                   ],
-                        //                 ),
-                        //               )
-                        //             ],
-                        //           ),
-                        //         )
-                        //         .toList(),
-                        //   ),
                       ),
                     ),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: GestureDetector(
-                        onTap: () => controller is GetQuoteController
-                            ? controller.showAddOrUpdateSheet(null)
-                            : controller.showAddOrUpdateItemSheet(
-                                data: null,
-                                isNew: true,
-                              ),
-                        child: Container(
-                          height: 40,
-                          width: 40,
-                          margin: EdgeInsets.only(top: 30),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: AppColors.primaryColor,
-                          ),
-                          child: Icon(
-                            Icons.add,
-                            color: AppColors.white,
-                            size: 30,
+                    if (controller is GetQuoteController)
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: GestureDetector(
+                          onTap: () => controller is GetQuoteController
+                              ? controller.showAddOrUpdateSheet(null)
+                              : controller.showAddOrUpdateItemSheet(
+                                  data: null,
+                                  isNew: true,
+                                ),
+                          child: Container(
+                            height: 40,
+                            width: 40,
+                            margin: EdgeInsets.only(top: 30),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: AppColors.primaryColor,
+                            ),
+                            child: Icon(
+                              Icons.add,
+                              color: AppColors.white,
+                              size: 30,
+                            ),
                           ),
                         ),
                       ),
-                    ),
                     Padding(
                       padding: const EdgeInsets.only(top: 60.0),
                       child: Center(

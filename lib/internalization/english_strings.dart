@@ -36,6 +36,7 @@ class EnglishStrings {
       AppStrings.activePolicies: 'Active@breakPolicies',
       AppStrings.expiredPolicies: 'Expired@breakPolicies',
       AppStrings.quote: 'Quote',
+      AppStrings.quoteId: 'Quote ID',
       AppStrings.quotes: 'Quotes',
       AppStrings.renewPolicy: 'Renew Policy',
       AppStrings.lodgeClaims: 'Lodge Claims',
@@ -182,6 +183,13 @@ class EnglishStrings {
       AppStrings.settled: 'Settled',
       AppStrings.processing: 'Processing',
       AppStrings.preview: 'Preview',
+      AppStrings.addImage: 'Add Image',
+
+      // Configuration
+      AppStrings.configError:
+          'Configuration data is not set. Please set the service URL and token.',
+      AppStrings.configIncorrect:
+          'Configuration data is incorrect. Please set the correct service URL and token.',
     };
   }
 }

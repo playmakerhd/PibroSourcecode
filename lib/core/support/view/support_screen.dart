@@ -5,7 +5,6 @@ import 'package:pibro/constants/app_images.dart';
 import 'package:pibro/constants/app_styles.dart';
 import 'package:pibro/core/support/controller/support_controller.dart';
 import 'package:pibro/internalization/app_strings.dart';
-import 'package:pibro/navigation/routes.dart';
 import 'package:pibro/shared/widget/rotated_container.dart';
 import 'package:pibro/utils/view_utils.dart';
 

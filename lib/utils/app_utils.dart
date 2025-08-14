@@ -1,18 +1,21 @@
 import 'dart:convert';
-import 'dart:typed_data';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:get/get_utils/src/extensions/internacionalization.dart';
+import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:encrypt/encrypt.dart' as encrypt;
 import 'package:intl/intl.dart';
 import 'package:pibro/constants/app_colors.dart';
 import 'package:pibro/constants/storage_keys.dart';
+import 'package:pibro/core/config/model/config_model.dart';
 import 'package:pibro/core/home/models/policy_status.dart';
 import 'package:pibro/core/login/model/login_data.dart';
 import 'package:pibro/internalization/app_strings.dart';
+import 'package:pibro/navigation/routes.dart';
 import 'package:pibro/network/models/platform_user/platform_user.dart';
 import 'package:pibro/network/models/response/customer_policy_claims_response.dart';
+import 'package:pibro/utils/view_utils.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 void persistLoginData({
@@ -28,7 +31,14 @@ void persistLoginData({
 }
 
 void persistProfileData(PlatformUser user) {
-  encryptData(key: StorageKeys.profileData, value: user.toJson().toString());
+  // encryptData(key: StorageKeys.profileData, value: user.toJson().toString());
+  GetStorage().write(StorageKeys.profileData, user.toJson());
+}
+
+void deleteQuoteConfirmation() {
+  if (GetStorage().hasData(StorageKeys.quoteConfirmation)) {
+    GetStorage().remove(StorageKeys.quoteConfirmation);
+  }
 }
 
 void persistSignupID(String id) {
@@ -95,16 +105,10 @@ String formatClaimDate(String date) {
 }
 
 // Base64 Image upload and display
-Image imageFromBase64String(String base64String) {
-  return Image.memory(base64Decode(base64String));
-}
-
-Uint8List dataFromBase64String(String base64String) {
-  return base64Decode(base64String);
-}
-
-String base64String(Uint8List data) {
-  return base64Encode(data);
+Future<String> convertFileToBase64(File file) async {
+  final bytes = await file.readAsBytes();
+  String base64String = base64Encode(bytes);
+  return base64String;
 }
 
 String formatAmount(double amount) {
@@ -116,9 +120,11 @@ List<dynamic> getClaimStatus(PolicyClaim claim) {
   if (claim.closed == true && claim.cleared == true) {
     return [AppStrings.settled.tr, AppColors.activeGreen];
   } else if (claim.cleared == true) {
-    return [AppStrings.processing.tr, AppColors.orange];
+    return [AppStrings.processing.tr, AppColors.green];
+  } else if (claim.submitClaim == true) {
+    return [AppStrings.submitted.tr, AppColors.orange];
   } else {
-    return [AppStrings.notSubmitted.tr, AppColors.orange];
+    return [AppStrings.notSubmitted.tr, AppColors.red];
   }
 }
 
@@ -127,8 +133,6 @@ Future<void> launchAnyUrl(String input) async {
 
   // Check if it's an email
   if (RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(input)) {
-    print('Email');
-    // uri = Uri.parse('mailto:$input');
     uri = Uri(
       scheme: 'mailto',
       path: input,
@@ -175,6 +179,28 @@ PolicyStatus getPolicyStatus(String date, bool approved) {
     } else {
       return PolicyStatus(
           status: AppStrings.active.tr, color: AppColors.activeGreen);
+    }
+  }
+}
+
+Future<void> saveConfig(GlobalKey<FormState> formKey,
+    {String url = '', String token = '', bool isProfile = false}) async {
+  if (formKey.currentState!.validate()) {
+    try {
+      final configData = ConfigData(
+        url: url,
+        token: token,
+      ).toJson();
+
+      encryptData(key: StorageKeys.configData, value: configData.toString());
+      if (isProfile) {
+        Get.back();
+      } else {
+        Get.offAllNamed(AppRoutes.splash);
+      }
+    } catch (e) {
+      showSnackbarMessage(
+          message: AppStrings.genericErrorMessage.tr, isSuccess: false);
     }
   }
 }

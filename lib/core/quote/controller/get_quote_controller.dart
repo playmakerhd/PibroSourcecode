@@ -1,3 +1,7 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
@@ -30,6 +34,7 @@ class GetQuoteController extends GetxController {
   RxBool businessLoading = false.obs;
   RxBool riskTypeLoading = false.obs;
   RxBool submitLoading = false.obs;
+  RxBool isPickingFile = false.obs;
 
   Rxn<DateTime> startDate = Rxn<DateTime>();
   final TextEditingController startDateController = TextEditingController();
@@ -44,6 +49,7 @@ class GetQuoteController extends GetxController {
   final TextEditingController locationController = TextEditingController();
   final TextEditingController valueController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
+  RxString selectedImage = ''.obs;
 
   RxList<ItemData> items = RxList<ItemData>([]);
   RxList<BusinessPolicy> businessPolicies = RxList<BusinessPolicy>([]);
@@ -128,10 +134,13 @@ class GetQuoteController extends GetxController {
             ),
             GestureDetector(
               onTap: () {
-                if (decryptData(StorageKeys.profileData) == null) {
+                if (GetStorage().read(StorageKeys.profileData) == null) {
+                  // if (decryptData(StorageKeys.profileData) == null) {
                   Get.offAllNamed(AppRoutes.landing);
                 } else {
-                  Get.offAllNamed(AppRoutes.main);
+                  Get.offNamedUntil(AppRoutes.quoteList,
+                      (route) => route.settings.name == AppRoutes.quoteList);
+                  Get.back();
                 }
               },
               child: ProfileButton(
@@ -151,10 +160,34 @@ class GetQuoteController extends GetxController {
   }
 
   void submit() {
-    if (decryptData(StorageKeys.profileData) == null) {
+    if (decryptData(StorageKeys.loginData) == null) {
+      encryptData(
+          key: StorageKeys.quoteConfirmation, value: 'quoteConfirmation');
       Get.offNamed(AppRoutes.signup);
     } else {
+      deleteQuoteConfirmation();
       Get.toNamed(AppRoutes.quoteConfirmation);
+    }
+  }
+
+  void pickImage() async {
+    if (isPickingFile.value) return;
+
+    isPickingFile.value = true;
+
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles();
+
+      if (result != null) {
+        selectedImage.value =
+            await convertFileToBase64(File(result.files.single.path!));
+      } else {
+        selectedImage.value = '';
+      }
+    } catch (e) {
+      debugPrint("Error picking file: $e");
+    } finally {
+      isPickingFile.value = false;
     }
   }
 
@@ -162,19 +195,39 @@ class GetQuoteController extends GetxController {
     if (addItemFormKey.currentState!.validate()) {
       if (data != null) {
         removeItemFromList(data);
+        if (isMotorQuote(selectedBusinessPolicy.value!.businessClassID!)) {
+          data.regNo = regNoController.text;
+          data.chasisId = chasisIdController.text;
+          data.engineNo = engineNoController.text;
+          data.vehicleMake = vehicleMakeController.text;
+        }
         data.description = descriptionController.text;
         data.value = valueController.text;
         data.location = locationController.text;
         data.subject = selectedRiskTypeID.value!.riskName;
+        data.screenShotURL = selectedImage.value;
         addData(data);
       } else {
         addData(
-          ItemData(
-            description: descriptionController.text,
-            location: locationController.text,
-            value: valueController.text,
-            subject: selectedRiskTypeID.value!.riskName,
-          ),
+          isMotorQuote(selectedBusinessPolicy.value!.businessClassID!)
+              ? ItemData(
+                  regNo: regNoController.text,
+                  chasisId: chasisIdController.text,
+                  engineNo: engineNoController.text,
+                  vehicleMake: vehicleMakeController.text,
+                  description: descriptionController.text,
+                  location: locationController.text,
+                  value: valueController.text,
+                  subject: selectedRiskTypeID.value!.riskName,
+                  screenShotURL: selectedImage.value,
+                )
+              : ItemData(
+                  description: descriptionController.text,
+                  location: locationController.text,
+                  value: valueController.text,
+                  subject: selectedRiskTypeID.value!.riskName,
+                  screenShotURL: selectedImage.value,
+                ),
         );
       }
       _closeSheet();
@@ -197,6 +250,7 @@ class GetQuoteController extends GetxController {
     valueController.clear();
     locationController.clear();
     descriptionController.clear();
+    selectedImage.value = '';
   }
 
   _closeSheet() {
@@ -204,20 +258,17 @@ class GetQuoteController extends GetxController {
     Get.back();
   }
 
-  // void populateInputFields(ItemData data) {
-  //   regNoController.text = data.regId!;
-  //   chasisIdController.text = data.chasisID!;
-  //   engineNoController.text = data.engineNo!;
-  //   vehicleMakeController.text = data.vehicleMake!;
-  //   valueController.text = data.value!;
-  //   locationController.text = data.location!;
-  //   descriptionController.text = data.description!;
-  // }
-
   void populateInputFields(ItemData data) {
     descriptionController.text = data.description!;
     valueController.text = data.value!;
     locationController.text = data.location!;
+    selectedImage.value = data.screenShotURL!;
+    if (isMotorQuote(selectedBusinessPolicy.value!.businessClassID!)) {
+      regNoController.text = data.regNo!;
+      chasisIdController.text = data.chasisId!;
+      engineNoController.text = data.engineNo!;
+      vehicleMakeController.text = data.vehicleMake!;
+    }
   }
 
   void showAddOrUpdateSheet(ItemData? data) {
@@ -242,34 +293,37 @@ class GetQuoteController extends GetxController {
                 ),
               ),
             ),
-            // CustomInput(
-            //   controller: regNoController,
-            //   label: AppStrings.regId.tr,
-            //   hint: '',
-            //   validator: (value) =>
-            //       Validators.requiredValidator(value, AppStrings.regId.tr),
-            // ),
-            // CustomInput(
-            //   controller: chasisIdController,
-            //   label: AppStrings.chasisId.tr,
-            //   hint: '',
-            //   validator: (value) =>
-            //       Validators.requiredValidator(value, AppStrings.chasisId.tr),
-            // ),
-            // CustomInput(
-            //   controller: engineNoController,
-            //   label: AppStrings.engineNo.tr,
-            //   hint: '',
-            //   validator: (value) =>
-            //       Validators.requiredValidator(value, AppStrings.engineNo.tr),
-            // ),
-            // CustomInput(
-            //   controller: vehicleMakeController,
-            //   label: AppStrings.vehicleMake.tr,
-            //   hint: '',
-            //   validator: (value) => Validators.requiredValidator(
-            //       value, AppStrings.vehicleMake.tr),
-            // ),
+            if (isMotorQuote(
+                selectedBusinessPolicy.value!.businessClassID!)) ...[
+              CustomInput(
+                controller: regNoController,
+                label: AppStrings.regId.tr,
+                hint: '',
+                validator: (value) =>
+                    Validators.requiredValidator(value, AppStrings.regId.tr),
+              ),
+              CustomInput(
+                controller: chasisIdController,
+                label: AppStrings.chasisId.tr,
+                hint: '',
+                validator: (value) =>
+                    Validators.requiredValidator(value, AppStrings.chasisId.tr),
+              ),
+              CustomInput(
+                controller: engineNoController,
+                label: AppStrings.engineNo.tr,
+                hint: '',
+                validator: (value) =>
+                    Validators.requiredValidator(value, AppStrings.engineNo.tr),
+              ),
+              CustomInput(
+                controller: vehicleMakeController,
+                label: AppStrings.vehicleMake.tr,
+                hint: '',
+                validator: (value) => Validators.requiredValidator(
+                    value, AppStrings.vehicleMake.tr),
+              ),
+            ],
             CustomInput(
               controller: valueController,
               label: AppStrings.value.tr,
@@ -292,6 +346,35 @@ class GetQuoteController extends GetxController {
                   value, AppStrings.description.tr),
               maxLines: 3,
             ),
+            Padding(
+              padding: const EdgeInsets.only(top: 10, bottom: 30),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  GestureDetector(
+                    onTap: pickImage,
+                    child: Text(
+                      AppStrings.addImage.tr,
+                      style: Styles.linkTextStyle(),
+                    ),
+                  ),
+                  SizedBox(
+                    width: 30,
+                  ),
+                  Obx(
+                    () => selectedImage.value.isNotEmpty
+                        ? Expanded(
+                            child: Image.memory(
+                              base64Decode(selectedImage.value),
+                              fit: BoxFit.cover,
+                              height: 100,
+                            ),
+                          )
+                        : SizedBox(),
+                  ),
+                ],
+              ),
+            ),
             PolicyButton(
               text: AppStrings.save.tr,
               onPressed: () => addOrUpdateItem(data),
@@ -307,8 +390,12 @@ class GetQuoteController extends GetxController {
   }
 
   Future<void> submitQuote() async {
-    final itemList = items.map((item) => item.toJson()).toList();
+    final itemList =
+        isMotorQuote(selectedBusinessPolicy.value!.businessClassID!)
+            ? items.map((item) => item.toMotorJson()).toList()
+            : items.map((item) => item.toJson()).toList();
     submitLoading.value = true;
+    deleteQuoteConfirmation();
     try {
       final response = await pibroRepository.sendToBroker(ApiUtils.createQuote(
         selectedRiskTypeID.value!.riskName!,
@@ -330,6 +417,15 @@ class GetQuoteController extends GetxController {
       showSnackbarMessage(
           message: AppStrings.genericErrorMessage.tr, isSuccess: false);
     }
+  }
+
+  bool isMotorQuote(String id) {
+    return id == 'MOT' ||
+        id == 'MOTOR' ||
+        id == 'MOTORS' ||
+        id == 'MOTOR INSURANCE' ||
+        id == 'PM' ||
+        id == 'PRIVATE MOTOR';
   }
 
   @override

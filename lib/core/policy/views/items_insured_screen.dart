@@ -2,11 +2,10 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:pibro/constants/app_constants.dart';
-import 'package:pibro/constants/app_styles.dart';
 import 'package:pibro/internalization/app_strings.dart';
 import 'package:pibro/network/models/response/customer_policy_response.dart';
 import 'package:pibro/shared/common_header.dart';
+import 'package:pibro/shared/empty_data.dart';
 import 'package:pibro/shared/item_row_container.dart';
 import 'package:pibro/shared/title_value_row.dart';
 
@@ -25,23 +24,7 @@ class ItemsInsuredScreen extends StatelessWidget {
           ),
           Expanded(
             child: itemsInsured.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.hourglass_empty,
-                          size: 80,
-                        ),
-                        Center(
-                          child: Text(
-                            AppStrings.noData.tr,
-                            style: Styles.mediumTextStyle(),
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
+                ? EmptyData()
                 : ListView.builder(
                     itemCount: itemsInsured.length,
                     itemBuilder: (BuildContext context, int index) {
@@ -71,7 +54,7 @@ class ItemsInsuredScreen extends StatelessWidget {
                                 ),
                                 if (item.policyItems != null)
                                   Image.memory(
-                                    base64Decode(AppConstants.base64),
+                                    base64Decode(item.policyItems!),
                                     height: 100,
                                   ),
                               ],

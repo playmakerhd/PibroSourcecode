@@ -44,6 +44,10 @@ abstract class CustomBaseResponse {
   }
 
   getRawBody() {
+    // if(data.response?.body.toString().contains('The resource you are looking for has been removed, had its name changed, or is temporarily unavailable')) {
+
+    //   return;
+    // }
     return data.response!.body;
   }
 

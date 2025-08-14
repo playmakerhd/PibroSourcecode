@@ -1,15 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pibro/constants/app_colors.dart';
-import 'package:pibro/constants/app_constants.dart';
-import 'package:pibro/constants/app_images.dart';
-import 'package:pibro/constants/app_styles.dart';
 import 'package:pibro/core/profile/controller/profile_controller.dart';
 import 'package:pibro/core/profile/widget/profile_button.dart';
 import 'package:pibro/internalization/app_strings.dart';
 import 'package:pibro/shared/common_header.dart';
 import 'package:pibro/shared/custom_input/custom_input.dart';
-import 'package:pibro/utils/image_factory.dart';
+import 'package:pibro/utils/app_utils.dart';
 import 'package:pibro/utils/validators.dart';
 import 'package:pibro/utils/view_utils.dart';
 
@@ -35,57 +32,68 @@ class ConfigurationScreen extends StatelessWidget {
             Padding(
               padding:
                   EdgeInsets.symmetric(horizontal: queryWidth(context) * 0.05),
-              child: Column(
-                children: [
-                  CustomInput(
-                    hint: AppStrings.enterServiceUrl.tr,
-                    controller: controller.serviceURLController,
-                    validator: (value) =>
-                        Validators.requiredValidator(value, 'Service URL'),
-                    isReducedBorderRadius: true,
-                  ),
-                  CustomInput(
-                    hint: AppStrings.enterToken.tr,
-                    controller: controller.tokenController,
-                    validator: (value) =>
-                        Validators.requiredValidator(value, 'Token'),
-                    isReducedBorderRadius: true,
-                  ),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: Container(
-                      height: 50,
-                      width: 160,
-                      margin: EdgeInsets.only(top: 10, bottom: 60),
-                      decoration: BoxDecoration(
-                        color: AppColors.primaryColor,
-                        borderRadius:
-                            BorderRadius.circular(AppConstants.appRadius),
+              child: Form(
+                key: controller.configFormKey,
+                child: Column(
+                  children: [
+                    CustomInput(
+                      hint: AppStrings.enterServiceUrl.tr,
+                      controller: controller.serviceURLController,
+                      validator: (value) =>
+                          Validators.requiredValidator(value, 'Service URL'),
+                      isReducedBorderRadius: true,
+                    ),
+                    CustomInput(
+                      hint: AppStrings.enterToken.tr,
+                      controller: controller.tokenController,
+                      validator: (value) =>
+                          Validators.requiredValidator(value, 'Token'),
+                      isReducedBorderRadius: true,
+                    ),
+                    SizedBox(
+                      height: queryHeight(context) * 0.05,
+                    ),
+                    // Align(
+                    //   alignment: Alignment.centerRight,
+                    //   child: Container(
+                    //     height: 50,
+                    //     width: 160,
+                    //     margin: EdgeInsets.only(top: 10, bottom: 60),
+                    //     decoration: BoxDecoration(
+                    //       color: AppColors.primaryColor,
+                    //       borderRadius:
+                    //           BorderRadius.circular(AppConstants.appRadius),
+                    //     ),
+                    //     child: Row(
+                    //       mainAxisAlignment: MainAxisAlignment.center,
+                    //       children: [
+                    //         ImageFactory.getImage(AppImages.scan)
+                    //             .render(width: 15),
+                    //         SizedBox(
+                    //           width: 10,
+                    //         ),
+                    //         Text(
+                    //           AppStrings.scanQR.tr,
+                    //           style: Styles.semiBoldTextStyle(
+                    //               color: AppColors.white),
+                    //         )
+                    //       ],
+                    //     ),
+                    //   ),
+                    // ),
+                    GestureDetector(
+                      onTap: () => saveConfig(
+                        controller.configFormKey,
+                        url: controller.serviceURLController.text.trim(),
+                        token: controller.tokenController.text.trim(),
+                        isProfile: true,
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          ImageFactory.getImage(AppImages.scan)
-                              .render(width: 15),
-                          SizedBox(
-                            width: 10,
-                          ),
-                          Text(
-                            AppStrings.scanQR.tr,
-                            style: Styles.semiBoldTextStyle(
-                                color: AppColors.white),
-                          )
-                        ],
+                      child: ProfileButton(
+                        text: AppStrings.save.tr,
                       ),
                     ),
-                  ),
-                  GestureDetector(
-                    onTap: Get.back,
-                    child: ProfileButton(
-                      text: AppStrings.save.tr,
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ],

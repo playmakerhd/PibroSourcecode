@@ -108,7 +108,7 @@ class RenewPolicyConfirmationScreen extends StatelessWidget {
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.only(top: 20.0),
+                    padding: const EdgeInsets.only(top: 20.0, bottom: 60.0),
                     child: Obx(
                       () => PolicyButton(
                         text: AppStrings.submitQuoteForApproval.tr,

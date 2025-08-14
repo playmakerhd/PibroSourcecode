@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get/get_utils/src/extensions/internacionalization.dart';
 import 'package:pibro/core/policy/views/insurers_screen.dart';
 import 'package:pibro/core/policy/views/items_insured_screen.dart';
 import 'package:pibro/internalization/app_strings.dart';

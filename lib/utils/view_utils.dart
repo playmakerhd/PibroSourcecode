@@ -12,8 +12,20 @@ double queryWidth(BuildContext? context) {
   return context != null ? MediaQuery.of(context).size.width : Get.size.width;
 }
 
-void showSnackbarMessage(
-    {required String message, bool isSuccess = true, bool isWarning = false}) {
+bool _isSnackbarShowing = false;
+
+void showSnackbarMessage({
+  required String message,
+  bool isSuccess = true,
+  bool isWarning = false,
+}) {
+  if (_isSnackbarShowing || Get.isSnackbarOpen) {
+    // Prevent showing another snackbar while one is active
+    return;
+  }
+
+  _isSnackbarShowing = true; // Lock
+
   final snackbar = GetSnackBar(
     titleText: Text(
       isWarning
@@ -39,6 +51,11 @@ void showSnackbarMessage(
   );
 
   Get.showSnackbar(snackbar);
+
+  // Release lock after duration + a small buffer (to account for animation)
+  Future.delayed(const Duration(seconds: 3), () {
+    _isSnackbarShowing = false;
+  });
 }
 
 void showAppDialog(Widget child,

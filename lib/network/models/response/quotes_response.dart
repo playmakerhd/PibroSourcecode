@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:pibro/network/models/response/base_response.dart';
 
 class QuotesResponse extends CustomBaseResponse {
@@ -66,7 +64,7 @@ class QuoteInfo {
   late String? contactId;
   late String? productId;
   late String? supportManager;
-  late bool supportAssigned;
+  late dynamic supportAssigned;
   late String? supportAssignedTo;
   late String? supportRequestMethod;
   late String? supportStatus;
@@ -82,18 +80,17 @@ class QuoteInfo {
   late String? supportResolutionDate;
   late String? supportTimeSpentFixing;
   late String? suportNotesPrivate;
-  late bool supportApproved;
+  late dynamic supportApproved;
   late String? supportApprovedBy;
   late String? supportEnquiryDate;
   late String? supportEnquiryLapseDate;
   late String? contactName;
   late String? contactPhone;
   late String? contactEmail;
-  late bool quoteRequest;
+  late dynamic quoteRequest;
   late List<RequestDetails>? requestDetails;
 
   factory QuoteInfo.fromJson(dynamic json) {
-    inspect(json);
     return QuoteInfo(
       companyID: json['CompanyID'],
       divisionID: json['DivisionID'],
@@ -103,7 +100,7 @@ class QuoteInfo {
       contactId: json['ContactId'],
       productId: json['ProductId'],
       supportManager: json['SupportManager'],
-      supportAssigned: json['SupportAssigned'],
+      supportAssigned: json['SupportAssigned'] ?? false,
       supportAssignedTo: json['SupportAssignedTo'],
       supportRequestMethod: json['SupportRequestMethod'],
       supportStatus: json['SupportStatus'],
@@ -119,14 +116,14 @@ class QuoteInfo {
       supportResolutionDate: json['SupportResolutionDate'],
       supportTimeSpentFixing: json['SupportTimeSpentFixing'],
       suportNotesPrivate: json['SuportNotesPrivate'],
-      supportApproved: json['SupportApproved'],
+      supportApproved: json['SupportApproved'] ?? false,
       supportApprovedBy: json['SupportApprovedBy'],
       supportEnquiryDate: json['SupportEnquiryDate'],
       supportEnquiryLapseDate: json['SupportEnquiryLapseDate'],
       contactName: json['ContactName'],
       contactPhone: json['ContactPhone'],
       contactEmail: json['ContactEmail'],
-      quoteRequest: json['QuoteRequest'],
+      quoteRequest: json['QuoteRequest'] ?? false,
       requestDetails:
           json['RequestDetails'] != null && json['RequestDetails'] != []
               ? List.from(json['RequestDetails'])

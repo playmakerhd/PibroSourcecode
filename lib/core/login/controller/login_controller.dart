@@ -53,7 +53,12 @@ class LoginController extends GetxController {
             phone: otherOption.value ? phoneController.text : '',
           );
           persistLoginData(data: data, remember: isRemember.value);
-          Get.offNamed(AppRoutes.main);
+          if (decryptData(StorageKeys.quoteConfirmation) != null) {
+            Get.offNamed(AppRoutes.quoteConfirmation);
+            deleteQuoteConfirmation();
+          } else {
+            Get.offNamed(AppRoutes.main);
+          }
         }
         loading.value = false;
       } catch (e) {

@@ -1,4 +1,3 @@
-import 'package:carousel_slider/carousel_controller.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:pibro/internalization/app_strings.dart';
@@ -29,9 +28,6 @@ class HomeController extends GetxController {
   RxBool isRenewPolicyClicked = false.obs;
   RxString policyStatus = ''.obs;
 
-  CarouselSliderController itemInsuredCarouselController =
-      CarouselSliderController();
-
   Future<void> getCustomerPolicies({String? status}) async {
     try {
       final response = await pibroRepository.getCustomerPolicies();
@@ -50,7 +46,7 @@ class HomeController extends GetxController {
   void _logout() {
     GetStorage().erase();
     Get.deleteAll();
-    Get.offAllNamed(AppRoutes.landing);
+    Get.offAllNamed(AppRoutes.login);
   }
 
   Future<void> getProfile() async {
@@ -58,7 +54,6 @@ class HomeController extends GetxController {
     loading.value = true;
     try {
       final response = await pibroRepository.getProfile();
-      print('Home response $response');
       if (response.user.customerID != null &&
           response.user.customerID!.isNotEmpty) {
         user.value = response.user;
@@ -66,7 +61,6 @@ class HomeController extends GetxController {
         profileLoading.value = false;
         getCustomerPolicies();
       } else {
-        print('Got here to logout');
         _logout();
       }
     } catch (e) {
@@ -178,6 +172,13 @@ class HomeController extends GetxController {
   navigateToRenewPolicyScreen() {
     Get.toNamed(
       AppRoutes.renewPolicy,
+      arguments: selectedPolicy.value,
+    );
+  }
+
+  navigateToLodgeClaimScreen() {
+    Get.toNamed(
+      AppRoutes.lodgeClaims,
       arguments: selectedPolicy.value,
     );
   }

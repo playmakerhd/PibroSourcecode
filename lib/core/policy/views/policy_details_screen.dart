@@ -30,31 +30,33 @@ class PolicyDetailsScreen extends StatelessWidget {
               width: 120,
             )
           : Padding(
-              padding:
-                  EdgeInsets.symmetric(horizontal: queryWidth(context) * 0.05),
+              padding: EdgeInsets.only(
+                  left: queryWidth(context) * 0.05,
+                  right: queryWidth(context) * 0.05,
+                  bottom: 10),
               child: Row(
                 children: [
-                  PolicyButton(
-                    text: AppStrings.next.tr,
-                    onPressed: () {},
-                    isExpanded: true,
-                  ),
-                  SizedBox(width: 10),
+                  // PolicyButton(
+                  //   text: AppStrings.next.tr,
+                  //   onPressed: () {},
+                  //   isExpanded: true,
+                  // ),
+                  // SizedBox(width: 10),
                   PolicyButton(
                     text: AppStrings.renew.tr,
                     onPressed: controller.navigateToRenewPolicyScreen,
                     isExpanded: true,
                   ),
-                  SizedBox(width: 10),
-                  PolicyButton(
-                    text: AppStrings.endorse.tr,
-                    onPressed: () {},
-                    isExpanded: true,
-                  ),
+                  // SizedBox(width: 10),
+                  // PolicyButton(
+                  //   text: AppStrings.endorse.tr,
+                  //   onPressed: () {},
+                  //   isExpanded: true,
+                  // ),
                   SizedBox(width: 10),
                   PolicyButton(
                     text: AppStrings.claim.tr,
-                    onPressed: () {},
+                    onPressed: controller.navigateToLodgeClaimScreen,
                     isExpanded: true,
                   ),
                 ],

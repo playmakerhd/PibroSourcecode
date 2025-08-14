@@ -2,11 +2,10 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:pibro/constants/app_constants.dart';
-import 'package:pibro/constants/app_styles.dart';
 import 'package:pibro/internalization/app_strings.dart';
 import 'package:pibro/network/models/response/quotes_response.dart';
 import 'package:pibro/shared/common_header.dart';
+import 'package:pibro/shared/empty_data.dart';
 import 'package:pibro/shared/item_row_container.dart';
 import 'package:pibro/shared/title_value_row.dart';
 import 'package:pibro/utils/api_utils.dart';
@@ -26,23 +25,7 @@ class QuoteItemsScreen extends StatelessWidget {
           ),
           Expanded(
             child: itemsInsured.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.hourglass_empty,
-                          size: 80,
-                        ),
-                        Center(
-                          child: Text(
-                            AppStrings.noData.tr,
-                            style: Styles.mediumTextStyle(),
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
+                ? EmptyData()
                 : ListView.builder(
                     itemCount: itemsInsured.length,
                     itemBuilder: (BuildContext context, int index) {
@@ -72,7 +55,7 @@ class QuoteItemsScreen extends StatelessWidget {
                                 ),
                                 if (item.screenShotURL != null)
                                   Image.memory(
-                                    base64Decode(AppConstants.base64),
+                                    base64Decode(item.screenShotURL!),
                                     height: 100,
                                   ),
                               ],

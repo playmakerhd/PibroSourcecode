@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pibro/constants/app_styles.dart';
@@ -45,7 +43,6 @@ class InsurersScreen extends StatelessWidget {
                     itemCount: writers.length,
                     itemBuilder: (BuildContext context, int index) {
                       InsurancePolicyUnderwriter item = writers[index];
-                      inspect(item);
                       return Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 10.0),
                         child: ItemRowContainer(

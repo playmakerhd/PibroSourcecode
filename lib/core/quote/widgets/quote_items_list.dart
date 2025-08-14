@@ -26,7 +26,7 @@ class QuoteItemsList extends StatelessWidget {
               children: [
                 Expanded(
                   child: ItemRowContainer(
-                    isPolicyRenew: true,
+                    noHeight: true,
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
@@ -42,6 +42,26 @@ class QuoteItemsList extends StatelessWidget {
                           title: '${AppStrings.location.tr}:',
                           value: item.location!,
                         ),
+                        if (item.regNo != null)
+                          TitleValueRow(
+                            title: '${AppStrings.regNo.tr}:',
+                            value: item.regNo!,
+                          ),
+                        if (item.chasisId != null)
+                          TitleValueRow(
+                            title: '${AppStrings.chasisId.tr}:',
+                            value: item.chasisId!,
+                          ),
+                        if (item.engineNo != null)
+                          TitleValueRow(
+                            title: '${AppStrings.engineNo.tr}:',
+                            value: item.engineNo!,
+                          ),
+                        if (item.vehicleMake != null)
+                          TitleValueRow(
+                            title: '${AppStrings.vehicleMake.tr}:',
+                            value: item.vehicleMake!,
+                          ),
                       ],
                     ),
                   ),

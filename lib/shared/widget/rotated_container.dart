@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:pibro/constants/app_colors.dart';
 import 'package:pibro/constants/app_styles.dart';
 import 'package:pibro/utils/image_factory.dart';
-import 'package:pibro/utils/view_utils.dart';
 
 class RotatedContainer extends StatefulWidget {
   const RotatedContainer({

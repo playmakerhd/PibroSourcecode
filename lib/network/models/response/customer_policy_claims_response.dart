@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:pibro/network/models/response/base_response.dart';
 import 'package:pibro/network/models/response/claim_document_response.dart';
 import 'package:pibro/network/models/response/customer_policy_response.dart';
@@ -12,7 +10,6 @@ class CustomerPolicyClaimsResponse extends CustomBaseResponse {
   @override
   parseResponseData() {
     try {
-      inspect(getResponseBody()[0]);
       policyClaims = getResponseBody() != []
           ? List.from(getResponseBody())
               .map((item) => PolicyClaim.fromJson(item))

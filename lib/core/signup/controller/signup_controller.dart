@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pibro/constants/app_constants.dart';
+import 'package:pibro/constants/storage_keys.dart';
 import 'package:pibro/core/login/model/login_data.dart';
 import 'package:pibro/internalization/app_strings.dart';
 import 'package:pibro/navigation/routes.dart';
@@ -51,7 +52,12 @@ class SignupController extends GetxController {
             ),
             remember: false,
           );
-          Get.offNamed(AppRoutes.quoteConfirmation);
+          if (decryptData(StorageKeys.quoteConfirmation) != null) {
+            Get.offNamed(AppRoutes.quoteConfirmation);
+          } else {
+            deleteQuoteConfirmation();
+            Get.offNamed(AppRoutes.login);
+          }
         }
         loading.value = false;
       } catch (e) {

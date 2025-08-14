@@ -133,7 +133,7 @@ class LandingScreen extends StatelessWidget {
                           text: AppStrings.explore.tr,
                           image: AppImages.explore,
                           hasBoxShadow: false,
-                          onPressed: () => Get.offNamed(AppRoutes.main),
+                          onPressed: () => Get.toNamed(AppRoutes.quote),
                         ),
                         RotatedContainer(
                           text: AppStrings.getQuote.tr,
@@ -154,7 +154,7 @@ class LandingScreen extends StatelessWidget {
                   Padding(
                     padding: EdgeInsets.only(
                         top: queryHeight(context) * 0.02,
-                        bottom: queryHeight(context) * 0.05),
+                        bottom: queryHeight(context) * 0.03),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [

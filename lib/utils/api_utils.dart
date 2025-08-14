@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:pibro/constants/storage_keys.dart';
 import 'package:pibro/core/login/model/login_data.dart';
 import 'package:pibro/network/models/platform_user/platform_user.dart';
@@ -12,8 +13,10 @@ import 'package:pibro/utils/app_utils.dart';
 
 class ApiUtils {
   static Map<String, dynamic> receiptPayload(CreateReceiptRequest requestData) {
-    PlatformUser user = PlatformUser.fromJson(
-        convertToJsonStringQuotes(StorageKeys.profileData));
+    // PlatformUser user = PlatformUser.fromJson(
+    //     convertToJsonStringQuotes(StorageKeys.profileData));
+    PlatformUser user =
+        PlatformUser.fromJson(GetStorage().read(StorageKeys.profileData) ?? {});
     return {
       'CompanyID': '',
       'DivisionID': '',
@@ -110,8 +113,10 @@ class ApiUtils {
   }
 
   static Map<String, dynamic> notePayload(ClientNoteRequest requestData) {
-    PlatformUser user = PlatformUser.fromJson(
-        convertToJsonStringQuotes(StorageKeys.profileData));
+    // PlatformUser user = PlatformUser.fromJson(
+    //     convertToJsonStringQuotes(StorageKeys.profileData));
+    PlatformUser user =
+        PlatformUser.fromJson(GetStorage().read(StorageKeys.profileData) ?? {});
     return {
       'CompanyID': '',
       'DivisionID': '',
@@ -313,18 +318,15 @@ class ApiUtils {
     String renewalDate,
     List<Map<String, dynamic>> itemsToInsure,
   ) {
-    String userId = '';
     LoginData loginData =
         LoginData.fromJson(convertToJsonStringQuotes(StorageKeys.loginData));
-    if (loginData == LoginData()) {
-      userId = decryptData(StorageKeys.signupData);
-    }
+    dynamic userId = decryptData(StorageKeys.signupData);
     return {
       "CompanyID": "",
       "DivisionID": "",
       "DepartmentID": "",
       "CaseId": "",
-      "CustomerId": loginData.customerID ?? userId,
+      "CustomerId": userId ?? loginData.customerID,
       "ProductId": product,
       "SupportDate": DateTime.now().toIso8601String(),
       "SupportKeywords": "Quote, $businessClass, $product",
@@ -356,9 +358,14 @@ class ApiUtils {
     final itemList =
         claim.claimsDocuments!.map((item) => item.toBrokerJson()).toList();
     InsurancePolicyUnderwriter? writer =
-        claim.insurancePolicyUnderwriters!.reduce((current, next) {
-      return (current.apportionment! > next.apportionment!) ? current : next;
-    });
+        claim.insurancePolicyUnderwriters!.isEmpty
+            ? null
+            : claim.insurancePolicyUnderwriters!.reduce((current, next) {
+                return ((current.apportionment ?? 0.0) >
+                        (next.apportionment ?? 0.0))
+                    ? current
+                    : next;
+              });
     return {
       "CompanyID": claim.companyID,
       "DivisionID": claim.divisionID,
@@ -370,7 +377,7 @@ class ApiUtils {
       "SupportKeywords":
           "Claims lodgement ${claim.brokerClaimID} for ${claim.businessClassID} class: ${claim.riskTypeID}",
       "SupportDescription":
-          "PolicyBrokerID: ${claim.policyBrokerID}, Occurrence Date: ${claim.accidentDate}, Lead insurer: ${writer.vendorName}, Lodgement date: ${claim.customerReportDate}, Narration: ${claim.accidentDetails}",
+          "PolicyBrokerID: ${claim.policyBrokerID}, Occurrence Date: ${claim.accidentDate},${writer == null ? '' : ' Lead insurer: ${writer.vendorName},'} Lodgement date: ${claim.customerReportDate}, Narration: ${claim.accidentDetails}",
       "SupportScreenShotURL": "",
       "SupportEnquiryDate": claim.startDate,
       "SupportEnquiryLapseDate": claim.endDate,
@@ -389,12 +396,9 @@ class ApiUtils {
   }
 
   static Map<String, dynamic> sendPolicyToBroker(PolicyData policyData) {
-    String userId = '';
     LoginData loginData =
         LoginData.fromJson(convertToJsonStringQuotes(StorageKeys.loginData));
-    if (loginData == LoginData()) {
-      userId = decryptData(StorageKeys.signupData);
-    }
+    dynamic userId = decryptData(StorageKeys.signupData);
     final itemList =
         policyData.itemsToInsure!.map((item) => item.toJson()).toList();
     return {
@@ -402,13 +406,13 @@ class ApiUtils {
       "DivisionID": policyData.divisionID,
       "DepartmentID": policyData.departmentID,
       "CaseId": "",
-      "CustomerId": loginData.customerID ?? userId,
+      "CustomerId": userId ?? loginData.customerID,
       "ProductId": policyData.riskTypeID,
       "SupportDate": DateTime.now().toIso8601String(),
       "SupportKeywords":
           "Quote, ${policyData.businessClassID}, ${policyData.riskTypeID}",
       "SupportDescription":
-          "Start Date: ${policyData.policyStartDate}, End Date: ${policyData.policyEndDate}, Renewal Date: ${policyData.renewalDate}",
+          "PolicyBrokerID: ${policyData.policyBrokerID}, New Start Date: ${policyData.policyStartDate}, New End Date: ${policyData.policyEndDate}, Renewal Date: ${policyData.renewalDate}",
       "SupportScreenShotURL": "",
       "SupportEnquiryDate": policyData.policyStartDate,
       "SupportEnquiryLapseDate": policyData.policyEndDate,
@@ -416,7 +420,7 @@ class ApiUtils {
       "SupportApproved": true,
       "SupportApprovedBy": "Admin",
       "SupportAssigned": true,
-      "SupportType": "Quote",
+      "SupportType": "Policy Renewal",
       "SupportStatus": "Pending",
       "ContactName": loginData.customerID ?? "",
       "ContactPhone": loginData.phone ?? "",
