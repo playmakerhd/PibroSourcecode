@@ -13,27 +13,93 @@ import 'package:pibro/utils/app_utils.dart';
 
 class ApiUtils {
   static Map<String, dynamic> receiptPayload(CreateReceiptRequest requestData) {
-    // PlatformUser user = PlatformUser.fromJson(
-    //     convertToJsonStringQuotes(StorageKeys.profileData));
-    PlatformUser user =
-        PlatformUser.fromJson(GetStorage().read(StorageKeys.profileData) ?? {});
-    return {
-      'CompanyID': '',
-      'DivisionID': '',
-      'DepartmentID': '',
-      'ReceiptID': requestData.receiptID,
-      'ReceiptTypeID': requestData.channel!.capitalizeFirst,
+    print('🧾 RECEIPT_PAYLOAD: Starting receipt payload creation');
+    print(
+        '   Receipt ID: ${requestData.receiptID ?? "EMPTY (will be generated)"}');
+    print('   Check Number: ${requestData.checkNumber}');
+    print('   Amount: ${requestData.amount}');
+    print('   Transaction Date: ${requestData.transactionDate}');
+    print('   Document Number: ${requestData.documentNumber}');
+    print('   Document Date: ${requestData.documentDate}');
+
+    // Safe profile data retrieval with null checks
+    final profileData = GetStorage().read(StorageKeys.profileData);
+    print('📱 PROFILE_DATA: Raw data from storage: $profileData');
+
+    if (profileData == null) {
+      print('❌ PROFILE_DATA: Profile data is null in storage');
+      throw Exception('Profile data not found. Please login again.');
+    }
+
+    PlatformUser? user;
+    try {
+      user = PlatformUser.fromJson(profileData);
+      print('✅ PROFILE_DATA: User parsed successfully');
+      print('   Customer ID: ${user.customerID}');
+      print('   User Name: ${user.customerFirstName} ${user.customerLastName}');
+      print('   Customer Full Name: ${user.customerFullName}');
+      print('   Customer Email: ${user.customerEmail}');
+    } catch (e) {
+      print('❌ PROFILE_DATA: Failed to parse user data: $e');
+      print('   Raw data: $profileData');
+      throw Exception('Invalid profile data. Please login again.');
+    }
+
+    if (user.customerID == null || user.customerID!.isEmpty) {
+      print('❌ PROFILE_DATA: Customer ID is null or empty');
+      print(
+          '   Available fields: customerID=${user.customerID}, customerName=${user.customerName}');
+      throw Exception('Customer ID not found. Please login again.');
+    }
+
+    // Validate required request data (NOTE: receiptID can be empty for CREATE, will be populated for POST)
+    if (requestData.checkNumber == null || requestData.checkNumber!.isEmpty) {
+      print('❌ REQUEST_DATA: Check number is null or empty');
+      throw Exception('Check number is required');
+    }
+
+    if (requestData.amount == null || requestData.amount! <= 0) {
+      print('❌ REQUEST_DATA: Amount is null or zero');
+      throw Exception('Valid amount is required');
+    }
+
+    if (requestData.transactionDate == null ||
+        requestData.transactionDate!.isEmpty) {
+      print('❌ REQUEST_DATA: Transaction date is null or empty');
+      throw Exception('Transaction date is required');
+    }
+
+    if (requestData.documentNumber == null ||
+        requestData.documentNumber!.isEmpty) {
+      print('❌ REQUEST_DATA: Document number is null or empty');
+      throw Exception('Document number is required');
+    }
+
+    if (requestData.documentDate == null || requestData.documentDate!.isEmpty) {
+      print('❌ REQUEST_DATA: Document date is null or empty');
+      throw Exception('Document date is required');
+    }
+
+    print('✅ REQUEST_DATA: All required fields validated');
+
+    final receiptId = requestData.receiptID ?? '';
+    final payload = {
+      'CompanyID': user.companyID ?? '',
+      'DivisionID': user.divisionID ?? '',
+      'DepartmentID': user.departmentID ?? '',
+      'ReceiptID': receiptId, // Empty for CREATE, populated for POST
+      'ReceiptTypeID': requestData.channel?.capitalizeFirst ?? 'Online',
       'ReceiptClassID': 'Customer',
-      'CheckNumber': requestData.checkNumber,
-      'CustomerID': user.customerID,
+      'CheckNumber': requestData.checkNumber!,
+      'CustomerID': user.customerID!,
       'Memorize': false,
-      'TransactionDate': requestData.transactionDate,
-      'SystemDate': requestData.systemDate,
+      'TransactionDate': requestData.transactionDate!,
+      'SystemDate': requestData.systemDate ?? DateTime.now().toIso8601String(),
       'DueToDate': null,
       'OrderDate': null,
       'CurrencyID': 'NGN',
       'CurrencyExchangeRate': 1.0,
-      'Amount': requestData.amount,
+      'Amount': requestData.amount!,
       'UnAppliedAmount': 0.0000,
       'GLBankAccount': '',
       'BankID': 'PayStack',
@@ -57,7 +123,9 @@ class ApiUtils {
       'Approved': false,
       'ApprovedBy': null,
       'ApprovedDate': null,
-      'EnteredBy': null,
+      'EnteredBy': user.customerFullName ??
+          user.customerName ??
+          '${user.customerFirstName ?? ''} ${user.customerLastName ?? ''}',
       'BatchControlNumber': null,
       'BatchControlTotal': null,
       'Signature': null,
@@ -70,24 +138,24 @@ class ApiUtils {
       'LockTS': null,
       'TaxGroupID': null,
       'TaxAmount': null,
-      'CustomerName': null,
+      'CustomerName': user.customerFullName ?? user.customerName,
       'BranchCode': null,
       'customerReceiptsDetail': [
         {
-          'CompanyID': '',
-          'DivisionID': '',
-          'DepartmentID': '',
-          'ReceiptID': requestData.receiptID ?? '',
+          'CompanyID': user.companyID ?? '',
+          'DivisionID': user.divisionID ?? '',
+          'DepartmentID': user.departmentID ?? '',
+          'ReceiptID': receiptId, // Empty for CREATE, populated for POST
           'ReceiptDetailID': 0,
-          'DocumentNumber': requestData.documentNumber,
-          'DocumentDate': requestData.documentDate,
+          'DocumentNumber': requestData.documentNumber!,
+          'DocumentDate': requestData.documentDate!,
           'PaymentID': null,
           'PayedID': null,
-          'CurrencyID': null,
-          'CurrencyExchangeRate': null,
+          'CurrencyID': 'NGN',
+          'CurrencyExchangeRate': 1.0,
           'DiscountTaken': 0.0000,
           'WriteOffAmount': 0.0000,
-          'AppliedAmount': requestData.amount,
+          'AppliedAmount': requestData.amount!,
           'Cleared': false,
           'ProjectID': null,
           'DetailMemo1': null,
@@ -110,6 +178,16 @@ class ApiUtils {
         }
       ]
     };
+
+    print('✅ RECEIPT_PAYLOAD: Payload created successfully');
+    print('   Customer ID: ${payload['CustomerID']}');
+    print(
+        '   Receipt ID: $receiptId ${receiptId.isEmpty ? "(EMPTY - for CREATE)" : "(POPULATED - for POST)"}');
+    print('   Amount: ${payload['Amount']}');
+    print('   Check Number: ${payload['CheckNumber']}');
+    print('   Customer Name: ${payload['CustomerName']}');
+
+    return payload;
   }
 
   static Map<String, dynamic> notePayload(ClientNoteRequest requestData) {
@@ -316,8 +394,10 @@ class ApiUtils {
     String startDate,
     String endDate,
     String renewalDate,
-    List<Map<String, dynamic>> itemsToInsure,
-  ) {
+    List<Map<String, dynamic>> itemsToInsure, {
+    String? vendorID,
+    String? vendorName,
+  }) {
     LoginData loginData =
         LoginData.fromJson(convertToJsonStringQuotes(StorageKeys.loginData));
     dynamic userId = decryptData(StorageKeys.signupData);
@@ -331,7 +411,7 @@ class ApiUtils {
       "SupportDate": DateTime.now().toIso8601String(),
       "SupportKeywords": "Quote, $businessClass, $product",
       "SupportDescription":
-          "Start Date: $startDate, End Date: $endDate, Renewal Date: $renewalDate",
+          "Start Date: $startDate, End Date: $endDate, Renewal Date: $renewalDate, VendorID: $vendorID",
       "SupportScreenShotURL": "",
       "SupportEnquiryDate": startDate,
       "SupportEnquiryLapseDate": endDate,

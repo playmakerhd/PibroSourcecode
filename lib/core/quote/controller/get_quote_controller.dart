@@ -20,8 +20,10 @@ import 'package:pibro/network/api/api_provider.dart';
 import 'package:pibro/network/models/response/business_policy_response.dart';
 import 'package:pibro/network/models/response/customer_policy_response.dart';
 import 'package:pibro/network/models/response/insurance_risk_type_response.dart';
+import 'package:pibro/network/models/response/vendor_response.dart';
 import 'package:pibro/network/repository/pibro_repository.dart';
 import 'package:pibro/shared/custom_input/custom_input.dart';
+
 import 'package:pibro/utils/api_utils.dart';
 import 'package:pibro/utils/app_utils.dart';
 import 'package:pibro/utils/image_factory.dart';
@@ -101,72 +103,160 @@ class GetQuoteController extends GetxController {
     Get.to(() => ItemsToInsureScreen(controller: this));
   }
 
-  void _showSuccessDialog() {
-    showAppDialog(
-      Padding(
-        padding: const EdgeInsets.only(top: 20),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            ImageFactory.getImage(AppImages.passwordSuccess).render(
-              height: 65,
-              width: 65,
-            ),
-            Column(
-              children: [
-                Text(
-                  AppStrings.policyQuoteSent.tr,
-                  style: Styles.semiBoldTextStyle(
-                    color: AppColors.primaryColor,
-                  ),
-                ),
-                SizedBox(
-                  height: 5,
-                ),
-                Text(
-                  AppStrings.policyQuoteSentToBroker.tr,
-                  style: Styles.mediumTextStyle(
-                    size: 12,
-                    color: AppColors.primaryColor,
-                  ),
-                ),
-              ],
-            ),
-            GestureDetector(
-              onTap: () {
-                if (GetStorage().read(StorageKeys.profileData) == null) {
-                  // if (decryptData(StorageKeys.profileData) == null) {
-                  Get.offAllNamed(AppRoutes.landing);
-                } else {
-                  Get.offNamedUntil(AppRoutes.quoteList,
-                      (route) => route.settings.name == AppRoutes.quoteList);
-                  Get.back();
-                }
-              },
-              child: ProfileButton(
-                text: AppStrings.ok.tr,
-                height: 25,
-                width: 80,
-                textColor: AppColors.activeGreen,
-                bgColor: AppColors.white,
-              ),
-            ),
-          ],
-        ),
-      ),
-      dismissible: false,
-      willPop: false,
-    );
+  // Vendors (Preferred Insurer)
+  final RxList<VendorInfo> vendors = <VendorInfo>[].obs;
+  final Rxn<VendorInfo> selectedVendor = Rxn<VendorInfo>();
+  final RxBool vendorsLoading = false.obs;
+
+  Future<void> loadVendors() async {
+    vendorsLoading.value = true;
+    try {
+      final res = await pibroRepository.getVendors();
+      vendors.assignAll(res.vendors);
+    } catch (e, st) {
+      // PibroLogger.e('loadVendors error', e, st);
+      vendors.clear();
+    } finally {
+      vendorsLoading.value = false;
+    }
   }
 
-  void submit() {
-    if (decryptData(StorageKeys.loginData) == null) {
-      encryptData(
-          key: StorageKeys.quoteConfirmation, value: 'quoteConfirmation');
-      Get.offNamed(AppRoutes.signup);
-    } else {
-      deleteQuoteConfirmation();
-      Get.toNamed(AppRoutes.quoteConfirmation);
+  void selectVendor(VendorInfo? v) {
+    selectedVendor.value = v;
+    if (v != null) {
+      GetStorage().write(StorageKeys.preferredInsurer, {
+        "vendorID": v.vendorID,
+        "vendorName": v.vendorName,
+      });
+    }
+  }
+
+  /// Landing-page flow:
+  /// - If user is logged in: create enquiry now, fetch it, branch to summary/confirmation.
+  /// - If not logged in: persist pending quote + set flag, navigate to signup/login.
+  Future<void> submit() async {
+    try {
+      final loggedIn = decryptData(StorageKeys.loginData) != null;
+
+      // Stash quote draft so we can resume after auth
+      final draft = {
+        "businessClassID": selectedBusinessPolicy.value?.businessClassID,
+        "businessClassName": selectedBusinessPolicy.value?.businessClassName,
+        "riskTypeID": selectedRiskTypeID.value?.riskTypeID,
+        "riskName": selectedRiskTypeID.value?.riskName,
+        "startDate": startDateController.text,
+        "endDate": endDateController.text,
+        "renewalDate": formatDate(
+          endDate.value!.add(const Duration(days: 1)).toIso8601String(),
+        ),
+        "items": items
+            .map((it) => isMotorQuote(
+                    selectedBusinessPolicy.value?.businessClassID ?? '')
+                ? it.toMotorJson()
+                : it.toJson())
+            .toList(),
+        "preferredInsurer": {
+          "vendorID": selectedVendor.value?.vendorID,
+          "vendorName": selectedVendor.value?.vendorName
+        },
+      };
+      GetStorage().write(StorageKeys.pendingQuote, draft);
+
+      if (loggedIn) {
+        await _createEnquiryAndNavigate();
+      } else {
+        GetStorage().write(StorageKeys.quoteFlowFlag, true);
+        // go to login/signup; use your existing route name
+        Get.offNamed(AppRoutes.signup);
+      }
+    } catch (e, st) {
+      //PibroLogger.e('submit() error', e, st);
+      showSnackbarMessage(
+          message: AppStrings.genericErrorMessage.tr, isSuccess: false);
+    }
+  }
+
+  /// Called post-auth (login/signup) when quoteFlowFlag is set.
+  Future<void> resumeAfterAuth() async {
+    await _createEnquiryAndNavigate();
+  }
+
+  Future<void> _createEnquiryAndNavigate() async {
+    try {
+      // Create enquiry (reuse your ApiUtils.createQuote)
+      final draft = GetStorage().read(StorageKeys.pendingQuote) as Map? ?? {};
+      if (draft.isEmpty) {
+        showSnackbarMessage(message: 'Nothing to submit', isSuccess: false);
+        return;
+      }
+      final v = draft['preferredInsurer'] as Map?;
+      final payload = ApiUtils.createQuote(
+        draft['riskName'] ?? '',
+        draft['businessClassName'] ?? '',
+        draft['startDate'] ?? '',
+        draft['endDate'] ?? '',
+        draft['renewalDate'] ?? '',
+        List<Map<String, dynamic>>.from(draft['items'] ?? const []),
+        vendorID: v?['vendorID']?.toString(),
+        vendorName: v?['vendorName']?.toString(),
+      );
+      final createRes = await pibroRepository.sendToBroker(payload);
+      if (createRes.messageResponse.status != AppConstants.responseSuccess) {
+        showSnackbarMessage(
+            message: createRes.messageResponse.message, isSuccess: false);
+        return;
+      }
+      final caseId = createRes.messageResponse.message;
+      final byId = await pibroRepository.getCustomerEnquiryById(caseId);
+      final quote = byId.quote;
+      if (quote == null) {
+        showSnackbarMessage(
+            message: 'Could not fetch enquiry', isSuccess: false);
+        return;
+      }
+      
+      // Fix premium parsing from API response
+      final premiumString = quote.supportResolution ?? '0';
+      final sumInsuredString = quote.supportScreenShotURL ?? '0';
+      
+      print('🔍 ENQUIRY: Raw premium from API: $premiumString');
+      print('🔍 ENQUIRY: Raw sumInsured from API: $sumInsuredString');
+      
+      final premium = double.tryParse(premiumString.replaceAll(',', '')) ?? 0.0;
+      final sumInsured = double.tryParse(sumInsuredString.replaceAll(',', '')) ?? 0.0;
+      
+      print('🔍 ENQUIRY: Parsed premium: $premium');
+      print('🔍 ENQUIRY: Parsed sumInsured: $sumInsured');
+
+      final enquiryData = {
+        "caseId": caseId,
+        "premium": premium,  // Store as number, not string
+        "sumInsured": sumInsured,  // Store as number, not string
+        "riskName": draft['riskName'],
+        "businessClassName": draft['businessClassName'],
+        "startDate": draft['startDate'],
+        "endDate": draft['endDate'],
+        "renewalDate": draft['renewalDate'],
+        "preferredInsurer": draft['preferredInsurer'],
+        "items": draft['items'],
+      };
+      
+      print('🔍 ENQUIRY: Storing enquiry data: $enquiryData');
+      GetStorage().write(StorageKeys.lastEnquiry, enquiryData);
+
+      // Branch
+      if (premium <= 0) {
+        Get.offNamed(AppRoutes.quoteConfirmation);
+      } else {
+        Get.offNamed(AppRoutes.quoteSummary);
+      }
+    } catch (e, st) {
+      print('❌ ENQUIRY: Error in _createEnquiryAndNavigate: $e');
+      print('📍 STACK TRACE: $st');
+      showSnackbarMessage(
+          message: AppStrings.genericErrorMessage.tr, isSuccess: false);
+    } finally {
+      GetStorage().remove(StorageKeys.quoteFlowFlag);
     }
   }
 
@@ -389,36 +479,6 @@ class GetQuoteController extends GetxController {
     );
   }
 
-  Future<void> submitQuote() async {
-    final itemList =
-        isMotorQuote(selectedBusinessPolicy.value!.businessClassID!)
-            ? items.map((item) => item.toMotorJson()).toList()
-            : items.map((item) => item.toJson()).toList();
-    submitLoading.value = true;
-    deleteQuoteConfirmation();
-    try {
-      final response = await pibroRepository.sendToBroker(ApiUtils.createQuote(
-        selectedRiskTypeID.value!.riskName!,
-        selectedBusinessPolicy.value!.businessClassName!,
-        startDateController.text,
-        endDateController.text,
-        formatDate(endDate.value!.add(Duration(days: 1)).toIso8601String()),
-        itemList,
-      ));
-      if (response.messageResponse.status != AppConstants.responseSuccess) {
-        showSnackbarMessage(
-            message: response.messageResponse.message, isSuccess: false);
-      } else {
-        _showSuccessDialog();
-      }
-      submitLoading.value = false;
-    } catch (e) {
-      submitLoading.value = false;
-      showSnackbarMessage(
-          message: AppStrings.genericErrorMessage.tr, isSuccess: false);
-    }
-  }
-
   bool isMotorQuote(String id) {
     return id == 'MOT' ||
         id == 'MOTOR' ||
@@ -431,6 +491,7 @@ class GetQuoteController extends GetxController {
   @override
   void onInit() {
     getInsuranceBusinessClass();
+    loadVendors(); // populate dropdown early
     super.onInit();
   }
 

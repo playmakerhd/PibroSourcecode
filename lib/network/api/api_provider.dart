@@ -29,6 +29,11 @@ import 'package:pibro/network/models/response/payment_init_response.dart';
 import 'package:pibro/network/models/response/payment_verfication_response.dart';
 import 'package:pibro/network/models/response/profile_response.dart';
 import 'package:pibro/network/models/response/quotes_response.dart';
+import 'package:pibro/network/models/response/vendor_response.dart';
+import 'package:pibro/network/models/response/message_response.dart'; // CustomMessageResponse
+import 'package:pibro/network/models/response/quotes_response.dart';   // QuoteInfo/QuoteByIdResponse
+ import 'package:pibro/network/models/response/quote_by_id_response.dart';
+
 import 'package:pibro/utils/api_utils.dart';
 import 'package:pibro/utils/app_utils.dart';
 
@@ -143,6 +148,49 @@ class ApiProvider extends BaseProvider {
         '$_baseApiPath${Endpoints.getInsuranceRiskType}/$businessID/$_acessToken';
     final responseData = await makeGetCall(Uri.parse(endpoint), false);
     return InsuranceRiskTypeResponse(responseData!);
+  }
+
+    // Vendors
+  Future<VendorResponse> callGetVendors() async {
+    final endpoint =
+        '$_baseApiPath${Endpoints.getVendors}/$_acessToken?PageNum=1&Size=100';
+    final resp = await makeGetCall(Uri.parse(endpoint), false);
+    return VendorResponse(resp!);
+  }
+
+  // Enquiry by ID (returns QuoteInfo with SupportResolution/SupportScreenShotURL)
+  Future<QuoteByIdResponse> callGetCustomerEnquiryById(String caseId) async {
+    final endpoint =
+        '$_baseApiPath${Endpoints.getCustomerEnquiryById}/$caseId/$_acessToken';
+    final resp = await makeGetCall(Uri.parse(endpoint), false);
+    return QuoteByIdResponse(resp!);
+  }
+
+  // Create Policy (new policy path after Paystack)
+  Future<CustomMessageResponse> callCreateInsurancePolicyClient(
+      Map<String, dynamic> body) async {
+    final endpoint =
+        '$_baseApiPath${Endpoints.createInsurancePolicy}?token=$_acessToken';
+    final resp =
+        await makePostCall(Uri.parse(endpoint), jsonEncode(body), false);
+    return CustomMessageResponse(resp);
+  }
+
+  // Book/Post policy by ID (new policy path convenience)
+  Future<CustomMessageResponse> callBookPolicyById(String id) async {
+    final endpoint =
+        '$_baseApiPath${Endpoints.bookPolicy}?token=$_acessToken';
+    final resp = await makePostCall(
+        Uri.parse(endpoint), jsonEncode({"PolicyBrokerID": id}), false);
+    return CustomMessageResponse(resp);
+  }
+
+  Future<CustomMessageResponse> callPostPolicyById(String id) async {
+    final endpoint =
+        '$_baseApiPath${Endpoints.postPolicy}?token=$_acessToken';
+    final resp = await makePostCall(
+        Uri.parse(endpoint), jsonEncode({"PolicyBrokerID": id}), false);
+    return CustomMessageResponse(resp);
   }
 
   Future<CustomMessageResponse> callRenewPolicy(PolicyData data) async {

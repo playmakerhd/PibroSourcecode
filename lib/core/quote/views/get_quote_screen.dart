@@ -7,6 +7,7 @@ import 'package:pibro/core/quote/controller/get_quote_controller.dart';
 import 'package:pibro/internalization/app_strings.dart';
 import 'package:pibro/network/models/response/business_policy_response.dart';
 import 'package:pibro/network/models/response/insurance_risk_type_response.dart';
+import 'package:pibro/network/models/response/vendor_response.dart';
 import 'package:pibro/shared/common_header.dart';
 import 'package:pibro/shared/custom_input/custom_dropdown.dart';
 import 'package:pibro/shared/custom_input/custom_input.dart';
@@ -161,6 +162,32 @@ class GetQuoteScreen extends StatelessWidget {
                         validator: (value) => Validators.requiredValidator(
                             value, AppStrings.endDate),
                       ),
+                      // Preferred Insurer dropdown (uses your CustomDropdown)
+Obx(
+                        () => CustomDropdown(
+                          label: 'Select Preferred Insurer',
+                          hint: 'Select Preferred Insurer',
+                          suffixIcon: Icon(
+                            Icons.arrow_drop_down,
+                            size: 30,
+                            color: AppColors.hintColor,
+                          ),
+                          dropDownValue: controller.selectedVendor.value,
+                          items: controller.vendors
+                              .map((v) => DropdownMenuItem<VendorInfo>(
+                                    value: v,
+                                    child: Text(
+                                      v.vendorName ?? '',
+                                      style: Styles.mediumTextStyle(size: 14),
+                                    ),
+                                  ))
+                              .toList(),
+                          onChanged: (val) =>
+                              controller.selectVendor(val as VendorInfo?),
+                        ),
+                      ),
+
+
                       Padding(
                         padding: const EdgeInsets.only(top: 40.0),
                         child: PolicyButton(

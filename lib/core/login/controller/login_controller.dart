@@ -4,6 +4,7 @@ import 'package:get_storage/get_storage.dart';
 import 'package:pibro/constants/app_constants.dart';
 import 'package:pibro/constants/storage_keys.dart';
 import 'package:pibro/core/login/model/login_data.dart';
+import 'package:pibro/core/quote/controller/get_quote_controller.dart';
 import 'package:pibro/internalization/app_strings.dart';
 import 'package:pibro/navigation/routes.dart';
 import 'package:pibro/network/api/api_provider.dart';
@@ -53,12 +54,23 @@ class LoginController extends GetxController {
             phone: otherOption.value ? phoneController.text : '',
           );
           persistLoginData(data: data, remember: isRemember.value);
-          if (decryptData(StorageKeys.quoteConfirmation) != null) {
-            Get.offNamed(AppRoutes.quoteConfirmation);
-            deleteQuoteConfirmation();
-          } else {
-            Get.offNamed(AppRoutes.main);
+          
+          // Also persist the email separately for payment flow (same as signup)
+          String emailToStore = otherOption.value ? emailController.text : '';
+          if (emailToStore.isNotEmpty) {
+            GetStorage().write(StorageKeys.userEmail, emailToStore);
           }
+          
+          // Check if user came from quote flow BEFORE navigating to main
+          try {
+            final cameFromQuote = GetStorage().read(StorageKeys.quoteFlowFlag) == true;
+            if (cameFromQuote) {
+              await Get.find<GetQuoteController>().resumeAfterAuth();
+              return;
+            }
+          } catch (_) {}
+          
+          Get.offNamed(AppRoutes.main);
         }
         loading.value = false;
       } catch (e) {

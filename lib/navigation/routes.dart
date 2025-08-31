@@ -21,6 +21,7 @@ import 'package:pibro/core/quote/views/get_quote_screen.dart';
 import 'package:pibro/core/quote/views/quote_confirmation_screen.dart';
 import 'package:pibro/core/quote/views/quote_details_screen.dart';
 import 'package:pibro/core/quote/views/quote_screen.dart';
+import 'package:pibro/core/quote/views/quote_summary_screen.dart';
 import 'package:pibro/core/quote/views/quotes_list_screen.dart';
 import 'package:pibro/core/signup/view/signup_screen.dart';
 import 'package:pibro/core/splash/splash_screen.dart';
@@ -53,6 +54,7 @@ class AppRoutes {
   static const String getQuote = '/get-quote';
   static const String paymentConfirmation = '/payment-confirmation';
   static const String quoteConfirmation = '/quote-confirmation';
+  static const String quoteSummary = '/quote-summary';
 
   static const String claim = '/claim';
   static const String claimDetail = '/claim-detail';
@@ -123,6 +125,7 @@ class AppRoutes {
       name: quoteConfirmation,
       page: () => const QuoteConfirmationScreen(),
     ),
+     GetPage(name: quoteSummary, page: () => const QuoteSummaryScreen()),
     GetPage(
       name: paymentConfirmation,
       page: () => const PaymentConfirmationScreen(),

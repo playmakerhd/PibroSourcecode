@@ -41,6 +41,10 @@ class Endpoints {
   static const String submitClaim = '/SubmitClaim';
   static const String quotes = '/GetCustomerEnquiriesByCustomerID';
 
+  // Vendors / Enquiries
+  static const String getVendors = '/GetVendorInformation';
+  static const String getCustomerEnquiryById = '/GetCustomerEnquiriesByID';
+
   // About Section
   static const String getCompanyInfo = '/GetCompanyInformationByID';
   static const String getCompanyFaq = '/GetCompanyFAQ';

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:pibro/constants/app_constants.dart';
 import 'package:pibro/constants/storage_keys.dart';
 import 'package:pibro/core/login/model/login_data.dart';
+import 'package:pibro/core/quote/controller/get_quote_controller.dart';
 import 'package:pibro/internalization/app_strings.dart';
 import 'package:pibro/navigation/routes.dart';
 import 'package:pibro/network/api/api_provider.dart';
@@ -43,21 +45,46 @@ class SignupController extends GetxController {
           showSnackbarMessage(
               message: response.messageResponse.message, isSuccess: false);
         } else {
-          persistSignupID(response.messageResponse.message);
+          // Store the customer ID from the response
+          final customerID = response.messageResponse.message;
+          persistSignupID(customerID);
+          
           persistLoginData(
             data: LoginData(
-              customerID: nameController.text,
+              customerID: customerID, // Use the response customer ID, not the text input
               email: emailController.text,
               phone: phoneController.text,
             ),
             remember: false,
           );
-          if (decryptData(StorageKeys.quoteConfirmation) != null) {
-            Get.offNamed(AppRoutes.quoteConfirmation);
-          } else {
-            deleteQuoteConfirmation();
-            Get.offNamed(AppRoutes.login);
-          }
+
+          // Also persist the email separately for payment flow
+          GetStorage().write(StorageKeys.userEmail, emailController.text);
+          
+          // Store profile data with customer ID for receipt creation
+          GetStorage().write(StorageKeys.profileData, {
+            'CustomerID': customerID,
+            'CustomerEmail': emailController.text,
+            'CustomerPhone': phoneController.text,
+            'CustomerName': nameController.text,
+          });
+
+           // Show success snackbar with customer ID
+          showSnackbarMessage(
+            message: 'Signup successful! Your Customer ID is: $customerID',
+            isSuccess: true,
+          );
+
+          // After successful signup/auth
+          try {
+            final cameFromQuote =
+                GetStorage().read(StorageKeys.quoteFlowFlag) == true;
+            if (cameFromQuote) {
+              await Get.find<GetQuoteController>().resumeAfterAuth();
+              return; // resumeAfterAuth does its own navigation
+            }
+          } catch (_) {}
+          Get.offNamed(AppRoutes.login);
         }
         loading.value = false;
       } catch (e) {

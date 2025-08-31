@@ -20,6 +20,9 @@ import 'package:pibro/network/models/response/payment_init_response.dart';
 import 'package:pibro/network/models/response/payment_verfication_response.dart';
 import 'package:pibro/network/models/response/profile_response.dart';
 import 'package:pibro/network/models/response/quotes_response.dart';
+import 'package:pibro/network/models/response/vendor_response.dart';
+import 'package:pibro/network/models/response/quote_by_id_response.dart';
+
 
 class PibroRepository {
   ApiProvider appApiProvider;
@@ -53,6 +56,19 @@ class PibroRepository {
           String businessClassID) async =>
       appApiProvider.callGetInsuranceRiskType(businessClassID);
 
+  // Vendors / Enquiry
+  Future<VendorResponse> getVendors() => appApiProvider.callGetVendors();
+  Future<QuoteByIdResponse> getCustomerEnquiryById(String id) =>
+      appApiProvider.callGetCustomerEnquiryById(id);
+
+  // Create new policy & book/post (quote flow)
+  Future<CustomMessageResponse> createInsurancePolicyClient(
+          Map<String, dynamic> body) =>
+      appApiProvider.callCreateInsurancePolicyClient(body);
+  Future<CustomMessageResponse> bookPolicyById(String id) =>
+      appApiProvider.callBookPolicyById(id);
+  Future<CustomMessageResponse> postPolicyById(String id) =>
+      appApiProvider.callPostPolicyById(id);
   Future<CustomMessageResponse> renewPolicy(PolicyData data) async =>
       appApiProvider.callRenewPolicy(data);
 
