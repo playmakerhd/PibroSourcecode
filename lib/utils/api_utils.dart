@@ -69,16 +69,16 @@ class ApiUtils {
       throw Exception('Transaction date is required');
     }
 
-    if (requestData.documentNumber == null ||
-        requestData.documentNumber!.isEmpty) {
-      print('❌ REQUEST_DATA: Document number is null or empty');
-      throw Exception('Document number is required');
-    }
+    // if (requestData.documentNumber == null ||
+    //     requestData.documentNumber!.isEmpty) {
+    //   print('❌ REQUEST_DATA: Document number is null or empty');
+    //   throw Exception('Document number is required');
+    // }
 
-    if (requestData.documentDate == null || requestData.documentDate!.isEmpty) {
-      print('❌ REQUEST_DATA: Document date is null or empty');
-      throw Exception('Document date is required');
-    }
+    // if (requestData.documentDate == null || requestData.documentDate!.isEmpty) {
+    //   print('❌ REQUEST_DATA: Document date is null or empty');
+    //   throw Exception('Document date is required');
+    // }
 
     print('✅ REQUEST_DATA: All required fields validated');
 
@@ -147,8 +147,8 @@ class ApiUtils {
           'DepartmentID': user.departmentID ?? '',
           'ReceiptID': receiptId, // Empty for CREATE, populated for POST
           'ReceiptDetailID': 0,
-          'DocumentNumber': requestData.documentNumber!,
-          'DocumentDate': requestData.documentDate!,
+          'DocumentNumber': requestData.checkNumber!,
+          'DocumentDate': requestData.transactionDate!,
           'PaymentID': null,
           'PayedID': null,
           'CurrencyID': 'NGN',

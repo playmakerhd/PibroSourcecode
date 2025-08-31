@@ -487,9 +487,10 @@ class RenewPolicyController extends GetxController {
 
       // Build receipt from payment
       createReceiptRequest.transactionDate =
-          data?.paidAt ?? DateTime.now().toIso8601String();
-      createReceiptRequest.amount = (data?.amount ?? 0) ~/ 100; // kobo → NGN
+          lastPaymentDate;
+      createReceiptRequest.amount = lastPaymentAmount; // kobo → NGN
       createReceiptRequest.systemDate = DateTime.now().toIso8601String();
+      createReceiptRequest.channel = "Online";
 
       // Create + Post receipt (await both); postReceipt will continue the flow
       await createReceipt(createReceiptRequest);
