@@ -46,31 +46,31 @@ class ItemsInsuredList extends StatelessWidget {
                     ),
                   ),
                 ),
-                // Container(
-                //   width: 25,
-                //   padding: const EdgeInsets.only(right: 4.0),
-                //   child: Column(
-                //     spacing: 15,
-                //     children: [
-                //       GestureDetector(
-                //         onTap: () => edit(item),
-                //         child: Icon(
-                //           Icons.edit,
-                //           size: 20,
-                //         ),
-                //       ),
-                //       if (delete != null)
-                //         GestureDetector(
-                //           onTap: () => delete!(item),
-                //           child: Icon(
-                //             Icons.delete,
-                //             color: Colors.red,
-                //             size: 20,
-                //           ),
-                //         )
-                //     ],
-                //   ),
-                // )
+                Container(
+                  width: 25,
+                  padding: const EdgeInsets.only(right: 4.0),
+                  child: Column(
+                    spacing: 15,
+                    children: [
+                      GestureDetector(
+                        onTap: () => edit(item),
+                        child: Icon(
+                          Icons.edit,
+                          size: 20,
+                        ),
+                      ),
+                      if (delete != null)
+                        GestureDetector(
+                          onTap: () => delete!(item),
+                          child: Icon(
+                            Icons.delete,
+                            color: Colors.red,
+                            size: 20,
+                          ),
+                        )
+                    ],
+                  ),
+                )
               ],
             ),
           )

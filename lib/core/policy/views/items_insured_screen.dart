@@ -32,6 +32,7 @@ class ItemsInsuredScreen extends StatelessWidget {
                       return Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 10.0),
                         child: ItemRowContainer(
+                          noHeight: true,
                           isPolicy: item.policyItems != null,
                           isPolicyRenew: item.policyItems == null,
                           child: Padding(

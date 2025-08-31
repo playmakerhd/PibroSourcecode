@@ -21,7 +21,10 @@ class QuoteDetailsScreen extends StatelessWidget {
         width: 180,
         text: AppStrings.makePayment.tr,
         bgColor: AppColors.primaryColor,
-        onPressed: () {},
+        onPressed: () {
+          QuoteDetailsWidget(data: controller.selectedQuote.value!);
+          controller.navigateToQuoteSummaryForPayment();
+        },
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       body: SafeArea(
