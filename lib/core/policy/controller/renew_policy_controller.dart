@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -17,6 +18,7 @@ import 'package:pibro/internalization/app_strings.dart';
 import 'package:pibro/navigation/routes.dart';
 import 'package:pibro/network/api/api_provider.dart';
 import 'package:pibro/network/models/request/client_note_request.dart';
+import 'package:pibro/network/models/request/create_poilcy_request.dart';
 import 'package:pibro/network/models/request/create_receipt_request.dart';
 import 'package:pibro/network/models/request/get_premium_amount_request.dart';
 import 'package:pibro/network/models/request/renew_policy_requesst.dart';
@@ -25,6 +27,10 @@ import 'package:pibro/network/models/response/customer_policy_response.dart';
 import 'package:pibro/network/models/response/insurance_risk_type_response.dart';
 import 'package:pibro/network/repository/pibro_repository.dart';
 import 'package:pibro/shared/custom_input/custom_input.dart';
+import 'package:get_storage/get_storage.dart';
+import 'package:pibro/constants/storage_keys.dart';
+import 'package:pibro/core/quote/controller/get_quote_controller.dart';
+
 import 'package:pibro/utils/api_utils.dart';
 import 'package:pibro/utils/app_utils.dart';
 import 'package:pibro/utils/image_factory.dart';
@@ -44,6 +50,7 @@ class RenewPolicyController extends GetxController {
   RxBool submitQuoteLoading = false.obs;
   RxBool getPremiumAmountLoading = false.obs;
   RxBool paymentLoading = false.obs;
+  bool isQuoteFlow = false;
 
   Rxn<DateTime> startDate = Rxn<DateTime>();
   final TextEditingController startDateController = TextEditingController();
@@ -74,6 +81,11 @@ class RenewPolicyController extends GetxController {
   CreateReceiptRequest createReceiptRequest = CreateReceiptRequest();
   ClientNoteRequest clientNoteRequest = ClientNoteRequest();
   late RenewPolicyRequest _renewPolicyRequest;
+
+// To make reference available outside the sccope of verifyPayment
+  String? lastPaymentReference;
+  String? lastPaymentDate;
+  int? lastPaymentAmount;
 
   // PAYMENT
   late InAppWebViewController webViewController;
@@ -450,31 +462,44 @@ class RenewPolicyController extends GetxController {
     try {
       final response =
           await pibroRepository.verifyPayment(_accessToken, reference);
+      final data = response.verificationData.data;
+      final status = data?.status?.toLowerCase();
 
-      if (response.verificationData.data!.status!.capitalizeFirst !=
-          AppConstants.responseSuccess) {
+      if (status != 'success') {
         showSnackbarMessage(
-          message: response.verificationData.message!,
+          message: response.verificationData.message ??
+              AppStrings.genericErrorMessage.tr,
           isSuccess: false,
         );
         paymentLoading.value = false;
-      } else {
-        createReceiptRequest.transactionDate =
-            response.verificationData.data!.paidAt;
-        createReceiptRequest.amount =
-            response.verificationData.data!.amount! ~/ 100;
-        createReceiptRequest.systemDate = DateTime.now().toIso8601String();
-        createReceiptRequest.documentNumber =
-            response.verificationData.data!.reference;
-        createReceiptRequest.documentDate =
-            response.verificationData.data!.paidAt;
-        createReceiptRequest.channel = response.verificationData.data!.channel;
-        createReceipt(createReceiptRequest);
+
+        // Persist for screens/logs
+        lastPaymentReference = data?.reference;
+        lastPaymentDate = data?.paidAt ?? DateTime.now().toIso8601String();
+        lastPaymentAmount = (data?.amount ?? 0) ~/ 100;
+        return;
       }
-    } catch (e) {
+
+      // Persist for confirmation screen
+      lastPaymentReference = data?.reference;
+      lastPaymentDate = data?.paidAt ?? DateTime.now().toIso8601String();
+      lastPaymentAmount = (data?.amount ?? 0) ~/ 100;
+
+      // Build receipt from payment
+      createReceiptRequest.transactionDate =
+          data?.paidAt ?? DateTime.now().toIso8601String();
+      createReceiptRequest.amount = (data?.amount ?? 0) ~/ 100; // kobo → NGN
+      createReceiptRequest.systemDate = DateTime.now().toIso8601String();
+
+      // Create + Post receipt (await both); postReceipt will continue the flow
+      await createReceipt(createReceiptRequest);
+    } catch (e, st) {
       paymentLoading.value = false;
+      print('verifyPayment error: $e\n$st');
       showSnackbarMessage(
-          message: AppStrings.genericErrorMessage.tr, isSuccess: false);
+        message: _extractServerMessage(e), // <- changed here
+        isSuccess: false,
+      );
     }
   }
 
@@ -495,12 +520,14 @@ class RenewPolicyController extends GetxController {
         paymentLoading.value = false;
       } else {
         createReceiptRequest.receiptID = response.messageResponse.message;
-        postReceipt(createReceiptRequest);
+        await postReceipt(createReceiptRequest); // <- ensure ordering
       }
     } catch (e) {
       paymentLoading.value = false;
       showSnackbarMessage(
-          message: AppStrings.genericErrorMessage.tr, isSuccess: false);
+        message: _extractServerMessage(e), // <- changed here
+        isSuccess: false,
+      );
     }
   }
 
@@ -512,13 +539,15 @@ class RenewPolicyController extends GetxController {
             message: response.messageResponse.message, isSuccess: false);
         paymentLoading.value = false;
       } else {
-        await sendItemsToBackend();
-        renewPolicy();
+        // Renewal path
+        updateInsurancePolicy();
       }
     } catch (e) {
       paymentLoading.value = false;
       showSnackbarMessage(
-          message: AppStrings.genericErrorMessage.tr, isSuccess: false);
+        message: _extractServerMessage(e), // <- changed here
+        isSuccess: false,
+      );
     }
   }
 
@@ -535,8 +564,11 @@ class RenewPolicyController extends GetxController {
       }
     } catch (e) {
       paymentLoading.value = false;
+      print(e);
       showSnackbarMessage(
-          message: AppStrings.genericErrorMessage.tr, isSuccess: false);
+        message: _extractServerMessage(e), // <- changed here
+        isSuccess: false,
+      );
     }
   }
 
@@ -561,8 +593,11 @@ class RenewPolicyController extends GetxController {
       }
     } catch (e) {
       paymentLoading.value = false;
+      print(e);
       showSnackbarMessage(
-          message: AppStrings.genericErrorMessage.tr, isSuccess: false);
+        message: _extractServerMessage(e), // <- changed here
+        isSuccess: false,
+      );
     }
   }
 
@@ -578,8 +613,11 @@ class RenewPolicyController extends GetxController {
       }
     } catch (e) {
       paymentLoading.value = false;
+      print(e);
       showSnackbarMessage(
-          message: AppStrings.genericErrorMessage.tr, isSuccess: false);
+        message: _extractServerMessage(e), // <- changed here
+        isSuccess: false,
+      );
     }
   }
 
@@ -595,8 +633,11 @@ class RenewPolicyController extends GetxController {
       }
     } catch (e) {
       paymentLoading.value = false;
+      print(e);
       showSnackbarMessage(
-          message: AppStrings.genericErrorMessage.tr, isSuccess: false);
+        message: _extractServerMessage(e), // <- changed here
+        isSuccess: false,
+      );
     }
   }
 
@@ -624,8 +665,11 @@ class RenewPolicyController extends GetxController {
       }
     } catch (e) {
       paymentLoading.value = false;
+      print(e);
       showSnackbarMessage(
-          message: AppStrings.genericErrorMessage.tr, isSuccess: false);
+        message: _extractServerMessage(e), // <- changed here
+        isSuccess: false,
+      );
     }
   }
 
@@ -641,8 +685,11 @@ class RenewPolicyController extends GetxController {
       }
     } catch (e) {
       paymentLoading.value = false;
+      print(e);
       showSnackbarMessage(
-          message: AppStrings.genericErrorMessage.tr, isSuccess: false);
+        message: _extractServerMessage(e), // <- changed here
+        isSuccess: false,
+      );
     }
   }
 
@@ -654,12 +701,26 @@ class RenewPolicyController extends GetxController {
             message: response.messageResponse.message, isSuccess: false);
         paymentLoading.value = false;
       } else {
-        Get.offNamed(AppRoutes.paymentConfirmation);
+        // ✅ Navigate here, once, after debit note is posted
+        if (isQuoteFlow) {
+          Get.offNamed(AppRoutes.quoteConfirmation, arguments: {
+            'policyId': policy.value?.policyBrokerID ?? '',
+            'paymentReference': lastPaymentReference ?? '',
+            'paymentDate': lastPaymentDate ?? '',
+            'paymentMethod': 'Card',
+            'paymentAmount': lastPaymentAmount ?? 0,
+          });
+        } else {
+          Get.offNamed(AppRoutes.paymentConfirmation);
+        }
       }
     } catch (e) {
       paymentLoading.value = false;
+      print(e);
       showSnackbarMessage(
-          message: AppStrings.genericErrorMessage.tr, isSuccess: false);
+        message: _extractServerMessage(e), // <- changed here
+        isSuccess: false,
+      );
     }
   }
 
@@ -710,27 +771,206 @@ class RenewPolicyController extends GetxController {
         subject: 'Invoice PDF',
       );
     } catch (e) {
+      print(e);
       showSnackbarMessage(
           message: 'Failed to export invoice as PDF: $e', isSuccess: false);
     }
   }
 
-  init() {
-    policy.value = Get.arguments as PolicyData;
-    // getInsuranceBusinessClass();
-    // getInsuranceRiskTypeID();
+  void init() {
+    final args = Get.arguments;
 
-    policyItems.value = policy.value!.itemsToInsure!;
+    if (args is PolicyData) {
+      // RENEWAL FLOW: a full PolicyData is passed via navigation
+      policy.value = args;
+      policyItems.value = policy.value!.itemsToInsure ?? [];
+    } else {
+      // QUOTE FLOW: build a minimal PolicyData from the persisted enquiry
+      final enquiry = GetStorage().read(StorageKeys.lastEnquiry) as Map? ?? {};
 
+      final double sumInsured = (enquiry['sumInsured'] is num)
+          ? (enquiry['sumInsured'] as num).toDouble()
+          : double.tryParse(enquiry['sumInsured']?.toString() ?? '0') ?? 0.0;
+
+      final double premiumAmount = (enquiry['premium'] is num)
+          ? (enquiry['premium'] as num).toDouble()
+          : double.tryParse(enquiry['premium']?.toString() ?? '0') ?? 0.0;
+
+      policy.value = PolicyData(
+        // these three are REQUIRED by your model
+        companyID: (enquiry['CompanyID'] ?? 'DEMO').toString(),
+        divisionID: (enquiry['DivisionID'] ?? 'DEFAULT').toString(),
+        departmentID: (enquiry['DepartmentID'] ?? 'DEFAULT').toString(),
+
+        // minimal identifiers for the screens to render
+        policyBrokerID: (enquiry['caseId'] ?? '').toString(),
+        businessClassID:
+            (enquiry['businessClassID'] ?? enquiry['businessClassName'] ?? '')
+                .toString(),
+        riskTypeID:
+            (enquiry['riskTypeID'] ?? enquiry['riskName'] ?? '').toString(),
+
+        // numeric fields parsed safely
+        sumInsured: sumInsured,
+        premiumAmount: premiumAmount,
+        // itemsToInsure is intentionally omitted here (none in quote flow yet)
+      );
+
+      policyItems.clear();
+    }
+
+    // Date fields for subsequent flows (kept as before)
     startDate.value = DateTime.now();
-    endDate.value = DateTime.now().add(Duration(days: 364));
+    endDate.value = DateTime.now().add(const Duration(days: 364));
     startDateController.text = formatDate(startDate.value.toString());
-    endDateController.text = formatDate(
-      endDate.value.toString(),
-    );
-    renewalDateController.text = formatDate(
-      endDate.value!.add(Duration(days: 1)).toString(),
-    );
+    endDateController.text = formatDate(endDate.value.toString());
+    renewalDateController.text =
+        formatDate(endDate.value!.add(const Duration(days: 1)).toString());
+  }
+
+  Map<String, dynamic> _toMap(dynamic raw) {
+    if (raw is Map) return Map<String, dynamic>.from(raw);
+    if (raw is String) {
+      try {
+        final m = jsonDecode(raw);
+        if (m is Map) return Map<String, dynamic>.from(m);
+      } catch (_) {}
+    }
+    return <String, dynamic>{};
+  }
+
+  String _pickCustomerId(Map<String, dynamic> m) {
+    for (final k in const [
+      'customerID',
+      'CustomerID',
+      'customerId',
+      'CustomerId',
+      'username',
+      'Username'
+    ]) {
+      final v = m[k];
+      if (v != null && v.toString().trim().isNotEmpty) return v.toString();
+    }
+    return '';
+  }
+
+  /// Try multiple sources for robustness:
+  /// - decryptData(StorageKeys.loginData)  (Map or JSON string)
+  /// - GetStorage().read(StorageKeys.loginData)
+  /// - GetStorage().read(StorageKeys.profileData)
+  /// - GetStorage().read(StorageKeys.signupID)
+  
+
+// --- Error helpers: prefer server-sent messages over generic text ---
+  String _extractServerMessage(Object e, {String? fallback}) {
+    // Default fallback
+    final fb = fallback ?? AppStrings.genericErrorMessage.tr;
+
+    // 1) Try typical HTTP client shapes (e.g. Dio: e.response.data, http: custom)
+    try {
+      final dynamic de = e;
+
+    
+
+      // Custom error model with messageResponse?
+      final dynamic mr = (de as dynamic).messageResponse;
+      final dynamic mrMsg =
+          mr is dynamic ? (mr.message ?? mr['message'] ?? mr['Message']) : null;
+      if (mrMsg is String && mrMsg.trim().isNotEmpty) return mrMsg.trim();
+
+      // Plain .message field on exception
+      final dynamic m = (de as dynamic).message;
+      if (m is String && m.trim().isNotEmpty) return m.trim();
+    } catch (_) {}
+
+    // 2) Well-known Dart exceptions
+    if (e is SocketException)
+      return 'Network error. Please check your connection and try again.';
+    if (e is HttpException) return e.message;
+    if (e is FormatException) return e.message;
+
+    // 3) String/JSON payload
+    final s = e.toString();
+    if (s.isNotEmpty) {
+      // Try to fish out JSON message from a stringified payload
+      final fromString = _messageFromData(s);
+      if (fromString != null && fromString.trim().isNotEmpty)
+        return fromString.trim();
+      // Trim "Exception:" noise
+      final idx = s.indexOf('Exception:');
+      if (idx >= 0 && idx + 10 < s.length) return s.substring(idx + 10).trim();
+      return s;
+    }
+
+    return fb;
+  }
+
+  String? _messageFromData(dynamic data) {
+    if (data == null) return null;
+
+    // If server sent a string, try JSON decode then fall back to raw
+    if (data is String) {
+      final d = _tryJsonDecode(data);
+      if (d is Map) return _messageFromMap(d) ?? data;
+      return data;
+    }
+    if (data is Map) return _messageFromMap(data);
+
+    return null;
+  }
+
+  String? _messageFromMap(Map map) {
+    // Common keys
+    final keys = const [
+      'message',
+      'Message',
+      'error',
+      'Error',
+      'detail',
+      'Detail',
+      'errors',
+      'Errors'
+    ];
+    for (final k in keys) {
+      if (!map.containsKey(k)) continue;
+      final v = map[k];
+      if (v == null) continue;
+
+      // direct string
+      if (v is String && v.trim().isNotEmpty) return v.trim();
+
+      // list of errors -> join first few
+      if (v is List && v.isNotEmpty) {
+        final parts = v
+            .take(3)
+            .map((e) => e?.toString() ?? '')
+            .where((s) => s.isNotEmpty)
+            .toList();
+        if (parts.isNotEmpty) return parts.join('\n');
+      }
+
+      // nested map { field: ["msg"] }
+      if (v is Map && v.isNotEmpty) {
+        final buf = <String>[];
+        v.forEach((key, val) {
+          if (val is List && val.isNotEmpty) {
+            buf.add('${key.toString()}: ${val.first.toString()}');
+          } else if (val != null) {
+            buf.add('${key.toString()}: ${val.toString()}');
+          }
+        });
+        if (buf.isNotEmpty) return buf.join('\n');
+      }
+    }
+    return null;
+  }
+
+  dynamic _tryJsonDecode(String s) {
+    try {
+      return jsonDecode(s);
+    } catch (_) {
+      return null;
+    }
   }
 
   @override
