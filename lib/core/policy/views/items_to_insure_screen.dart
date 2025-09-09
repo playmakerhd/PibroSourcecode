@@ -131,32 +131,32 @@ class ItemsToInsureScreen extends StatelessWidget {
                               ),
                       ),
                     ),
-                    if (controller is GetQuoteController)
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: GestureDetector(
-                          onTap: () => controller is GetQuoteController
-                              ? controller.showAddOrUpdateSheet(null)
-                              : controller.showAddOrUpdateItemSheet(
-                                  data: null,
-                                  isNew: true,
-                                ),
-                          child: Container(
-                            height: 40,
-                            width: 40,
-                            margin: EdgeInsets.only(top: 30),
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: AppColors.primaryColor,
-                            ),
-                            child: Icon(
-                              Icons.add,
-                              color: AppColors.white,
-                              size: 30,
-                            ),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: GestureDetector(
+                        onTap: () => controller is GetQuoteController
+                            ? controller.showAddOrUpdateSheet(null)
+                            : controller.showAddOrUpdateItemSheet(
+                                data: null,
+                                isNew: true,
+                              ),
+                        child: Container(
+                          height: 40,
+                          width: 40,
+                          margin: EdgeInsets.only(top: 30),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: AppColors.primaryColor,
+                          ),
+                          child: Icon(
+                            Icons.add,
+                            color: AppColors.white,
+                            size: 30,
                           ),
                         ),
                       ),
+                    ),
+
                     Padding(
                       padding: const EdgeInsets.only(top: 60.0),
                       child: Center(

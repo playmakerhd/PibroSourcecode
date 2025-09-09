@@ -100,7 +100,7 @@ class CustomerTransactionDetailScreen extends StatelessWidget {
                     DetailRow(
                         title: 'Transaction Type:',
                         value: t.transactionType ?? '-'),
-                    DetailRow(title: 'Key Field:', value: t.keyField ?? '-'),
+                  //  DetailRow(title: 'Key Field:', value: t.keyField ?? '-'),
                     DetailRow(title: 'Customer ID:', value: t.customerID ?? '-'),
                     const SizedBox(height: 80),
                   ],

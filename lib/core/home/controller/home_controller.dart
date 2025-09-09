@@ -104,30 +104,11 @@ class HomeController extends GetxController {
   }
 
   navigateToPolicyScreens({String? status = ''}) {
-    policyStatus.value = status!;
-    if (policies.isNotEmpty) {
-      categorizePolicies(status);
-      // policyScreenTitle.value = status.isEmpty
-      //     ? AppStrings.policies.tr
-      //     : status == AppStrings.active.tr
-      //         ? AppStrings.activePolicies.trParams({'break': ' '})
-      //         : AppStrings.expiredPolicies.trParams({'break': ' '});
-      // isRenewPolicyClicked.value = false;
-      // displayPolicies.value = status.isEmpty
-      //     ? policies
-      //     : policies
-      //         .where((item) =>
-      //             getPolicyStatus(
-      //                     item.policyEndDate ?? DateTime.now().toString(),
-      //                     item.approved ?? false)
-      //                 .status ==
-      //             status)
-      //         .toList();
-      Get.toNamed(AppRoutes.policy);
-    } else {
-      showSnackbarMessage(
-          message: 'Policies data still loading...', isWarning: true);
-    }
+    // Always set the requested status, categorize and navigate.
+    // This allows opening the Policies screen even when the policies list is empty.
+    policyStatus.value = status ?? '';
+    categorizePolicies(policyStatus.value);
+    Get.toNamed(AppRoutes.policy);
   }
 
   navigateToQuoteScreen() {
@@ -152,12 +133,8 @@ class HomeController extends GetxController {
   }
 
   navigateToClaimScreen() {
-    if (policies.isNotEmpty) {
-      Get.toNamed(AppRoutes.claim);
-    } else {
-      showSnackbarMessage(
-          message: 'Policies data still loading...', isWarning: true);
-    }
+    // Allow opening the Claims screen even if there are no policies yet.
+    Get.toNamed(AppRoutes.claim);
   }
 
   navigateToPolicyDetails(PolicyData data) {
@@ -189,3 +166,6 @@ class HomeController extends GetxController {
     super.onInit();
   }
 }
+    
+  
+

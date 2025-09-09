@@ -48,6 +48,13 @@ class ItemData {
     map['ScreenShotURL'] = screenShotURL ?? '';
     map['CaseIDDetail'] = 0;
     map['Value'] = value;
+
+    // Add explicit fields required by policy creation flow
+    map['ItemsDescription'] = description ?? '';
+    map['ItemLocation'] = location ?? '';
+    // defensive duplicates (lowercase) to be extra robust for varying consumers
+    map['description'] = description ?? '';
+    map['location'] = location ?? '';
     return map;
   }
 
@@ -61,6 +68,17 @@ class ItemData {
     map['ScreenShotURL'] = screenShotURL ?? '';
     map['CaseIDDetail'] = 0;
     map['Value'] = value;
+
+    // Add explicit fields required by policy creation flow
+    map['ItemsDescription'] = description ?? '';
+    map['ItemLocation'] = location ?? '';
+    map['description'] = description ?? '';
+    map['location'] = location ?? '';
+    // Optionally include vehicle-specific fields if needed downstream
+    map['RegNo'] = regNo ?? '';
+    map['ChasisId'] = chasisId ?? '';
+    map['EngineNo'] = engineNo ?? '';
+    map['VehicleMake'] = vehicleMake ?? '';
     return map;
   }
 }

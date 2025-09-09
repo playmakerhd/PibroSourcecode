@@ -233,8 +233,97 @@ class RenewPolicyController extends GetxController {
   }
 
   Future<void> submitItemToInsure() async {
-    Get.toNamed(AppRoutes.renewPolicyConfirmation);
+    renewPolicyLoading.value = true;
+    try {
+      // 1) Persist any pending items (edited server items + new local items)
+      await sendItemsToBackend();
+
+      // 2) Book policy using ONLY PolicyBrokerID
+      final id = policy.value?.policyBrokerID ?? '';
+      if (id.isEmpty) {
+        showSnackbarMessage(
+          message: AppStrings.genericErrorMessage.tr,
+          isSuccess: false,
+        );
+        return;
+      }
+
+      final bookRes = await pibroRepository.bookPolicyById(id);
+      if (bookRes.messageResponse.status != AppConstants.responseSuccess) {
+        showSnackbarMessage(
+          message: bookRes.messageResponse.message,
+          isSuccess: false,
+        );
+        return;
+      }
+
+      // 3) Post policy using ONLY PolicyBrokerID
+      final postRes = await pibroRepository.postPolicyById(id);
+      if (postRes.messageResponse.status != AppConstants.responseSuccess) {
+        showSnackbarMessage(
+          message: postRes.messageResponse.message,
+          isSuccess: false,
+        );
+        return;
+      }
+
+      // 4) Compute premium
+      final prem = await pibroRepository.getPremiumAmount(
+        GetPremiumAmountRequest(
+          brokerId: id,
+          startDate: startDateController.text,
+          endDate: endDateController.text,
+        ),
+      );
+      if (prem.messageResponse.status != AppConstants.responseSuccess) {
+        showSnackbarMessage(
+          message: prem.messageResponse.message,
+          isSuccess: false,
+        );
+        return;
+      }
+      policyPremiumAmount = prem.messageResponse.message;
+
+      // 5) Pull fresh policy so the confirmation shows updated totals
+      await _refreshPolicyFromServer();
+
+      // 6) Navigate to confirmation
+      Get.toNamed(AppRoutes.renewPolicyConfirmation);
+    } catch (e) {
+      showSnackbarMessage(
+        message: AppStrings.genericErrorMessage.tr,
+        isSuccess: false,
+      );
+    } finally {
+      renewPolicyLoading.value = false;
+    }
   }
+
+  Future<void> _refreshPolicyFromServer() async {
+    try {
+      final all = await pibroRepository.getCustomerPolicies();
+      final currentId = policy.value?.policyBrokerID;
+      if (currentId == null || currentId.isEmpty) return;
+
+      PolicyData? updated;
+      for (final p in all.policies) {
+        if (p.policyBrokerID == currentId) {
+          updated = p;
+          break;
+        }
+      }
+
+      if (updated != null) {
+        policy.value = updated;
+        policyItems.value = updated.itemsToInsure ?? [];
+        newPolicyItems.clear(); // local staged items are now on server
+      }
+    } catch (_) {
+      // Non-fatal: if refresh fails, we'll still show the existing view
+    }
+  }
+
+
 
   void addOrUpdateItem({ItemToInsure? data, required bool isNew}) {
     if (addItemFormKey.currentState!.validate()) {
@@ -251,13 +340,15 @@ class RenewPolicyController extends GetxController {
             departmentID: policy.value!.departmentID,
             divisionID: policy.value!.divisionID,
             policyBrokerID: policy.value!.policyBrokerID,
-            manualNumbering: '0',
+            manualNumbering: _nextManualNumbering(),
             brokingSlipItemCount: 0,
             excessAmount: 0.0,
             discount: 0.0,
             itemsDescription: descriptionController.text,
             sumInsured: double.parse(valueController.text),
             itemLocation: locationController.text,
+            sectionTypeID: 'SECTIONA', // static per contract
+            policyItems: '',
           ),
           isNew,
         );
@@ -486,8 +577,7 @@ class RenewPolicyController extends GetxController {
       lastPaymentAmount = (data?.amount ?? 0) ~/ 100;
 
       // Build receipt from payment
-      createReceiptRequest.transactionDate =
-          lastPaymentDate;
+      createReceiptRequest.transactionDate = lastPaymentDate;
       createReceiptRequest.amount = lastPaymentAmount; // kobo → NGN
       createReceiptRequest.systemDate = DateTime.now().toIso8601String();
       createReceiptRequest.channel = "Online";
@@ -860,7 +950,6 @@ class RenewPolicyController extends GetxController {
   /// - GetStorage().read(StorageKeys.loginData)
   /// - GetStorage().read(StorageKeys.profileData)
   /// - GetStorage().read(StorageKeys.signupID)
-  
 
 // --- Error helpers: prefer server-sent messages over generic text ---
   String _extractServerMessage(Object e, {String? fallback}) {
@@ -870,8 +959,6 @@ class RenewPolicyController extends GetxController {
     // 1) Try typical HTTP client shapes (e.g. Dio: e.response.data, http: custom)
     try {
       final dynamic de = e;
-
-    
 
       // Custom error model with messageResponse?
       final dynamic mr = (de as dynamic).messageResponse;
@@ -964,6 +1051,15 @@ class RenewPolicyController extends GetxController {
       }
     }
     return null;
+  }
+
+  String _nextManualNumbering() {
+    int maxNum = 199; // start from 200 as baseline if none exists
+    for (final it in [...policyItems, ...newPolicyItems]) {
+      final n = int.tryParse(it.manualNumbering?.toString() ?? '') ?? 0;
+      if (n > maxNum) maxNum = n;
+    }
+    return (maxNum + 1).toString();
   }
 
   dynamic _tryJsonDecode(String s) {

@@ -9,8 +9,34 @@ import 'package:pibro/core/policy/widget/detail_row.dart';
 import 'package:pibro/core/policy/widget/policy_button.dart';
 import 'package:pibro/shared/common_header.dart';
 import 'package:pibro/shared/widget/large_line.dart';
+import 'package:intl/intl.dart';
 
 class QuoteSummaryScreen extends StatelessWidget {
+  // Helper to format date strings to 'MMM dd, yyyy'
+  String formatDatePretty(String dateStr) {
+    if (dateStr.isEmpty || dateStr == 'N/A') return dateStr;
+    try {
+      final dt = DateTime.tryParse(dateStr);
+      if (dt != null) {
+        return DateFormat('MMM dd, yyyy').format(dt);
+      }
+      // Try parsing pretty formats if needed
+      try {
+        return DateFormat('MMM d, y')
+            .format(DateFormat('MMM d, y').parse(dateStr));
+      } catch (_) {}
+      try {
+        return DateFormat('MMM dd, yyyy')
+            .format(DateFormat('MMM dd, yyyy').parse(dateStr));
+      } catch (_) {}
+      try {
+        return DateFormat('MM-dd-yyyy')
+            .format(DateFormat('MM-dd-yyyy').parse(dateStr));
+      } catch (_) {}
+    } catch (_) {}
+    return dateStr;
+  }
+
   const QuoteSummaryScreen({super.key});
 
   @override
@@ -38,8 +64,7 @@ class QuoteSummaryScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 2),
               child: ListView(
                 children: [
-                   DetailRow(
-                      title: 'Customer ID:', value: customerid),
+                  DetailRow(title: 'Customer ID:', value: customerid),
                   DetailRow(
                       title: 'Customer Name:',
                       value: '${data['customerName'] ?? 'N/A'}'),
@@ -50,13 +75,14 @@ class QuoteSummaryScreen extends StatelessWidget {
                       title: 'Product:', value: '${data['riskName'] ?? 'N/A'}'),
                   DetailRow(
                       title: 'New Start Date:',
-                      value: '${data['startDate'] ?? 'N/A'}'),
+                      value: formatDatePretty('${data['startDate'] ?? 'N/A'}')),
                   DetailRow(
                       title: 'New End Date:',
-                      value: '${data['endDate'] ?? 'N/A'}'),
+                      value: formatDatePretty('${data['endDate'] ?? 'N/A'}')),
                   DetailRow(
                       title: 'New Renewal Date:',
-                      value: '${data['renewalDate'] ?? 'N/A'}'),
+                      value:
+                          formatDatePretty('${data['renewalDate'] ?? 'N/A'}')),
                   DetailRow(
                       title: 'Sum Insured(NGN):',
                       value: '${data['sumInsured'] ?? 'N/A'}'),
@@ -67,21 +93,23 @@ class QuoteSummaryScreen extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Obx(() {
-                        final qp = Get.isRegistered<QuotePaymentController>()
+                      GetBuilder<QuotePaymentController>(
+                        init: Get.isRegistered<QuotePaymentController>()
                             ? Get.find<QuotePaymentController>()
-                            : Get.put(QuotePaymentController());
-                        return PolicyButton(
-                          text: 'Make Payment',
-                          onPressed: () async {
-                            await qp.beginPayment();
-                          },
-                          width: 160,
-                          bgColor: AppColors.primaryColor,
-                          loading:
-                              qp.paymentLoading.value, // 👈 button-level loader
-                        );
-                      }),
+                            : Get.put(QuotePaymentController()),
+                        builder: (qp) => Obx(() => PolicyButton(
+                              text: 'Make Payment',
+                              onPressed: () async {
+                                // Start loader, run payment
+                                qp.paymentLoading.value = true;
+                                await qp.beginPayment();
+                              },
+                              width: 160,
+                              bgColor: AppColors.primaryColor,
+                              loading: qp.paymentLoading
+                                  .value, // <-- loader shows/hides here
+                            )),
+                      ),
                       const SizedBox(width: 12),
                       PolicyButton(
                         text: 'Cancel',

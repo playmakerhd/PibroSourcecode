@@ -16,6 +16,7 @@ import 'package:pibro/network/models/request/client_note_request.dart';
 import 'package:pibro/network/models/request/create_receipt_request.dart';
 import 'package:pibro/network/models/request/get_premium_amount_request.dart';
 import 'package:pibro/network/models/request/renew_policy_requesst.dart';
+import 'package:pibro/network/models/request/update_enquiry_status_request.dart';
 import 'package:pibro/network/models/response/base_response.dart';
 import 'package:pibro/network/models/response/business_policy_response.dart';
 import 'package:pibro/network/models/response/claim_document_response.dart';
@@ -31,11 +32,10 @@ import 'package:pibro/network/models/response/profile_response.dart';
 import 'package:pibro/network/models/response/quotes_response.dart';
 import 'package:pibro/network/models/response/vendor_response.dart';
 import 'package:pibro/network/models/response/message_response.dart'; // CustomMessageResponse
-import 'package:pibro/network/models/response/quotes_response.dart';   // QuoteInfo/QuoteByIdResponse
- import 'package:pibro/network/models/response/quote_by_id_response.dart';
- import 'package:pibro/network/models/response/debit_note_list_response.dart';
+import 'package:pibro/network/models/response/quotes_response.dart'; // QuoteInfo/QuoteByIdResponse
+import 'package:pibro/network/models/response/quote_by_id_response.dart';
+import 'package:pibro/network/models/response/debit_note_list_response.dart';
 import 'package:pibro/network/models/response/customer_transactions_response.dart';
-
 
 import 'package:pibro/utils/api_utils.dart';
 import 'package:pibro/utils/app_utils.dart';
@@ -116,7 +116,7 @@ class ApiProvider extends BaseProvider {
     return CustomerPolicyResponse(responseData!);
   }
 
-    Future<DebitNoteListResponse> callGetClientNotesByCustomer() async {
+  Future<DebitNoteListResponse> callGetClientNotesByCustomer() async {
     final data =
         PlatformUser.fromJson(GetStorage().read(StorageKeys.profileData) ?? {});
     final endpoint =
@@ -140,7 +140,6 @@ class ApiProvider extends BaseProvider {
     final responseData = await makeGetCall(Uri.parse(endpoint), false);
     return CustomerTransactionsResponse(responseData!);
   }
-
 
   Future<QuotesResponse> callGetQuotes() async {
     // PlatformUser data = PlatformUser.fromJson(
@@ -179,7 +178,7 @@ class ApiProvider extends BaseProvider {
     return InsuranceRiskTypeResponse(responseData!);
   }
 
-    // Vendors
+  // Vendors
   Future<VendorResponse> callGetVendors() async {
     final endpoint =
         '$_baseApiPath${Endpoints.getVendors}/$_acessToken?PageNum=1&Size=100';
@@ -207,16 +206,14 @@ class ApiProvider extends BaseProvider {
 
   // Book/Post policy by ID (new policy path convenience)
   Future<CustomMessageResponse> callBookPolicyById(String id) async {
-    final endpoint =
-        '$_baseApiPath${Endpoints.bookPolicy}?token=$_acessToken';
+    final endpoint = '$_baseApiPath${Endpoints.bookPolicy}?token=$_acessToken';
     final resp = await makePostCall(
         Uri.parse(endpoint), jsonEncode({"PolicyBrokerID": id}), false);
     return CustomMessageResponse(resp);
   }
 
   Future<CustomMessageResponse> callPostPolicyById(String id) async {
-    final endpoint =
-        '$_baseApiPath${Endpoints.postPolicy}?token=$_acessToken';
+    final endpoint = '$_baseApiPath${Endpoints.postPolicy}?token=$_acessToken';
     final resp = await makePostCall(
         Uri.parse(endpoint), jsonEncode({"PolicyBrokerID": id}), false);
     return CustomMessageResponse(resp);
@@ -337,6 +334,23 @@ class ApiProvider extends BaseProvider {
         PlatformUser.fromJson(GetStorage().read(StorageKeys.profileData) ?? {});
     var resData = ResponseData();
     dynamic endpoint = '$_paystackBaseUrl/initialize';
+
+    // Defensive email resolution: profile -> explicit stored email -> login data -> default
+    String email = (data.customerEmail ?? '').trim();
+    if (email.isEmpty) {
+      email =
+          (GetStorage().read(StorageKeys.userEmail) ?? '').toString().trim();
+    }
+    if (email.isEmpty) {
+      try {
+        final ld = LoginData.fromJson(
+            convertToJsonStringQuotes(StorageKeys.loginData));
+        email = (ld.email ?? '').trim();
+      } catch (_) {}
+    }
+    // Last resort default to avoid Paystack rejecting empty email
+    if (email.isEmpty) email = 'no-reply@pibro.com';
+
     final responseData = await http.post(
       Uri.parse(endpoint),
       headers: {
@@ -345,7 +359,7 @@ class ApiProvider extends BaseProvider {
       },
       body: json.encode(
         {
-          'email': data.customerEmail,
+          'email': email, // ✅ resolved defensively
           'amount': amount,
           'currency': 'NGN',
         },
@@ -458,5 +472,14 @@ class ApiProvider extends BaseProvider {
     final responseData =
         await makePostCall(Uri.parse(endpoint), jsonEncode(claimId), false);
     return CustomMessageResponse(responseData);
+  }
+
+  Future<CustomMessageResponse> callUpdateCustomerEnquiryStatus(
+      UpdateEnquiryStatusRequest data) async {
+    final endpoint =
+        '$_baseApiPath${Endpoints.updateCustomerEnquiryStatus}/$_acessToken';
+    final body = jsonEncode(ApiUtils.updateEnquiryStatusPayload(data));
+    final resp = await makePutCall(Uri.parse(endpoint), body, false);
+    return CustomMessageResponse(resp);
   }
 }

@@ -11,6 +11,7 @@ import 'package:pibro/network/models/request/client_note_request.dart';
 import 'package:pibro/network/models/request/create_receipt_request.dart';
 import 'package:pibro/network/models/request/get_premium_amount_request.dart';
 import 'package:pibro/network/models/request/renew_policy_requesst.dart';
+import 'package:pibro/network/models/request/update_enquiry_status_request.dart';
 import 'package:pibro/network/models/response/business_policy_response.dart';
 import 'package:pibro/network/models/response/claim_document_response.dart';
 import 'package:pibro/network/models/response/company_data_response.dart';
@@ -27,7 +28,6 @@ import 'package:pibro/network/models/response/profile_response.dart';
 import 'package:pibro/network/models/response/quotes_response.dart';
 import 'package:pibro/network/models/response/vendor_response.dart';
 import 'package:pibro/network/models/response/quote_by_id_response.dart';
-
 
 class PibroRepository {
   ApiProvider appApiProvider;
@@ -158,9 +158,6 @@ class PibroRepository {
   Future<CustomMessageResponse> submitClaim(String body) async =>
       appApiProvider.callSubmitClaim(body);
 
-        Future<DebitNoteListResponse> getClientNotesByCustomer() =>
-      appApiProvider.callGetClientNotesByCustomer();
-
   Future<CustomerTransactionsResponse> getCustomerTransactions({
     required int page,
     required int size,
@@ -179,4 +176,9 @@ class PibroRepository {
     );
   }
 
+  Future<CustomMessageResponse> updateCustomerEnquiryStatus(
+    UpdateEnquiryStatusRequest body,
+  ) async {
+    return appApiProvider.callUpdateCustomerEnquiryStatus(body);
+  }
 }

@@ -16,6 +16,31 @@ import 'package:pibro/utils/app_utils.dart';
 import 'package:screenshot/screenshot.dart';
 
 class QuoteConfirmationScreen extends StatelessWidget {
+  // Helper to format date strings to 'MMM dd, yyyy'
+  String formatDatePretty(String dateStr) {
+    if (dateStr.isEmpty) return '';
+    try {
+      final dt = DateTime.tryParse(dateStr);
+      if (dt != null) {
+        return DateFormat('MMM dd, yyyy').format(dt);
+      }
+      // Try parsing pretty formats if needed
+      try {
+        return DateFormat('MMM d, y')
+            .format(DateFormat('MMM d, y').parse(dateStr));
+      } catch (_) {}
+      try {
+        return DateFormat('MMM dd, yyyy')
+            .format(DateFormat('MMM dd, yyyy').parse(dateStr));
+      } catch (_) {}
+      try {
+        return DateFormat('MM-dd-yyyy')
+            .format(DateFormat('MM-dd-yyyy').parse(dateStr));
+      } catch (_) {}
+    } catch (_) {}
+    return dateStr;
+  }
+
   const QuoteConfirmationScreen({super.key});
 
   @override
@@ -43,7 +68,7 @@ class QuoteConfirmationScreen extends StatelessWidget {
         paymentRef.isNotEmpty ||
         paymentAmountStr.isNotEmpty;
 
-        String formatPaymentDate(String dateString) {
+    String formatPaymentDate(String dateString) {
       if (dateString.isEmpty) return '';
       try {
         final date = DateTime.parse(dateString);
@@ -92,7 +117,8 @@ class QuoteConfirmationScreen extends StatelessWidget {
                     const SizedBox(height: 16),
                     Icon(
                       Icons.check_circle,
-                      color: isPolicyMode ? AppColors.activeGreen : Colors.green,
+                      color:
+                          isPolicyMode ? AppColors.activeGreen : Colors.green,
                       size: 64,
                     ),
                     const SizedBox(height: 12),
@@ -114,16 +140,24 @@ class QuoteConfirmationScreen extends StatelessWidget {
                       style: Styles.boldTextStyle(size: 14),
                     ),
                     const Divider(
-                        height: 32, thickness: 3, color: AppColors.primaryColor),
-              
+                        height: 32,
+                        thickness: 3,
+                        color: AppColors.primaryColor),
+
                     if (isPolicyMode && policyId.isNotEmpty)
                       DetailRow(title: 'Policy Number:', value: policyId),
-              
+
                     DetailRow(title: 'Insurance Class:', value: businessClass),
                     DetailRow(title: 'Product:', value: product),
-                    DetailRow(title: 'New Start Date:', value: startDate),
-                    DetailRow(title: 'New End Date:', value: endDate),
-                    DetailRow(title: 'New Renewal Date:', value: renewalDate),
+                    DetailRow(
+                        title: 'New Start Date:',
+                        value: formatDatePretty(startDate)),
+                    DetailRow(
+                        title: 'New End Date:',
+                        value: formatDatePretty(endDate)),
+                    DetailRow(
+                        title: 'New Renewal Date:',
+                        value: formatDatePretty(renewalDate)),
                     DetailRow(
                       title: 'Sum Insured (NGN):',
                       value: formatAmount(sumInsured),
@@ -132,17 +166,19 @@ class QuoteConfirmationScreen extends StatelessWidget {
                       title: 'Premium Due (NGN):',
                       value: formatAmount(premium),
                     ),
-              
+
                     // Show payment specifics only in Policy mode
                     if (isPolicyMode && paymentDate.isNotEmpty)
-                      DetailRow(title: 'Payment Date:', value: formatPaymentDate(paymentDate)),
+                      DetailRow(
+                          title: 'Payment Date:',
+                          value: formatPaymentDate(paymentDate)),
                     if (isPolicyMode && paymentRef.isNotEmpty)
                       DetailRow(title: 'Payment Reference:', value: paymentRef),
                     if (isPolicyMode && paymentMethod.isNotEmpty)
                       DetailRow(title: 'Payment Method:', value: paymentMethod),
-              
+
                     const SizedBox(height: 28),
-              
+
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [

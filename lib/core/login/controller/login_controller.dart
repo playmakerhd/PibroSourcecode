@@ -54,22 +54,38 @@ class LoginController extends GetxController {
             phone: otherOption.value ? phoneController.text : '',
           );
           persistLoginData(data: data, remember: isRemember.value);
-          
+
           // Also persist the email separately for payment flow (same as signup)
           String emailToStore = otherOption.value ? emailController.text : '';
           if (emailToStore.isNotEmpty) {
             GetStorage().write(StorageKeys.userEmail, emailToStore);
           }
-          
+
           // Check if user came from quote flow BEFORE navigating to main
           try {
-            final cameFromQuote = GetStorage().read(StorageKeys.quoteFlowFlag) == true;
+            final cameFromQuote =
+                GetStorage().read(StorageKeys.quoteFlowFlag) == true;
             if (cameFromQuote) {
+              // 🔹 Hydrate profile immediately so Paystack has a real email
+              final prof = await pibroRepository.getProfile();
+              if (prof.user.customerID != null &&
+                  prof.user.customerID!.isNotEmpty) {
+                // persistProfileData should write StorageKeys.profileData
+                persistProfileData(prof.user);
+
+                // also mirror email (defensive)
+                final e = (prof.user.customerEmail ?? '').trim();
+                if (e.isNotEmpty) {
+                  GetStorage().write(StorageKeys.userEmail, e);
+                }
+              }
+
+              // Continue the quote flow only after profile is ready
               await Get.find<GetQuoteController>().resumeAfterAuth();
-              return;
+              return; // don't navigate to main
             }
           } catch (_) {}
-          
+
           Get.offNamed(AppRoutes.main);
         }
         loading.value = false;

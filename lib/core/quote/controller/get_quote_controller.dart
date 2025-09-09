@@ -139,16 +139,31 @@ class GetQuoteController extends GetxController {
       final loggedIn = decryptData(StorageKeys.loginData) != null;
 
       // Stash quote draft so we can resume after auth
+      final startIso = (startDate.value ?? DateTime.now()).toIso8601String();
+      final endIso =
+          (endDate.value ?? DateTime.now().add(const Duration(days: 364)))
+              .toIso8601String();
+      final renewalIso =
+          (endDate.value ?? DateTime.now().add(const Duration(days: 364)))
+              .add(const Duration(days: 1))
+              .toIso8601String();
+
       final draft = {
         "businessClassID": selectedBusinessPolicy.value?.businessClassID,
         "businessClassName": selectedBusinessPolicy.value?.businessClassName,
         "riskTypeID": selectedRiskTypeID.value?.riskTypeID,
         "riskName": selectedRiskTypeID.value?.riskName,
-        "startDate": startDateController.text,
-        "endDate": endDateController.text,
-        "renewalDate": formatDate(
-          endDate.value!.add(const Duration(days: 1)).toIso8601String(),
-        ),
+
+        // ✅ Persist machine-friendly ISO dates
+        "startDate": startIso,
+        "endDate": endIso,
+        "renewalDate": renewalIso,
+
+        // (Optional) keep UI text for redisplay
+        "startDateText": startDateController.text,
+        "endDateText": endDateController.text,
+        "renewalDateText": formatDate(renewalIso),
+
         "items": items
             .map((it) => isMotorQuote(
                     selectedBusinessPolicy.value?.businessClassID ?? '')
@@ -191,8 +206,12 @@ class GetQuoteController extends GetxController {
       }
       final v = draft['preferredInsurer'] as Map?;
       final payload = ApiUtils.createQuote(
+        // product / risk type (ProductId)
         draft['riskName'] ?? '',
-        draft['businessClassName'] ?? '',
+        // businessClassID (canonical) -> stored into SupportRequestMethod
+        (draft['businessClassID'] ?? '').toString(),
+        // businessClassName (human friendly)
+        (draft['businessClassName'] ?? '').toString(),
         draft['startDate'] ?? '',
         draft['endDate'] ?? '',
         draft['renewalDate'] ?? '',
@@ -214,24 +233,25 @@ class GetQuoteController extends GetxController {
             message: 'Could not fetch enquiry', isSuccess: false);
         return;
       }
-      
+
       // Fix premium parsing from API response
       final premiumString = quote.supportResolution ?? '0';
       final sumInsuredString = quote.supportScreenShotURL ?? '0';
-      
+
       print('🔍 ENQUIRY: Raw premium from API: $premiumString');
       print('🔍 ENQUIRY: Raw sumInsured from API: $sumInsuredString');
-      
+
       final premium = double.tryParse(premiumString.replaceAll(',', '')) ?? 0.0;
-      final sumInsured = double.tryParse(sumInsuredString.replaceAll(',', '')) ?? 0.0;
-      
+      final sumInsured =
+          double.tryParse(sumInsuredString.replaceAll(',', '')) ?? 0.0;
+
       print('🔍 ENQUIRY: Parsed premium: $premium');
       print('🔍 ENQUIRY: Parsed sumInsured: $sumInsured');
 
       final enquiryData = {
         "caseId": caseId,
-        "premium": premium,  // Store as number, not string
-        "sumInsured": sumInsured,  // Store as number, not string
+        "premium": premium, // Store as number, not string
+        "sumInsured": sumInsured, // Store as number, not string
         "riskName": draft['riskName'],
         "businessClassName": draft['businessClassName'],
         "startDate": draft['startDate'],
@@ -240,7 +260,7 @@ class GetQuoteController extends GetxController {
         "preferredInsurer": draft['preferredInsurer'],
         "items": draft['items'],
       };
-      
+
       print('🔍 ENQUIRY: Storing enquiry data: $enquiryData');
       GetStorage().write(StorageKeys.lastEnquiry, enquiryData);
 

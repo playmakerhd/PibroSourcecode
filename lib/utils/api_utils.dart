@@ -1,11 +1,13 @@
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:intl/intl.dart';
 import 'package:pibro/constants/storage_keys.dart';
 import 'package:pibro/core/login/model/login_data.dart';
 import 'package:pibro/network/models/platform_user/platform_user.dart';
 import 'package:pibro/network/models/request/claim_request.dart';
 import 'package:pibro/network/models/request/client_note_request.dart';
 import 'package:pibro/network/models/request/create_receipt_request.dart';
+import 'package:pibro/network/models/request/update_enquiry_status_request.dart';
 import 'package:pibro/network/models/response/customer_policy_claims_response.dart';
 import 'package:pibro/network/models/response/customer_policy_response.dart';
 import 'package:pibro/network/models/response/quotes_response.dart';
@@ -390,7 +392,8 @@ class ApiUtils {
 
   static Map<String, dynamic> createQuote(
     String product,
-    String businessClass,
+    String businessClassID,
+    String businessClassName,
     String startDate,
     String endDate,
     String renewalDate,
@@ -401,6 +404,23 @@ class ApiUtils {
     LoginData loginData =
         LoginData.fromJson(convertToJsonStringQuotes(StorageKeys.loginData));
     dynamic userId = decryptData(StorageKeys.signupData);
+
+    // Format dates for human-readable display in SupportDescription
+    String formatPrettyDate(String dateStr) {
+      try {
+        final dt = DateTime.tryParse(dateStr);
+        if (dt != null) {
+          return DateFormat('MMM dd, yyyy').format(dt);
+        }
+      } catch (_) {}
+      return dateStr;
+    }
+
+    // Format dates for display, but keep originals for API fields
+    String prettyStartDate = formatPrettyDate(startDate);
+    String prettyEndDate = formatPrettyDate(endDate);
+    String prettyRenewalDate = formatPrettyDate(renewalDate);
+
     return {
       "CompanyID": "",
       "DivisionID": "",
@@ -409,18 +429,25 @@ class ApiUtils {
       "CustomerId": userId ?? loginData.customerID,
       "ProductId": product,
       "SupportDate": DateTime.now().toIso8601String(),
-      "SupportKeywords": "Quote, $businessClass, $product",
+      // Human readable keywords (use name) but persist canonical ID in SupportRequestMethod
+      "SupportKeywords": "Quote, $businessClassName, $product",
+      "SupportRequestMethod":
+          businessClassID, // <- BCID persisted here for backend
       "SupportDescription":
-          "Start Date: $startDate, End Date: $endDate, Renewal Date: $renewalDate, VendorID: $vendorID",
+          "Start Date: $prettyStartDate, End Date: $prettyEndDate, Renewal Date: $prettyRenewalDate, VendorID: $vendorID",
       "SupportScreenShotURL": "",
       "SupportEnquiryDate": startDate,
       "SupportEnquiryLapseDate": endDate,
+      "SupportType": "Quote",
+      "SupportStatus": "Pending",
       "SupportPriority": 64,
       "SupportApproved": true,
       "SupportApprovedBy": "Admin",
       "SupportAssigned": true,
-      "SupportType": "Quote",
-      "SupportStatus": "Pending",
+
+      // ✅ Persist vendor in structured fields as well as the description
+      "SupportAssignedTo": vendorID ?? "",
+      "SupportManager": vendorName ?? (vendorID ?? ""),
       "ContactName": loginData.customerID ?? "",
       "ContactPhone": loginData.phone ?? "",
       "ContactEmail": loginData.email ?? "",
@@ -481,6 +508,23 @@ class ApiUtils {
     dynamic userId = decryptData(StorageKeys.signupData);
     final itemList =
         policyData.itemsToInsure!.map((item) => item.toJson()).toList();
+
+    // Format dates for human-readable display in SupportDescription
+    String formatPrettyDate(String dateStr) {
+      try {
+        final dt = DateTime.tryParse(dateStr);
+        if (dt != null) {
+          return DateFormat('MMM dd, yyyy').format(dt);
+        }
+      } catch (_) {}
+      return dateStr;
+    }
+
+    // Format dates for display, but keep originals for API fields
+    String prettyStartDate = formatPrettyDate(policyData.policyStartDate ?? '');
+    String prettyEndDate = formatPrettyDate(policyData.policyEndDate ?? '');
+    String prettyRenewalDate = formatPrettyDate(policyData.renewalDate ?? '');
+
     return {
       "CompanyID": policyData.companyID,
       "DivisionID": policyData.divisionID,
@@ -492,7 +536,7 @@ class ApiUtils {
       "SupportKeywords":
           "Quote, ${policyData.businessClassID}, ${policyData.riskTypeID}",
       "SupportDescription":
-          "PolicyBrokerID: ${policyData.policyBrokerID}, New Start Date: ${policyData.policyStartDate}, New End Date: ${policyData.policyEndDate}, Renewal Date: ${policyData.renewalDate}",
+          "PolicyBrokerID: ${policyData.policyBrokerID}, New Start Date: ${prettyStartDate}, New End Date: ${prettyEndDate}, Renewal Date: ${prettyRenewalDate}",
       "SupportScreenShotURL": "",
       "SupportEnquiryDate": policyData.policyStartDate,
       "SupportEnquiryLapseDate": policyData.policyEndDate,
@@ -507,6 +551,13 @@ class ApiUtils {
       "ContactEmail": loginData.email ?? "",
       "QuoteRequest": true,
       "RequestDetails": itemList,
+    };
+  }
+
+  static Map<String, dynamic> updateEnquiryStatusPayload(
+      UpdateEnquiryStatusRequest req) {
+    return {
+      "CaseID": req.caseID, // exact casing required by backend
     };
   }
 }
@@ -525,19 +576,113 @@ List<String> getQuoteItemsData(RequestDetails details) {
 }
 
 List<String> getQuoteDates(QuoteInfo quote) {
-  RegExp datePattern = RegExp(r'([A-Za-z]{3} \d{1,2}, \d{4})');
-  Iterable<Match> matches = datePattern.allMatches(quote.supportDescription!);
+  String startDate = '';
+  String endDate = '';
+  String renewalDate = '';
 
-  List<String> dates = matches.map((match) => match.group(0)!).toList();
+  // Get the description where dates are stored
+  final description = quote.supportDescription ?? '';
 
-  String startDate = dates.isNotEmpty ? dates[0] : '';
-  String endDate = dates.length > 1 ? dates[1] : '';
-  String renewalDate = dates.length > 2 ? dates[2] : '';
-  return [
-    startDate,
-    endDate,
-    renewalDate,
-  ];
+  // First try to find dates with named fields
+  final startPattern =
+      RegExp(r'Start Date:?\s*([\w\d\s,.:T+-]+)', caseSensitive: false);
+  final endPattern =
+      RegExp(r'End Date:?\s*([\w\d\s,.:T+-]+)', caseSensitive: false);
+  final renewalPattern =
+      RegExp(r'Renewal Date:?\s*([\w\d\s,.:T+-]+)', caseSensitive: false);
+  final newStartPattern =
+      RegExp(r'New Start Date:?\s*([\w\d\s,.:T+-]+)', caseSensitive: false);
+  final newEndPattern =
+      RegExp(r'New End Date:?\s*([\w\d\s,.:T+-]+)', caseSensitive: false);
+
+  // Extract named dates if available
+  var match = newStartPattern.firstMatch(description) ??
+      startPattern.firstMatch(description);
+  if (match != null) {
+    startDate = match.group(1)?.trim() ?? '';
+    if (startDate.endsWith(','))
+      startDate = startDate.substring(0, startDate.length - 1).trim();
+  }
+
+  match = newEndPattern.firstMatch(description) ??
+      endPattern.firstMatch(description);
+  if (match != null) {
+    endDate = match.group(1)?.trim() ?? '';
+    if (endDate.endsWith(','))
+      endDate = endDate.substring(0, endDate.length - 1).trim();
+  }
+
+  match = renewalPattern.firstMatch(description);
+  if (match != null) {
+    renewalDate = match.group(1)?.trim() ?? '';
+    if (renewalDate.endsWith(','))
+      renewalDate = renewalDate.substring(0, renewalDate.length - 1).trim();
+  }
+
+  // If not found by name, look for date patterns in sequence (prioritize MMM dd, yyyy format)
+  if (startDate.isEmpty || endDate.isEmpty || renewalDate.isEmpty) {
+    // First try to find human-readable dates (Aug 28, 2025)
+    RegExp prettyDatePattern = RegExp(r'([A-Za-z]{3} \d{1,2}, \d{4})');
+    Iterable<Match> matches = prettyDatePattern.allMatches(description);
+    List<String> dates =
+        matches.map((match) => match.group(0)!.trim()).toList();
+
+    // If found, use them in sequence
+    if (dates.isNotEmpty) {
+      if (startDate.isEmpty) startDate = dates[0];
+      if (endDate.isEmpty && dates.length > 1) endDate = dates[1];
+      if (renewalDate.isEmpty && dates.length > 2) renewalDate = dates[2];
+    }
+
+    // If still not complete, try ISO dates as fallback
+    if (startDate.isEmpty || endDate.isEmpty || renewalDate.isEmpty) {
+      RegExp isoPattern =
+          RegExp(r'(\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}:\d{2}(?:\.\d{3})?)?)');
+      matches = isoPattern.allMatches(description);
+      dates = matches.map((match) => match.group(0)!.trim()).toList();
+
+      if (startDate.isEmpty && dates.isNotEmpty) startDate = dates[0];
+      if (endDate.isEmpty && dates.length > 1) endDate = dates[1];
+      if (renewalDate.isEmpty && dates.length > 2) renewalDate = dates[2];
+    }
+  }
+
+  // Use supportEnquiryDate/supportEnquiryLapseDate as fallbacks
+  if (startDate.isEmpty && quote.supportEnquiryDate?.isNotEmpty == true) {
+    startDate = quote.supportEnquiryDate!;
+  }
+
+  if (endDate.isEmpty && quote.supportEnquiryLapseDate?.isNotEmpty == true) {
+    endDate = quote.supportEnquiryLapseDate!;
+  }
+
+  // Calculate renewal date if still missing
+  if (renewalDate.isEmpty && endDate.isNotEmpty) {
+    try {
+      DateTime? dt;
+      // Try to parse the end date in various formats
+      if (endDate.contains(',')) {
+        try {
+          dt = DateFormat('MMM dd, yyyy').parse(endDate);
+        } catch (_) {}
+      }
+      if (dt == null) {
+        dt = DateTime.tryParse(endDate);
+      }
+
+      if (dt != null) {
+        // Return renewal in same format as end date
+        if (endDate.contains(',')) {
+          renewalDate = DateFormat('MMM dd, yyyy')
+              .format(dt.add(const Duration(days: 1)));
+        } else {
+          renewalDate = dt.add(const Duration(days: 1)).toIso8601String();
+        }
+      }
+    } catch (_) {}
+  }
+
+  return [startDate, endDate, renewalDate];
 }
 
 double getQuoteSum(QuoteInfo quote) {

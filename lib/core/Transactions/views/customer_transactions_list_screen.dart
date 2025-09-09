@@ -9,13 +9,22 @@ import 'package:pibro/shared/item_row_container.dart';
 import 'package:pibro/shared/title_value_row.dart';
 import 'package:pibro/utils/app_utils.dart';
 import 'package:pibro/utils/view_utils.dart';
+import 'package:pibro/constants/app_styles.dart';
+
+/// tiny helper to choose amount color from transaction number prefix
+Color amountColorFromTxn(BuildContext context, String? txnNo) {
+  final s = (txnNo ?? '').toUpperCase().trim();
+  if (s.startsWith('RN')) return Colors.red; // Receipt -> outflow
+  if (s.startsWith('DBN')) return Colors.green; // Debit Note -> inflow
+  return Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87;
+}
 
 class CustomerTransactionsListScreen extends StatelessWidget {
   const CustomerTransactionsListScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(CustomerTransactionsController());
+    final c = Get.put(CustomerTransactionsController());
     return Scaffold(
       backgroundColor: AppColors.white,
       body: Column(
@@ -24,37 +33,37 @@ class CustomerTransactionsListScreen extends StatelessWidget {
           const CommonHeader(title: 'Customer Transactions'),
           _DateFilter(
             onChanged: (from, to) {
-              controller.from.value = from;
-              controller.to.value = to;
-              controller.refreshList();
+              c.from.value = from;
+              c.to.value = to;
+              c.refreshList();
             },
           ),
           Expanded(
             child: Obx(() {
-              if (controller.loading.value && controller.items.isEmpty) {
+              if (c.loading.value && c.items.isEmpty) {
                 return Center(
                   child: LoadingAnimationWidget.waveDots(
                       color: AppColors.primaryColor, size: 50),
                 );
               }
-              if (controller.items.isEmpty) {
+              if (c.items.isEmpty) {
                 return const Center(child: Text('No transactions'));
               }
               return NotificationListener<ScrollNotification>(
                 onNotification: (sn) {
                   if (sn.metrics.pixels >= sn.metrics.maxScrollExtent - 200) {
-                    controller.loadMore();
+                    c.loadMore();
                   }
                   return false;
                 },
                 child: ListView.builder(
-                  padding: const EdgeInsets.only(top: 20, bottom: 50),
-                  itemCount: controller.items.length + 1,
+                  padding: const EdgeInsets.only(top: 20, bottom: 100),
+                  itemCount: c.items.length + 1,
                   itemBuilder: (_, i) {
-                    if (i == controller.items.length) {
-                      return controller.loading.value
+                    if (i == c.items.length) {
+                      return c.loading.value
                           ? Padding(
-                              padding: const EdgeInsets.all(8.0),
+                              padding: const EdgeInsets.all(16.0),
                               child: Center(
                                 child: LoadingAnimationWidget.waveDots(
                                     color: AppColors.primaryColor, size: 40),
@@ -62,7 +71,7 @@ class CustomerTransactionsListScreen extends StatelessWidget {
                             )
                           : const SizedBox.shrink();
                     }
-                    final t = controller.items[i];
+                    final t = c.items[i];
                     return GestureDetector(
                       onTap: () => Get.toNamed('/customer-transaction-detail',
                           arguments: t),
@@ -72,18 +81,57 @@ class CustomerTransactionsListScreen extends StatelessWidget {
                         child: Padding(
                           padding: EdgeInsets.symmetric(
                               horizontal: queryWidth(context) * 0.04,
-                              vertical: 10),
-                          child: Column(
+                              vertical: 4),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              TitleValueRow(
-                                  title: 'Transaction No',
-                                  value: t.transactionNumber ?? '-'),
-                              TitleValueRow(
-                                  title: 'Transaction Date',
-                                  value: formatDate(t.transactionDate ?? '')),
-                              TitleValueRow(
-                                  title: 'Amount',
-                                  value: (t.transactionAmount ?? 0).toString()),
+                              // LEFT: Transaction No + Date
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      t.transactionNumber ?? '-',
+                                      style: Styles.mediumTextStyle(size: 14),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      formatDate(t.transactionDate ?? ''),
+                                      style: Styles.regularTextStyle(
+                                          size: 12, color: AppColors.hintColor),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              // RIGHT: Amount + Currency (right-aligned)
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Text(
+                                      formatAmount((t.transactionAmount ?? 0)),
+                                      style: Styles.mediumTextStyle(
+                                        size: 14,
+                                        color: amountColorFromTxn(
+                                            context, t.transactionNumber),
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                      textAlign: TextAlign.right,
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      t.currencyID ?? '-',
+                                      style: Styles.regularTextStyle(
+                                          size: 14, color: AppColors.hintColor),
+                                      overflow: TextOverflow.ellipsis,
+                                      textAlign: TextAlign.right,
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -132,7 +180,7 @@ class _DateFilterState extends State<_DateFilter> {
                 widget.onChanged(from, to);
               },
               child: _DateBox(
-                  label: 'From:',
+                  label: 'From',
                   value:
                       from == null ? '' : formatDate(from!.toIso8601String())),
             ),
@@ -151,7 +199,7 @@ class _DateFilterState extends State<_DateFilter> {
                 widget.onChanged(from, to);
               },
               child: _DateBox(
-                  label: 'To:',
+                  label: 'To',
                   value: to == null ? '' : formatDate(to!.toIso8601String())),
             ),
           ),
@@ -169,7 +217,7 @@ class _DateBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ItemRowContainer(
-      noHeight: true ,
+      noHeight: true,
       noHorizontalMargin: true,
       child: Padding(
         padding: const EdgeInsets.all(8.0),

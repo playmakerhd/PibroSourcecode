@@ -649,7 +649,7 @@ class PolicyData implements PolicyDetails {
 
     map['PolicyUnderwriterID'] = policyUnderwriterID;
     map['PackagePololicyID'] = packagePololicyID;
-    map['EndorsementID'] = e;
+    map['EndorsementID'] = endorsementID;
     map['BrokerID'] = brokerID;
     map['BasicPremium'] = basicPremium;
     map['MasterPolicyDocumentName'] = masterPolicyDocumentName;

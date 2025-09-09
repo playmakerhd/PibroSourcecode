@@ -42,16 +42,17 @@ class Endpoints {
   static const String quotes = '/GetCustomerEnquiriesByCustomerID';
 
   // Transactions
-    // Transactions
+  // Transactions
   static const String getClientNotesByCustomer =
       '/GetInsuranceClientNotesByCustomerID';
   static const String getCustomerTransactions =
       '/GetCustomerTransactionsByCustomer';
 
-
   // Vendors / Enquiries
   static const String getVendors = '/GetVendorInformation';
   static const String getCustomerEnquiryById = '/GetCustomerEnquiriesByID';
+  static const String updateCustomerEnquiryStatus =
+      '/UpdateCustomerEnquiryStatus'; // NEW
 
   // About Section
   static const String getCompanyInfo = '/GetCompanyInformationByID';

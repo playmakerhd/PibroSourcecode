@@ -15,12 +15,30 @@ import 'package:pibro/network/models/request/client_note_request.dart';
 import 'package:pibro/network/models/request/create_poilcy_request.dart';
 import 'package:pibro/network/models/request/create_receipt_request.dart';
 import 'package:pibro/network/models/request/renew_policy_requesst.dart';
+import 'package:pibro/network/models/request/update_enquiry_status_request.dart';
 import 'package:pibro/network/repository/pibro_repository.dart';
 import 'package:pibro/utils/app_utils.dart';
 import 'package:pibro/utils/view_utils.dart';
 import 'package:pibro/utils/qlog.dart';
+import 'package:intl/intl.dart';
 
 class QuotePaymentController extends GetxController {
+  // Flexible date parser for ISO and pretty formats
+  DateTime _parseDateFlex(dynamic v, {DateTime? fallback}) {
+    if (v is DateTime) return v;
+    final s = (v ?? '').toString().trim();
+    if (s.isEmpty) return fallback ?? DateTime.now();
+    final iso = DateTime.tryParse(s);
+    if (iso != null) return iso;
+    try {
+      return DateFormat('MMM d, y').parse(s);
+    } catch (_) {}
+    try {
+      return DateFormat('MM-dd-yyyy').parse(s);
+    } catch (_) {}
+    return fallback ?? DateTime.now();
+  }
+
   final PibroRepository repo = PibroRepository(appApiProvider: ApiProvider());
   final RxBool paymentLoading = false.obs;
 
@@ -337,28 +355,46 @@ class QuotePaymentController extends GetxController {
         return;
       }
 
-      // Build items
+      // Build items (prefer explicit fields, then parse from Message, then fallback to Subject)
       final policyItems = <CreatePolicyItem>[];
       for (int i = 0; i < items.length; i++) {
         final m = items[i];
-        final desc = (m['Subject'] ??
-                m['subject'] ??
-                m['ItemsDescription'] ??
+        final msg = (m['Message'] ?? m['message'] ?? '').toString();
+
+        String desc = (m['ItemsDescription'] ??
                 m['itemsDescription'] ??
-                'Item ${i + 1}')
+                m['description'] ??
+                '')
             .toString();
+        if (desc.trim().isEmpty && msg.isNotEmpty) {
+          final md =
+              RegExp(r'Description\s*[:\-\s]*([^,]+)', caseSensitive: false)
+                  .firstMatch(msg);
+          if (md != null) desc = (md.group(1) ?? '').trim();
+        }
+        if (desc.trim().isEmpty) {
+          desc = (m['Subject'] ?? m['subject'] ?? 'Item ${i + 1}').toString();
+        }
+
+        String location =
+            (m['ItemLocation'] ?? m['itemLocation'] ?? m['location'] ?? '')
+                .toString();
+        if (location.trim().isEmpty && msg.isNotEmpty) {
+          final ml = RegExp(r'Location\s*[:\-\s]*([^,]+)', caseSensitive: false)
+              .firstMatch(msg);
+          if (ml != null) location = (ml.group(1) ?? '').trim();
+        }
+        if (location.trim().isEmpty) {
+          location = 'Not specified';
+        }
+
         final sum = double.tryParse(
               '${m['Value'] ?? m['value'] ?? m['SumInsured'] ?? m['sumInsured'] ?? 0}'
                   .toString()
                   .replaceAll(',', ''),
             ) ??
             0.0;
-        final location = (m['ItemLocation'] ?? 
-                m['itemLocation'] ?? 
-                m['location'] ?? 
-                'Not specified')
-            .toString();
-            
+
         policyItems.add(CreatePolicyItem(
           manualNumbering: '${i + 1}',
           itemsDescription: desc,
@@ -370,8 +406,35 @@ class QuotePaymentController extends GetxController {
         ));
       }
 
-      final vendorID = (preferredInsurer['vendorID'] ?? '').toString();
-      final vendorName = (preferredInsurer['vendorName'] ?? '').toString();
+      // Vendor (from context)
+      var vendorID = (preferredInsurer['vendorID'] ?? '').toString().trim();
+      var vendorName = (preferredInsurer['vendorName'] ?? '').toString().trim();
+
+      // Fallback to stored pick if still empty (defensive)
+      if (vendorID.isEmpty) {
+        final raw = GetStorage().read(StorageKeys.preferredInsurer);
+        if (raw is Map && (raw['vendorID']?.toString().isNotEmpty ?? false)) {
+          vendorID = raw['vendorID'].toString();
+          vendorName = (raw['vendorName'] ?? vendorID).toString();
+        } else if (raw is String) {
+          try {
+            final m = jsonDecode(raw);
+            if (m is Map && (m['vendorID']?.toString().isNotEmpty ?? false)) {
+              vendorID = m['vendorID'].toString();
+              vendorName = (m['vendorName'] ?? vendorID).toString();
+            }
+          } catch (_) {}
+        }
+      }
+
+      if (vendorID.isEmpty) {
+        paymentLoading.value = false;
+        showSnackbarMessage(
+          message: 'Please select a preferred insurer before payment.',
+          isWarning: true,
+        );
+        return;
+      }
 
       final req = CreatePolicyRequest(
         customerID: customerId,
@@ -384,7 +447,6 @@ class QuotePaymentController extends GetxController {
         policyEndDate: endDate.toIso8601String(),
         renewalDate: renewalDate.toIso8601String(),
         insurancePremiumMethodsID: 'BASIC',
-        
         items: policyItems,
         underwriters: [
           CreatePolicyUnderwriter(
@@ -485,6 +547,47 @@ class QuotePaymentController extends GetxController {
             message: postCn.messageResponse.message, isSuccess: false);
         return;
       }
+      // 🔄 NEW: Update enquiry status AFTER Debit Note has been posted
+      try {
+        // Try to get CaseID from the current quote context first
+        String caseId = '';
+        try {
+          final dynamic fromArgs = (Get.arguments as Map?) ?? {};
+          if (fromArgs is Map && fromArgs.containsKey('caseId')) {
+            caseId = (fromArgs['caseId'] ?? '').toString();
+          }
+        } catch (_) {}
+
+        if (caseId.isEmpty) {
+          // Fallback: read from persisted lastEnquiry
+          final raw = GetStorage().read(StorageKeys.lastEnquiry);
+          if (raw is Map) {
+            caseId = (raw['caseId'] ?? '').toString();
+          } else if (raw is String && raw.isNotEmpty) {
+            try {
+              final m = Map<String, dynamic>.from(jsonDecode(raw));
+              caseId = (m['caseId'] ?? '').toString();
+            } catch (_) {}
+          }
+        }
+
+        if (caseId.isNotEmpty) {
+          final upd = await repo.updateCustomerEnquiryStatus(
+            UpdateEnquiryStatusRequest(caseID: caseId),
+          );
+          QLog.d('ENQUIRY_STATUS', 'UpdateCustomerEnquiryStatus', {
+            'caseId': caseId,
+            'status': upd.messageResponse.status,
+            'message': upd.messageResponse.message,
+          });
+        } else {
+          QLog.d('ENQUIRY_STATUS',
+              'Skipped UpdateCustomerEnquiryStatus — CaseID not found');
+        }
+      } catch (e, st) {
+        // Never block user on this; just log
+        QLog.e('ENQUIRY_STATUS', e, st);
+      }
 
       paymentLoading.value = false;
 
@@ -525,17 +628,26 @@ class QuotePaymentController extends GetxController {
     }
     ctx = fromArgs.isNotEmpty ? fromArgs : fromStore;
 
-     // Add debug logging to trace premium value
+    // Add debug logging to trace premium value
     print('🔍 PAYMENT_CTX: Raw storage data: $raw');
     print('🔍 PAYMENT_CTX: Parsed context: $ctx');
     print('🔍 PAYMENT_CTX: Premium field value: ${ctx['premium']}');
 
-    startDate =
-        DateTime.tryParse('${ctx['startDate'] ?? ''}') ?? DateTime.now();
-    endDate = DateTime.tryParse('${ctx['endDate'] ?? ''}') ??
-        DateTime.now().add(const Duration(days: 364));
-    renewalDate = DateTime.tryParse('${ctx['renewalDate'] ?? ''}') ??
-        endDate.add(const Duration(days: 1));
+    startDate = _parseDateFlex(ctx['startDate']);
+    endDate = _parseDateFlex(
+      ctx['endDate'],
+      fallback: startDate.add(const Duration(days: 364)),
+    );
+    renewalDate = _parseDateFlex(
+      ctx['renewalDate'],
+      fallback: endDate.add(const Duration(days: 1)),
+    );
+
+    QLog.d('PAYMENT_DATES', 'Using dates', {
+      'start': startDate.toIso8601String(),
+      'end': endDate.toIso8601String(),
+      'renewal': renewalDate.toIso8601String(),
+    });
 
     // Fix premium parsing - handle both numeric and string values
     final premiumRaw = ctx['premium'] ?? ctx['Premium'] ?? 0;
@@ -644,16 +756,16 @@ class QuotePaymentController extends GetxController {
         .round();
   }
 
-  Map<String, dynamic> _toMap(dynamic raw) {
-    if (raw is Map) return Map<String, dynamic>.from(raw);
-    if (raw is String) {
-      try {
-        final m = jsonDecode(raw);
-        if (m is Map) return Map<String, dynamic>.from(m);
-      } catch (_) {}
-    }
-    return <String, dynamic>{};
-  }
+  // Map<String, dynamic> _toMap(dynamic raw) {
+  //   if (raw is Map) return Map<String, dynamic>.from(raw);
+  //   if (raw is String) {
+  //     try {
+  //       final m = jsonDecode(raw);
+  //       if (m is Map) return Map<String, dynamic>.from(m);
+  //     } catch (_) {}
+  //   }
+  //   return <String, dynamic>{};
+  // }
 
   // String _pickCustomerId(Map<String, dynamic> m) {
   //   for (final k in const [
@@ -698,8 +810,6 @@ class QuotePaymentController extends GetxController {
       return '';
     }
   }
-
-  
 
   String _extractServerMessage(Object e, {String? fallback}) {
     final fb = fallback ?? 'Something went wrong. Please try again.';

@@ -14,31 +14,53 @@ class PolicyList extends StatelessWidget {
     final HomeController controller = Get.put(HomeController());
     return Expanded(
       child: Obx(
-        () => ListView.builder(
-          itemCount: controller.displayPolicies.length,
-          padding: EdgeInsets.only(top: 30, bottom: 50),
-          itemBuilder: (BuildContext context, int index) {
-            final PolicyData policy = controller.displayPolicies[index];
-            return GestureDetector(
-              onTap: () => controller.navigateToPolicyDetails(policy),
-              child: ItemRowContainer(
-                isLarge: true,
-                child: ItemRowContainerColumn(
-                  id: policy.policyBrokerID,
-                  amount: 'N${formatAmount(policy.premiumAmount!)}',
-                  dates:
-                      '${formatDate(policy.policyStartDate!)} - ${formatDate(policy.policyEndDate!)}',
-                  type: policy.riskTypeID!,
-                  status:
-                      getPolicyStatus(policy.policyEndDate!, policy.approved)
-                          .status,
-                  color: getPolicyStatus(policy.policyEndDate!, policy.approved)
-                      .color,
+        () {
+          final items = controller.displayPolicies;
+
+          // Optional: show friendly empty state when there are no policies.
+          if (items.isEmpty) {
+            return SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(vertical: 60),
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Text(
+                    'No policies yet',
+                    style: TextStyle(fontSize: 16),
+                    textAlign: TextAlign.center,
+                  ),
                 ),
               ),
             );
-          },
-        ),
+          }
+
+          return ListView.builder(
+            itemCount: items.length,
+            padding: EdgeInsets.only(top: 30, bottom: 50),
+            itemBuilder: (BuildContext context, int index) {
+              final PolicyData policy = items[index];
+              return GestureDetector(
+                onTap: () => controller.navigateToPolicyDetails(policy),
+                child: ItemRowContainer(
+                  isLarge: true,
+                  child: ItemRowContainerColumn(
+                    id: policy.policyBrokerID,
+                    amount: 'N${formatAmount(policy.premiumAmount!)}',
+                    dates:
+                        '${formatDate(policy.policyStartDate!)} - ${formatDate(policy.policyEndDate!)}',
+                    type: policy.riskTypeID!,
+                    status:
+                        getPolicyStatus(policy.policyEndDate!, policy.approved)
+                            .status,
+                    color:
+                        getPolicyStatus(policy.policyEndDate!, policy.approved)
+                            .color,
+                  ),
+                ),
+              );
+            },
+          );
+        },
       ),
     );
   }

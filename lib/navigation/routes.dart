@@ -1,8 +1,6 @@
 import 'package:get/get.dart';
 import 'package:pibro/core/Transactions/views/customer_transaction_detail_screen.dart';
 import 'package:pibro/core/Transactions/views/customer_transactions_list_screen.dart';
-import 'package:pibro/core/Transactions/views/debit_note_detail_screen.dart';
-import 'package:pibro/core/Transactions/views/debit_note_list_screen.dart';
 import 'package:pibro/core/Transactions/views/transactions_hub_screen.dart';
 import 'package:pibro/core/claim/views/claim_details_screen.dart';
 import 'package:pibro/core/claim/views/claim_screen.dart';
@@ -160,14 +158,7 @@ class AppRoutes {
       name: transactionsHub,
       page: () => const TransactionsHubScreen(),
     ),
-    GetPage(
-      name: debitNoteList,
-      page: () => const DebitNoteListScreen(),
-    ),
-    GetPage(
-      name: debitNoteDetail,
-      page: () => const DebitNoteDetailScreen(),
-    ),
+    
     GetPage(
       name: customerTransactionsList,
       page: () => const CustomerTransactionsListScreen(),
