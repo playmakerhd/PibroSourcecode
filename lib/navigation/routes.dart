@@ -1,4 +1,9 @@
 import 'package:get/get.dart';
+import 'package:pibro/core/Transactions/views/customer_transaction_detail_screen.dart';
+import 'package:pibro/core/Transactions/views/customer_transactions_list_screen.dart';
+import 'package:pibro/core/Transactions/views/debit_note_detail_screen.dart';
+import 'package:pibro/core/Transactions/views/debit_note_list_screen.dart';
+import 'package:pibro/core/Transactions/views/transactions_hub_screen.dart';
 import 'package:pibro/core/claim/views/claim_details_screen.dart';
 import 'package:pibro/core/claim/views/claim_screen.dart';
 import 'package:pibro/core/claim/views/lodge_claims_screen.dart';
@@ -55,6 +60,15 @@ class AppRoutes {
   static const String paymentConfirmation = '/payment-confirmation';
   static const String quoteConfirmation = '/quote-confirmation';
   static const String quoteSummary = '/quote-summary';
+
+  // Transaction
+  static const String transactionsHub = '/transactions';
+  static const String debitNoteList = '/debit-notes';
+  static const String debitNoteDetail = '/debit-note-detail';
+  static const String customerTransactionsList = '/customer-transactions';
+  static const String customerTransactionDetail =
+      '/customer-transaction-detail';
+
 
   static const String claim = '/claim';
   static const String claimDetail = '/claim-detail';
@@ -142,6 +156,27 @@ class AppRoutes {
       name: getQuote,
       page: () => const GetQuoteScreen(),
     ),
+        GetPage(
+      name: transactionsHub,
+      page: () => const TransactionsHubScreen(),
+    ),
+    GetPage(
+      name: debitNoteList,
+      page: () => const DebitNoteListScreen(),
+    ),
+    GetPage(
+      name: debitNoteDetail,
+      page: () => const DebitNoteDetailScreen(),
+    ),
+    GetPage(
+      name: customerTransactionsList,
+      page: () => const CustomerTransactionsListScreen(),
+    ),
+    GetPage(
+      name: customerTransactionDetail,
+      page: () => const CustomerTransactionDetailScreen(),
+    ),
+
     GetPage(
       name: claim,
       page: () => const ClaimScreen(),

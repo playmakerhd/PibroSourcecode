@@ -1,6 +1,9 @@
 import 'dart:async';
 
+import 'package:get_storage/get_storage.dart';
+import 'package:pibro/constants/storage_keys.dart';
 import 'package:pibro/network/api/api_provider.dart';
+import 'package:pibro/network/models/platform_user/platform_user.dart';
 import 'package:pibro/network/models/request/auth_request.dart';
 import 'package:pibro/network/models/request/change_password_request.dart';
 import 'package:pibro/network/models/request/claim_request.dart';
@@ -14,6 +17,8 @@ import 'package:pibro/network/models/response/company_data_response.dart';
 import 'package:pibro/network/models/response/company_info_response.dart';
 import 'package:pibro/network/models/response/customer_policy_claims_response.dart';
 import 'package:pibro/network/models/response/customer_policy_response.dart';
+import 'package:pibro/network/models/response/customer_transactions_response.dart';
+import 'package:pibro/network/models/response/debit_note_list_response.dart';
 import 'package:pibro/network/models/response/insurance_risk_type_response.dart';
 import 'package:pibro/network/models/response/message_response.dart';
 import 'package:pibro/network/models/response/payment_init_response.dart';
@@ -152,4 +157,26 @@ class PibroRepository {
 
   Future<CustomMessageResponse> submitClaim(String body) async =>
       appApiProvider.callSubmitClaim(body);
+
+        Future<DebitNoteListResponse> getClientNotesByCustomer() =>
+      appApiProvider.callGetClientNotesByCustomer();
+
+  Future<CustomerTransactionsResponse> getCustomerTransactions({
+    required int page,
+    required int size,
+    required String periodFromIso,
+    required String periodToIso,
+  }) async {
+    final user =
+        PlatformUser.fromJson(GetStorage().read(StorageKeys.profileData) ?? {});
+    return appApiProvider.callGetCustomerTransactions(
+      customerID: user.customerID ?? '',
+      pageNum: page,
+      size: size,
+      sortDir: 'desc',
+      periodFrom: periodFromIso,
+      periodTo: periodToIso,
+    );
+  }
+
 }

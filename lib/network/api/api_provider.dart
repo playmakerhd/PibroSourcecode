@@ -33,6 +33,9 @@ import 'package:pibro/network/models/response/vendor_response.dart';
 import 'package:pibro/network/models/response/message_response.dart'; // CustomMessageResponse
 import 'package:pibro/network/models/response/quotes_response.dart';   // QuoteInfo/QuoteByIdResponse
  import 'package:pibro/network/models/response/quote_by_id_response.dart';
+ import 'package:pibro/network/models/response/debit_note_list_response.dart';
+import 'package:pibro/network/models/response/customer_transactions_response.dart';
+
 
 import 'package:pibro/utils/api_utils.dart';
 import 'package:pibro/utils/app_utils.dart';
@@ -112,6 +115,32 @@ class ApiProvider extends BaseProvider {
     final responseData = await makeGetCall(Uri.parse(endpoint), false);
     return CustomerPolicyResponse(responseData!);
   }
+
+    Future<DebitNoteListResponse> callGetClientNotesByCustomer() async {
+    final data =
+        PlatformUser.fromJson(GetStorage().read(StorageKeys.profileData) ?? {});
+    final endpoint =
+        '$_baseApiPath${Endpoints.getClientNotesByCustomer}/${data.customerID}/$_acessToken';
+    final responseData = await makeGetCall(Uri.parse(endpoint), false);
+    return DebitNoteListResponse(responseData!);
+  }
+
+  Future<CustomerTransactionsResponse> callGetCustomerTransactions({
+    required String customerID,
+    required int pageNum,
+    required int size,
+    String sortDir = 'desc',
+    required String periodFrom,
+    required String periodTo,
+  }) async {
+    final endpoint =
+        '$_baseApiPath${Endpoints.getCustomerTransactions}/$_acessToken'
+        '?CustomerID=$customerID&PageNum=$pageNum&Size=$size&sortDir=$sortDir'
+        '&periodFrom=$periodFrom&periodTo=$periodTo';
+    final responseData = await makeGetCall(Uri.parse(endpoint), false);
+    return CustomerTransactionsResponse(responseData!);
+  }
+
 
   Future<QuotesResponse> callGetQuotes() async {
     // PlatformUser data = PlatformUser.fromJson(

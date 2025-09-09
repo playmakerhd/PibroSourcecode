@@ -67,17 +67,21 @@ class QuoteSummaryScreen extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      PolicyButton(
-                        text: 'Make Payment',
-                        onPressed: () async {
-                          final qp = Get.isRegistered<QuotePaymentController>()
-                              ? Get.find<QuotePaymentController>()
-                              : Get.put(QuotePaymentController());
-                          await qp.beginPayment();
-                        },
-                        width: 160,
-                        bgColor: AppColors.primaryColor,
-                      ),
+                      Obx(() {
+                        final qp = Get.isRegistered<QuotePaymentController>()
+                            ? Get.find<QuotePaymentController>()
+                            : Get.put(QuotePaymentController());
+                        return PolicyButton(
+                          text: 'Make Payment',
+                          onPressed: () async {
+                            await qp.beginPayment();
+                          },
+                          width: 160,
+                          bgColor: AppColors.primaryColor,
+                          loading:
+                              qp.paymentLoading.value, // 👈 button-level loader
+                        );
+                      }),
                       const SizedBox(width: 12),
                       PolicyButton(
                         text: 'Cancel',

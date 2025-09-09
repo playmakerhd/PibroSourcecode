@@ -655,20 +655,20 @@ class QuotePaymentController extends GetxController {
     return <String, dynamic>{};
   }
 
-  String _pickCustomerId(Map<String, dynamic> m) {
-    for (final k in const [
-      'customerID',
-      'CustomerID',
-      'customerId',
-      'CustomerId',
-      'username',
-      'Username'
-    ]) {
-      final v = m[k];
-      if (v != null && v.toString().trim().isNotEmpty) return v.toString();
-    }
-    return '';
-  }
+  // String _pickCustomerId(Map<String, dynamic> m) {
+  //   for (final k in const [
+  //     'customerID',
+  //     'CustomerID',
+  //     'customerId',
+  //     'CustomerId',
+  //     'username',
+  //     'Username'
+  //   ]) {
+  //     final v = m[k];
+  //     if (v != null && v.toString().trim().isNotEmpty) return v.toString();
+  //   }
+  //   return '';
+  // }
 
   String _extractCustomerId() {
     print('🔍 EXTRACT_CUSTOMER_ID: Starting customer ID extraction');
@@ -698,6 +698,8 @@ class QuotePaymentController extends GetxController {
       return '';
     }
   }
+
+  
 
   String _extractServerMessage(Object e, {String? fallback}) {
     final fb = fallback ?? 'Something went wrong. Please try again.';

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:pibro/constants/storage_keys.dart';
@@ -12,7 +14,7 @@ import 'package:pibro/utils/pibro_logger.dart';
 import 'package:pibro/utils/view_utils.dart';
 
 class QuoteSummaryController extends GetxController {
-late final RenewPolicyController renew;
+  late final RenewPolicyController renew;
   // UI observables
   final RxString insuranceClass = ''.obs;
   final RxString product = ''.obs;
@@ -27,86 +29,112 @@ late final RenewPolicyController renew;
   @override
   void onInit() {
     super.onInit();
-if (Get.isRegistered<RenewPolicyController>()) {
+    if (Get.isRegistered<RenewPolicyController>()) {
       renew = Get.find<RenewPolicyController>();
     } else {
       renew = Get.put(RenewPolicyController());
     }
-    _hydrateFromStorage();
   }
 
-  void _hydrateFromStorage() {
-    final e = GetStorage().read(StorageKeys.lastEnquiry) as Map? ?? {};
-    enquiry = Map<String, dynamic>.from(e);
-
-    insuranceClass.value = '${e['businessClassName'] ?? ''}';
-    product.value = '${e['riskName'] ?? ''}';
-    startDateText.value = '${e['startDate'] ?? ''}';
-    endDateText.value = '${e['endDate'] ?? ''}';
-    renewalDateText.value = '${e['renewalDate'] ?? ''}';
-
-    final sum = (e['sumInsured'] ?? 0).toString();
-    final prem = (e['premium'] ?? 0).toString();
-
-    sumInsuredText.value =
-        formatAmount(double.tryParse(sum.replaceAll(',', '')) ?? 0);
-    premiumText.value =
-        formatAmount(double.tryParse(prem.replaceAll(',', '')) ?? 0);
-
-    // Switch renew controller into "quote mode"
-    renew.isQuoteFlow = true;
-
-    // premium used by client note creation later
-    final premNum = double.tryParse(prem.replaceAll(',', '')) ?? 0;
-    renew.policyPremiumAmount = premNum.toStringAsFixed(2);
-
-    // set dates for debit note flow (avoid new helpers, mirror renew controller style)
-    renew.startDate.value =
-        DateTime.tryParse(e['startDate']?.toString() ?? '') ?? DateTime.now();
-    renew.endDate.value = DateTime.tryParse(e['endDate']?.toString() ?? '') ??
-        DateTime.now().add(const Duration(days: 364));
+  Map<String, dynamic> _readProfileMap() {
+    final raw = GetStorage().read(StorageKeys.profileData);
+    if (raw == null) return <String, dynamic>{};
+    if (raw is Map<String, dynamic>) return raw;
+    if (raw is String) {
+      try {
+        final m = jsonDecode(raw);
+        if (m is Map) return Map<String, dynamic>.from(m);
+      } catch (_) {}
+    }
+    return <String, dynamic>{};
   }
 
-  /// Trigger Paystack via RenewPolicyController
+  Map<String, dynamic> _readLoginMap() {
+    try {
+      final m = convertToJsonStringQuotes(StorageKeys.loginData);
+      return m is Map<String, dynamic> ? m : <String, dynamic>{};
+    } catch (_) {
+      return <String, dynamic>{};
+    }
+  }
+
+  String _firstNonEmpty(Iterable<dynamic> vals) {
+    for (final v in vals) {
+      final s = (v ?? '').toString().trim();
+      if (s.isNotEmpty) return s;
+    }
+    return '';
+  }
+
+  /// ✅ Robust CustomerID extractor
+  String extractCustomerId() {
+    try {
+      final profileMap = _readProfileMap();
+      if (profileMap.isNotEmpty) {
+        final user = PlatformUser.fromJson(profileMap);
+        final id = (user.customerID ?? '').trim();
+        if (id.isNotEmpty) return id;
+      }
+
+      final loginMap = _readLoginMap();
+      final id = _firstNonEmpty([
+        loginMap['customerID'],
+        loginMap['CustomerID'],
+        loginMap['customerId'],
+        loginMap['CustomerId'],
+        loginMap['username'],
+        loginMap['Username'],
+      ]);
+      if (id.isNotEmpty) return id;
+
+      return '';
+    } catch (e, st) {
+      print('❌ extractCustomerId error: $e\n$st');
+      return '';
+    }
+  }
+
+  /// ✅ Robust CustomerEmail extractor
+  String extractCustomerEmail() {
+    try {
+      final profileMap = _readProfileMap();
+      if (profileMap.isNotEmpty) {
+        final user = PlatformUser.fromJson(profileMap);
+        final email = (user.customerEmail ?? '').trim();
+        if (email.isNotEmpty) return email;
+        if (user.customerContacts != null) {
+          for (final c in user.customerContacts!) {
+            final em = (c.contactEmail ?? '').trim();
+            if (em.isNotEmpty) return em;
+          }
+        }
+      }
+
+      final loginMap = _readLoginMap();
+      final email = _firstNonEmpty([
+        loginMap['email'],
+        loginMap['Email'],
+      ]);
+      if (email.isNotEmpty) return email;
+
+      final stored = GetStorage().read(StorageKeys.userEmail);
+      if (stored is String && stored.trim().isNotEmpty) return stored.trim();
+
+      return '';
+    } catch (e, st) {
+      print('❌ extractCustomerEmail error: $e\n$st');
+      return '';
+    }
+  }
+
   Future<void> beginPayment() async {
     try {
-      // Build/ensure lastEnquiry is already persisted as you do now
       await Get.put(QuotePaymentController()).beginPayment();
     } catch (err, st) {
-     // PibroLogger.logResponse('beginPayment error: $err\n$st');
       showSnackbarMessage(
         message: AppStrings.genericErrorMessage.tr,
         isSuccess: false,
       );
-    }
-  }
-
-  String extractCustomerId() {
-    print('🔍 EXTRACT_CUSTOMER_ID: Starting customer ID extraction');
-
-    try {
-      final profileData = GetStorage().read(StorageKeys.profileData);
-      print('📱 EXTRACT_CUSTOMER_ID: Raw profile data: $profileData');
-
-      if (profileData == null) {
-        print('❌ EXTRACT_CUSTOMER_ID: Profile data is null');
-        return '';
-      }
-
-      final user = PlatformUser.fromJson(profileData);
-      print('✅ EXTRACT_CUSTOMER_ID: User parsed successfully');
-      print('   Customer ID: ${user.customerID}');
-      print('   Customer Name: ${user.customerName}');
-      print('   Customer Full Name: ${user.customerFullName}');
-      print('   Customer First Name: ${user.customerFirstName}');
-      print('   Customer Last Name: ${user.customerLastName}');
-      print('   Customer Email: ${user.customerEmail}');
-
-      return user.customerID ?? '';
-    } catch (e, st) {
-      print('❌ EXTRACT_CUSTOMER_ID: Error extracting customer ID: $e');
-      print('📍 STACK TRACE: $st');
-      return '';
     }
   }
 }

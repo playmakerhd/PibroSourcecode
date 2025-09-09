@@ -47,12 +47,12 @@ class PolicyDetailsScreen extends StatelessWidget {
                     onPressed: controller.navigateToRenewPolicyScreen,
                     isExpanded: true,
                   ),
-                  // SizedBox(width: 10),
-                  // PolicyButton(
-                  //   text: AppStrings.endorse.tr,
-                  //   onPressed: () {},
-                  //   isExpanded: true,
-                  // ),
+                  SizedBox(width: 10),
+                  PolicyButton(
+                    text: AppStrings.endorse.tr,
+                    onPressed: () {},
+                    isExpanded: true,
+                  ),
                   SizedBox(width: 10),
                   PolicyButton(
                     text: AppStrings.claim.tr,
