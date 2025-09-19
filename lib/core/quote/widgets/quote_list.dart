@@ -30,18 +30,29 @@ class QuoteList extends StatelessWidget {
                     padding: EdgeInsets.only(top: 30, bottom: 20),
                     itemBuilder: (BuildContext context, int index) {
                       final QuoteInfo quote = controller.quotes[index];
+                      // Determine status color: Completed -> green, Pending -> orange (yellow), otherwise default orange
+                      final String statusText =
+                          (quote.supportStatus ?? '').toString();
+                      Color statusColor = Colors.orange;
+                      if (statusText.toLowerCase() == 'completed') {
+                        statusColor = AppColors.activeGreen;
+                      } else if (statusText.toLowerCase() == 'pending') {
+                        statusColor =
+                            Colors.orange;
+                      }
+
                       return GestureDetector(
                         onTap: () => controller.navigateToQuoteDetails(quote),
                         child: ItemRowContainer(
                           isLarge: true,
                           child: ItemRowContainerColumn(
                             id: quote.caseId!,
-                            amount: 'N${getQuoteSum(quote).toString()}',
+                            amount: 'N${formatAmount(getQuoteSum(quote)).toString()}',
                             dates: formatDate(quote.supportDate!),
                             type: quote.productId!,
-                            // To Do: Color and Status
-                            status: quote.supportStatus ?? '',
-                            color: Colors.orange,
+                            // status text and color
+                            status: statusText,
+                            color: statusColor,
                           ),
                         ),
                       );

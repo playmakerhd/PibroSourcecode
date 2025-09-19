@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pibro/constants/app_colors.dart';
-import 'package:pibro/internalization/app_strings.dart';
 import 'package:pibro/navigation/routes.dart';
 import 'package:pibro/shared/common_header.dart';
-import 'package:pibro/shared/widget/large_line.dart';
 import 'package:pibro/shared/widget/rotated_container.dart';
 import 'package:pibro/utils/view_utils.dart';
 import 'package:pibro/constants/app_images.dart';
@@ -23,10 +21,7 @@ class TransactionsHubScreen extends StatelessWidget {
           padding: EdgeInsets.zero,
           children: [
             CommonHeader(title: 'Transactions'),
-            
-            
             SizedBox(height: 200),
-           
             Padding(
               padding:
                   EdgeInsets.symmetric(horizontal: queryWidth(context) * 0.1),

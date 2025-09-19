@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'base_response.dart';
 
 class CustomerPolicyResponse extends CustomBaseResponse {

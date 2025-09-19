@@ -22,7 +22,7 @@ class ClaimList extends StatelessWidget {
                 color: AppColors.primaryColor,
                 size: 100,
               )
-            : controller.policyClaims.isEmpty
+            : controller.policyClaims.isEmpty 
                 ? EmptyData()
                 : ListView.builder(
                     itemCount: controller.policyClaims.length,

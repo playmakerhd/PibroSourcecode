@@ -31,7 +31,7 @@ class ItemRowContainer extends StatelessWidget {
               : isPolicyRenew || isLarge
                   ? 80
                   : 40,
-      width: queryWidth(context),
+      width: double.infinity,
       margin: EdgeInsets.symmetric(
         vertical: isLarge ? 10 : 7,
         horizontal: noHorizontalMargin

@@ -36,24 +36,27 @@ class RenewPolicyScreen extends StatelessWidget {
                 children: [
                   DetailRow(
                     title: '${AppStrings.policyNumber.tr}:',
-                    value: controller.policy.value!.policyBrokerID,
+                    value: controller.policy.value?.policyBrokerID ?? '-',
                   ),
                   DetailRow(
                     title: '${AppStrings.insuranceClass.tr}:',
-                    value: controller.policy.value!.businessClassID!,
+                    value: controller.policy.value?.businessClassID ?? '-',
                   ),
                   DetailRow(
                     title: '${AppStrings.product.tr}:',
-                    value: controller.policy.value!.riskTypeID!,
+                    value: controller.policy.value?.riskTypeID ?? '-',
                   ),
                   DetailRow(
                     title: '${AppStrings.oldStartDate.tr}:',
-                    value:
-                        formatDate(controller.policy.value!.policyStartDate!),
+                    value: (controller.policy.value?.policyStartDate != null)
+                        ? formatDate(controller.policy.value!.policyStartDate!)
+                        : '-',
                   ),
                   DetailRow(
                     title: '${AppStrings.oldEndDate.tr}:',
-                    value: formatDate(controller.policy.value!.policyEndDate!),
+                    value: (controller.policy.value?.policyEndDate != null)
+                        ? formatDate(controller.policy.value!.policyEndDate!)
+                        : '-',
                   ),
                 ],
               ),

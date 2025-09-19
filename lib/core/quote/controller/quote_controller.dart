@@ -8,9 +8,7 @@ import 'package:pibro/navigation/routes.dart';
 import 'package:pibro/network/api/api_provider.dart';
 import 'package:pibro/network/models/response/quotes_response.dart';
 import 'package:pibro/network/repository/pibro_repository.dart';
-import 'package:pibro/utils/api_utils.dart' as api;
 import 'package:pibro/utils/api_utils.dart';
-import 'package:pibro/utils/app_utils.dart';
 import 'package:pibro/utils/view_utils.dart';
 
 class QuoteController extends GetxController {
@@ -127,11 +125,19 @@ class QuoteController extends GetxController {
         'sumInsured': val,
       };
       if (loc.isNotEmpty) itemMap['itemLocation'] = loc;
+
+      // *** CRITICAL: Include document/attachment data from screenShotURL ***
+      if (it.screenShotURL?.isNotEmpty ?? false) {
+        itemMap['screenShotURL'] = it.screenShotURL!;
+        print(
+            '📎 Including document for item: $descTxt -> ${it.screenShotURL!.length} chars');
+      }
+
       items.add(itemMap);
     }
 
     // Dates: fall back safely if API didn’t set them
-    final dates = api.getQuoteDates(q); // [start, end, renewal] as strings
+    final dates = getQuoteDates(q); // [start, end, renewal] as strings
     String startStr = dates.isNotEmpty ? dates[0] : '';
     String endStr = dates.length > 1 ? dates[1] : '';
     String renewalStr = dates.length > 2 ? dates[2] : '';
@@ -160,7 +166,7 @@ class QuoteController extends GetxController {
       'premium': premium,
       'sumInsured': sumInsured,
       'riskName': q.productId,
-      'businessClassName': (api.getQuoteClass(q) ?? q.supportType ?? ''),
+      'businessClassName': (getQuoteClass(q) ?? q.supportType ?? ''),
       // canonical BCID for later create-policy flows
       'businessClassID': businessClassId,
       'startDate': startStr,
@@ -171,8 +177,31 @@ class QuoteController extends GetxController {
       'riskTypeID': q.productId?.toString(),
     };
 
-    // Persist & navigate
-    GetStorage().write(StorageKeys.lastEnquiry, ctx);
+    // Persist & navigate - but only if this is NOT from a fresh quote submission
+    // Check if we have fresh quote data from get_quote_controller first
+    final existingEnquiry = GetStorage().read(StorageKeys.lastEnquiry) as Map?;
+    final hasFreshQuoteData =
+        existingEnquiry != null && existingEnquiry['_source'] == 'fresh_quote';
+
+    // Only overwrite if we don't have fresh quote data, OR if the fresh quote
+    // data lacks the riskTypeID from the selected quote (ensure consistency)
+    if (!hasFreshQuoteData ||
+        (hasFreshQuoteData &&
+            (existingEnquiry['riskTypeID']?.toString().isEmpty ?? true) &&
+            ctx['riskTypeID']?.toString().isNotEmpty == true)) {
+      print(
+          "💾 Writing quote data to storage (no fresh quote detected or updating riskTypeID)");
+      print("📋 Items being stored: ${items.length} items");
+      for (int i = 0; i < items.length; i++) {
+        final item = items[i];
+        print(
+            "   Item $i: ${item['itemsDescription']} - Has document: ${item.containsKey('screenShotURL')}");
+      }
+      GetStorage().write(StorageKeys.lastEnquiry, ctx);
+    } else {
+      print(
+          "🚫 Skipping storage write - fresh quote data present with valid riskTypeID");
+    }
     Get.toNamed(AppRoutes.quoteSummary);
   }
 

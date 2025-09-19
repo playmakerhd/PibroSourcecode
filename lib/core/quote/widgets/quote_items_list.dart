@@ -11,11 +11,13 @@ class QuoteItemsList extends StatelessWidget {
     required this.list,
     required this.edit,
     this.delete,
+    this.view,
   });
 
   final List<ItemData> list;
   final Function(ItemData item) edit;
   final Function(ItemData item)? delete;
+  final Function(ItemData item)? view;
 
   @override
   Widget build(BuildContext context) {
@@ -72,6 +74,12 @@ class QuoteItemsList extends StatelessWidget {
                   child: Column(
                     spacing: 15,
                     children: [
+                      if (view != null &&
+                          (item.screenShotURL?.isNotEmpty ?? false))
+                        GestureDetector(
+                          onTap: () => view!(item),
+                          child: const Icon(Icons.remove_red_eye, size: 20),
+                        ),
                       GestureDetector(
                         onTap: () => edit(item),
                         child: Icon(

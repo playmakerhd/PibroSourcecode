@@ -6,6 +6,7 @@ import 'package:pibro/internalization/app_strings.dart';
 import 'package:pibro/network/models/response/quotes_response.dart';
 import 'package:pibro/network/models/response/quote_info_extensions.dart';
 import 'package:pibro/shared/item_row.dart';
+import 'package:pibro/constants/app_colors.dart';
 import 'package:pibro/utils/api_utils.dart';
 import 'package:pibro/utils/view_utils.dart';
 
@@ -68,12 +69,22 @@ class QuoteDetailsWidget extends StatelessWidget {
             title: AppStrings.sumInsured.tr,
             value: getQuoteSum(data).toString(),
           ),
-          ItemRow(
-            title: AppStrings.status.tr,
-            // To Do: Color and Status
-            value: data.supportStatus ?? '',
-            valueColor: Colors.orange,
-          ),
+          // Status with color: Completed -> green, Pending -> orange
+          Builder(builder: (ctx) {
+            final String statusText = (data.supportStatus ?? '').toString();
+            Color statusColor = Colors.orange;
+            if (statusText.toLowerCase() == 'completed') {
+              statusColor = AppColors.activeGreen;
+            } else if (statusText.toLowerCase() == 'pending') {
+              statusColor = Colors.orange;
+            }
+
+            return ItemRow(
+              title: AppStrings.status.tr,
+              value: statusText,
+              valueColor: statusColor,
+            );
+          }),
           ItemRow(
             title: AppStrings.itemInsured.tr,
             value: AppStrings.view.tr,

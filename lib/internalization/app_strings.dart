@@ -77,7 +77,7 @@ class AppStrings extends Translations {
   static const String policyDetail = 'policyDetail';
   static const String quoteDetail = 'quoteDetail';
   static const String policyNumber = 'policyNumber';
-  static const String policyConfirmation = 'policyConfirmation';
+  static const String policySummary = 'policySummary';
   static const String insuranceClass = 'insuranceClass';
   static const String product = 'product';
   static const String premiumDue = 'premiumDue';

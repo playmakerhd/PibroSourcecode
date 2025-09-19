@@ -2,9 +2,11 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:get/get.dart';
+import 'package:printing/printing.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pibro/constants/app_colors.dart';
 import 'package:pibro/constants/app_constants.dart';
@@ -18,7 +20,6 @@ import 'package:pibro/internalization/app_strings.dart';
 import 'package:pibro/navigation/routes.dart';
 import 'package:pibro/network/api/api_provider.dart';
 import 'package:pibro/network/models/request/client_note_request.dart';
-import 'package:pibro/network/models/request/create_poilcy_request.dart';
 import 'package:pibro/network/models/request/create_receipt_request.dart';
 import 'package:pibro/network/models/request/get_premium_amount_request.dart';
 import 'package:pibro/network/models/request/renew_policy_requesst.dart';
@@ -29,7 +30,6 @@ import 'package:pibro/network/repository/pibro_repository.dart';
 import 'package:pibro/shared/custom_input/custom_input.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:pibro/constants/storage_keys.dart';
-import 'package:pibro/core/quote/controller/get_quote_controller.dart';
 
 import 'package:pibro/utils/api_utils.dart';
 import 'package:pibro/utils/app_utils.dart';
@@ -59,6 +59,8 @@ class RenewPolicyController extends GetxController {
   final TextEditingController renewalDateController = TextEditingController();
   final GlobalKey<FormState> addItemFormKey = GlobalKey<FormState>();
   final GlobalKey<FormState> renewFormKey = GlobalKey<FormState>();
+  RxBool isPickingFile = false.obs;
+  RxString selectedImage = ''.obs;
 
   final TextEditingController regNoController = TextEditingController();
   final TextEditingController chasisIdController = TextEditingController();
@@ -323,8 +325,6 @@ class RenewPolicyController extends GetxController {
     }
   }
 
-
-
   void addOrUpdateItem({ItemToInsure? data, required bool isNew}) {
     if (addItemFormKey.currentState!.validate()) {
       if (data != null) {
@@ -332,6 +332,9 @@ class RenewPolicyController extends GetxController {
         data.itemsDescription = descriptionController.text;
         data.sumInsured = double.parse(valueController.text);
         data.itemLocation = locationController.text;
+        if (selectedImage.value.isNotEmpty) {
+          data.policyItems = selectedImage.value; // raw base64
+        }
         addData(data, isNew);
       } else {
         addData(
@@ -348,7 +351,7 @@ class RenewPolicyController extends GetxController {
             sumInsured: double.parse(valueController.text),
             itemLocation: locationController.text,
             sectionTypeID: 'SECTIONA', // static per contract
-            policyItems: '',
+            policyItems: selectedImage.value, // raw base64 (may be empty)
           ),
           isNew,
         );
@@ -386,6 +389,36 @@ class RenewPolicyController extends GetxController {
     valueController.clear();
     locationController.clear();
     descriptionController.clear();
+    selectedImage.value = '';
+  }
+
+  void pickImage() async {
+    if (isPickingFile.value) return;
+    isPickingFile.value = true;
+    try {
+      const int maxBytes = 20 * 1024 * 1024; // 20MB
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['jpg', 'jpeg', 'png', 'pdf'],
+        withData: true,
+      );
+      if (result != null && result.files.single.bytes != null) {
+        final f = result.files.single;
+        if (f.size > maxBytes) {
+          showSnackbarMessage(
+              message: 'Max file size is 5MB', isSuccess: false);
+          selectedImage.value = '';
+        } else {
+          selectedImage.value = base64Encode(f.bytes!); // raw base64
+        }
+      } else {
+        selectedImage.value = '';
+      }
+    } catch (e) {
+      debugPrint("Error picking file: $e");
+    } finally {
+      isPickingFile.value = false;
+    }
   }
 
   _closeSheet() {
@@ -394,9 +427,87 @@ class RenewPolicyController extends GetxController {
   }
 
   void populateInputFields(ItemToInsure data) {
-    descriptionController.text = data.itemsDescription!;
-    valueController.text = data.sumInsured.toString();
-    locationController.text = data.itemLocation!;
+    descriptionController.text = data.itemsDescription ?? '';
+    valueController.text = (data.sumInsured ?? 0).toString();
+    locationController.text = data.itemLocation ?? '';
+  }
+
+  void previewItemAttachment(ItemToInsure item) {
+    final raw = (item.policyItems ?? '');
+    if (raw.isEmpty) return;
+
+    try {
+      final b64 = raw.contains(',') ? raw.split(',').last : raw;
+      final bytes = base64Decode(b64); // Validate base64 first
+      final isPdf = b64.startsWith('JVBERi0');
+
+      if (isPdf) {
+        // PDF Preview - use a different bottom sheet approach to avoid layout issues
+        Get.bottomSheet(
+          Container(
+            height: queryHeight(null) * 0.85,
+            width: queryWidth(null),
+            decoration: BoxDecoration(
+              color: AppColors.white,
+              borderRadius: BorderRadius.vertical(
+                top: Radius.circular(AppConstants.appRadius),
+              ),
+            ),
+            child: Column(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('PDF Preview', style: Styles.mediumTextStyle()),
+                      GestureDetector(
+                        onTap: () => Get.back(),
+                        child: Icon(Icons.close),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: PdfPreview(
+                    allowPrinting: false,
+                    allowSharing: false,
+                    canChangePageFormat: false,
+                    canChangeOrientation: false,
+                    build: (_) async => bytes,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          isDismissible: true,
+          enableDrag: true,
+        );
+      } else {
+        // Image Preview - use the existing method
+        showAppBottomSheet(
+          height: queryHeight(null) * 0.85,
+          isImagePreview: true,
+          child: InteractiveViewer(
+            child: Image.memory(bytes, fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.error, size: 48, color: Colors.red),
+                    SizedBox(height: 16),
+                    Text('Unable to display image'),
+                  ],
+                ),
+              );
+            }),
+          ),
+        );
+      }
+    } catch (e) {
+      showSnackbarMessage(message: 'Invalid attachment data', isSuccess: false);
+    }
   }
 
   void showAddOrUpdateItemSheet({ItemToInsure? data, bool isNew = false}) {
@@ -470,6 +581,92 @@ class RenewPolicyController extends GetxController {
               validator: (value) => Validators.requiredValidator(
                   value, AppStrings.description.tr),
               maxLines: 3,
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 10, bottom: 30),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      GestureDetector(
+                        onTap: pickImage,
+                        child: Text("Add Image/PDF",
+                            style: Styles.linkTextStyle()),
+                      ),
+                      const SizedBox(width: 30),
+                      Obx(() {
+                        if (selectedImage.value.isEmpty)
+                          return const SizedBox();
+
+                        // Safely handle base64 validation and display
+                        try {
+                          final b64 = selectedImage.value.contains(',')
+                              ? selectedImage.value.split(',').last
+                              : selectedImage.value;
+
+                          // Validate base64 first
+                          final bytes = base64Decode(b64);
+
+                          // Check if it's a PDF after successful validation
+                          final isPdf = b64.startsWith('JVBERi0');
+
+                          if (isPdf) {
+                            return const Expanded(
+                              child: Row(children: [
+                                Icon(Icons.picture_as_pdf),
+                                SizedBox(width: 8),
+                                Expanded(
+                                    child: Text('PDF attached',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis))
+                              ]),
+                            );
+                          }
+
+                          // Display image safely
+                          return Expanded(
+                            child: Image.memory(bytes,
+                                fit: BoxFit.cover, height: 100,
+                                errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                height: 100,
+                                child: Row(children: [
+                                  Icon(Icons.error, color: Colors.red),
+                                  SizedBox(width: 8),
+                                  Expanded(child: Text('Invalid image data')),
+                                ]),
+                              );
+                            }),
+                          );
+                        } catch (e) {
+                          return Expanded(
+                            child: Container(
+                              height: 100,
+                              child: Row(children: [
+                                Icon(Icons.error, color: Colors.red),
+                                SizedBox(width: 8),
+                                Expanded(
+                                    child: Text('Invalid attachment data')),
+                              ]),
+                            ),
+                          );
+                        }
+                      }),
+                    ],
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    "File size should not exceed 5MB",
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[600],
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ],
+              ),
             ),
             SizedBox(
               height: 20,
@@ -680,6 +877,17 @@ class RenewPolicyController extends GetxController {
             message: response.messageResponse.message, isSuccess: false);
         paymentLoading.value = false;
       } else {
+        // ✅ Keep the in-memory policy in sync so UIs show NEW dates
+        final String startIso = startDate.value!.toIso8601String();
+        final String endIso = endDate.value!.toIso8601String();
+        final String renewalIso =
+            endDate.value!.add(const Duration(days: 1)).toIso8601String();
+
+        policy.value?.policyStartDate = startIso;
+        policy.value?.policyEndDate = endIso;
+        policy.value?.renewalDate = renewalIso;
+        policy.refresh();
+
         bookPolicy();
       }
     } catch (e) {
@@ -793,16 +1001,36 @@ class RenewPolicyController extends GetxController {
         paymentLoading.value = false;
       } else {
         // ✅ Navigate here, once, after debit note is posted
+        final String nStart = startDate.value!.toIso8601String();
+        final String nEnd = endDate.value!.toIso8601String();
+        final String nRenew =
+            endDate.value!.add(const Duration(days: 1)).toIso8601String();
+
         if (isQuoteFlow) {
-          Get.offNamed(AppRoutes.quoteConfirmation, arguments: {
-            'policyId': policy.value?.policyBrokerID ?? '',
-            'paymentReference': lastPaymentReference ?? '',
-            'paymentDate': lastPaymentDate ?? '',
-            'paymentMethod': 'Card',
-            'paymentAmount': lastPaymentAmount ?? 0,
-          });
+          Get.offNamed(
+            AppRoutes.quoteConfirmation,
+            arguments: {
+              'policyId': policy.value?.policyBrokerID ?? '',
+              'paymentReference': lastPaymentReference ?? '',
+              'paymentDate': lastPaymentDate ?? '',
+              'paymentMethod': 'Card',
+              'paymentAmount': lastPaymentAmount ?? 0,
+              // ✅ new date overrides
+              'newStartDate': nStart,
+              'newEndDate': nEnd,
+              'newRenewalDate': nRenew,
+            },
+          );
         } else {
-          Get.offNamed(AppRoutes.paymentConfirmation);
+          Get.offNamed(
+            AppRoutes.paymentConfirmation,
+            arguments: {
+              // You weren't passing args before; adding these is backward-compatible.
+              'newStartDate': nStart,
+              'newEndDate': nEnd,
+              'newRenewalDate': nRenew,
+            },
+          );
         }
       }
     } catch (e) {
@@ -917,32 +1145,6 @@ class RenewPolicyController extends GetxController {
     endDateController.text = formatDate(endDate.value.toString());
     renewalDateController.text =
         formatDate(endDate.value!.add(const Duration(days: 1)).toString());
-  }
-
-  Map<String, dynamic> _toMap(dynamic raw) {
-    if (raw is Map) return Map<String, dynamic>.from(raw);
-    if (raw is String) {
-      try {
-        final m = jsonDecode(raw);
-        if (m is Map) return Map<String, dynamic>.from(m);
-      } catch (_) {}
-    }
-    return <String, dynamic>{};
-  }
-
-  String _pickCustomerId(Map<String, dynamic> m) {
-    for (final k in const [
-      'customerID',
-      'CustomerID',
-      'customerId',
-      'CustomerId',
-      'username',
-      'Username'
-    ]) {
-      final v = m[k];
-      if (v != null && v.toString().trim().isNotEmpty) return v.toString();
-    }
-    return '';
   }
 
   /// Try multiple sources for robustness:

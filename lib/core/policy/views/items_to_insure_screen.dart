@@ -43,9 +43,12 @@ class ItemsToInsureScreen extends StatelessWidget {
                   children: [
                     Text(
                       controller is GetQuoteController
-                          ? controller
-                              .selectedBusinessPolicy.value!.businessClassName!
-                          : controller.policy.value!.businessClassID!,
+                          ? (controller.selectedBusinessPolicy.value
+                                  ?.businessClassName ??
+                              controller.selectedBusinessPolicy.value
+                                  ?.businessClassID ??
+                              '-')
+                          : (controller.policy.value?.businessClassID ?? '-'),
                       style: Styles.mediumTextStyle(),
                     ),
                     Padding(
@@ -100,30 +103,35 @@ class ItemsToInsureScreen extends StatelessWidget {
                                             .showAddOrUpdateSheet(item),
                                         delete: (item) =>
                                             controller.removeItemFromList(item),
+                                        view: (item) => controller
+                                            .previewItemAttachment(item),
                                       ),
                                     ),
                                   ] else ...[
                                     Obx(
                                       () => ItemsInsuredList(
-                                        list: controller.policyItems.value,
+                                        // RxList is already initialized; ensure non-null
+                                        list: (controller.policyItems).toList(),
                                         edit: (item) =>
                                             controller.showAddOrUpdateItemSheet(
                                                 data: item),
+                                        view: (item) => controller
+                                            .previewItemAttachment(item),
                                       ),
                                     ),
                                     Obx(
                                       () => ItemsInsuredList(
-                                        list: controller
-                                            .newPolicyItems.value.reversed
+                                        list: (controller.newPolicyItems)
+                                            .reversed
                                             .toList(),
                                         edit: (item) =>
                                             controller.showAddOrUpdateItemSheet(
                                                 data: item, isNew: true),
                                         delete: (item) =>
-                                            controller.removeItemFromList(
-                                          item,
-                                          controller.newPolicyItems,
-                                        ),
+                                            controller.removeItemFromList(item,
+                                                controller.newPolicyItems),
+                                        view: (item) => controller
+                                            .previewItemAttachment(item),
                                       ),
                                     ),
                                   ]
@@ -156,7 +164,6 @@ class ItemsToInsureScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-
                     Padding(
                       padding: const EdgeInsets.only(top: 60.0),
                       child: Center(

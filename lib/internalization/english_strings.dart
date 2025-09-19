@@ -82,7 +82,7 @@ class EnglishStrings {
       AppStrings.policyDetail: 'Policy Detail',
       AppStrings.quoteDetail: 'Quote Detail',
       AppStrings.policyNumber: 'Policy Number',
-      AppStrings.policyConfirmation: 'Policy Confirmation',
+      AppStrings.policySummary: 'Policy Summary',
       AppStrings.insuranceClass: 'Insurance Class',
       AppStrings.product: 'Product',
       AppStrings.startDate: 'Start Date',

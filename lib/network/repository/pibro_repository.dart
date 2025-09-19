@@ -19,7 +19,6 @@ import 'package:pibro/network/models/response/company_info_response.dart';
 import 'package:pibro/network/models/response/customer_policy_claims_response.dart';
 import 'package:pibro/network/models/response/customer_policy_response.dart';
 import 'package:pibro/network/models/response/customer_transactions_response.dart';
-import 'package:pibro/network/models/response/debit_note_list_response.dart';
 import 'package:pibro/network/models/response/insurance_risk_type_response.dart';
 import 'package:pibro/network/models/response/message_response.dart';
 import 'package:pibro/network/models/response/payment_init_response.dart';
@@ -95,6 +94,14 @@ class PibroRepository {
 
   Future<CustomMessageResponse> postClientNote(ClientNoteRequest data) async =>
       appApiProvider.callPostClientNote(data);
+
+  Future<CustomMessageResponse> endorsePolicy(
+          Map<String, dynamic> body) async =>
+      appApiProvider.callEndorsePolicy(body);
+
+  Future<CustomMessageResponse> createClientNoteEndorsement(
+          Map<String, dynamic> body) async =>
+      appApiProvider.callCreateClientNoteEndorsement(body);
 
   Future<CustomMessageResponse> getPremiumAmount(
           GetPremiumAmountRequest data) async =>

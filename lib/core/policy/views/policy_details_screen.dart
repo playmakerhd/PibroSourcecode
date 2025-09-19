@@ -15,13 +15,14 @@ class PolicyDetailsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final HomeController controller = Get.put(HomeController());
+    final policy = controller.selectedPolicy.value;
+
     return Scaffold(
       backgroundColor: AppColors.tileColor,
-      floatingActionButton: getPolicyStatus(
-                      controller.selectedPolicy.value!.policyEndDate!,
-                      controller.selectedPolicy.value!.approved)
-                  .status ==
-              AppStrings.expired.tr
+      floatingActionButton: (policy != null &&
+              getPolicyStatus(policy.policyEndDate ?? '', policy.approved)
+                      .status ==
+                  AppStrings.expired.tr)
           ? PolicyButton(
               text: AppStrings.renew.tr,
               onPressed: controller.navigateToRenewPolicyScreen,
@@ -36,23 +37,22 @@ class PolicyDetailsScreen extends StatelessWidget {
                   bottom: 10),
               child: Row(
                 children: [
-                  // PolicyButton(
-                  //   text: AppStrings.next.tr,
-                  //   onPressed: () {},
-                  //   isExpanded: true,
-                  // ),
-                  // SizedBox(width: 10),
                   PolicyButton(
                     text: AppStrings.renew.tr,
                     onPressed: controller.navigateToRenewPolicyScreen,
                     isExpanded: true,
                   ),
                   SizedBox(width: 10),
-                  PolicyButton(
-                    text: AppStrings.endorse.tr,
-                    onPressed: () {},
-                    isExpanded: true,
-                  ),
+                  if (policy != null &&
+                      getPolicyStatus(
+                                  policy.policyEndDate ?? '', policy.approved)
+                              .status ==
+                          AppStrings.active.tr)
+                    PolicyButton(
+                      text: AppStrings.endorse.tr,
+                      onPressed: controller.navigateToEndorsePolicyScreen,
+                      isExpanded: true,
+                    ),
                   SizedBox(width: 10),
                   PolicyButton(
                     text: AppStrings.claim.tr,

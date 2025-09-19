@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:pibro/constants/app_colors.dart';
 import 'package:pibro/core/transactions/controller/customer_transactions_controller.dart';
-import 'package:pibro/core/policy/widget/policy_button.dart';
 import 'package:pibro/shared/common_header.dart';
 import 'package:pibro/shared/item_row_container.dart';
 import 'package:pibro/shared/title_value_row.dart';

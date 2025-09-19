@@ -160,12 +160,13 @@ class HomeController extends GetxController {
     );
   }
 
+  void navigateToEndorsePolicyScreen() {
+    Get.toNamed(AppRoutes.endorsePolicy, arguments: selectedPolicy.value);
+  }
+
   @override
   void onInit() {
     getProfile();
     super.onInit();
   }
 }
-    
-  
-

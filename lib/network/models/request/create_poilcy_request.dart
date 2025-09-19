@@ -47,6 +47,7 @@ class CreatePolicyItem {
     this.policyBrokerID = "",
     this.sectionTypeID = "SECTIONA",
     this.brokingSlipItemCount = 0,
+    this.policyItems, // Add field for base64 attachment data
   });
 
   String policyBrokerID;
@@ -56,6 +57,7 @@ class CreatePolicyItem {
   String itemsDescription;
   double sumInsured;
   String itemLocation;
+  String? policyItems; // Field for base64 attachment data
 
   Map<String, dynamic> toJson() {
     return {
@@ -66,6 +68,7 @@ class CreatePolicyItem {
       'ItemsDescription': itemsDescription,
       'SumInsured': sumInsured,
       'ItemLocation': itemLocation,
+      'PolicyItems': policyItems ?? '', // Include attachment in API payload
     };
   }
 }

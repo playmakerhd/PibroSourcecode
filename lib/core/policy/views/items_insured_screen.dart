@@ -8,6 +8,7 @@ import 'package:pibro/shared/common_header.dart';
 import 'package:pibro/shared/empty_data.dart';
 import 'package:pibro/shared/item_row_container.dart';
 import 'package:pibro/shared/title_value_row.dart';
+import 'package:printing/printing.dart';
 
 class ItemsInsuredScreen extends StatelessWidget {
   const ItemsInsuredScreen({super.key, required this.itemsInsured});
@@ -43,20 +44,132 @@ class ItemsInsuredScreen extends StatelessWidget {
                               children: [
                                 TitleValueRow(
                                   title: '${AppStrings.description.tr}:',
-                                  value: item.itemsDescription!,
+                                  value: item.itemsDescription ?? '-',
                                 ),
                                 TitleValueRow(
                                   title: '${AppStrings.location.tr}:',
-                                  value: item.itemLocation!,
+                                  value: item.itemLocation ?? '-',
                                 ),
                                 TitleValueRow(
                                   title: '${AppStrings.value.tr}:',
-                                  value: 'N${item.sumInsured.toString()}',
+                                  value:
+                                      'N${(item.sumInsured ?? 0).toString()}',
                                 ),
-                                if (item.policyItems != null)
-                                  Image.memory(
-                                    base64Decode(item.policyItems!),
+                                // Always show something in the image area for consistent layout
+                                if (item.policyItems != null &&
+                                    (item.policyItems ?? '').trim().isNotEmpty)
+                                  Builder(
+                                    builder: (context) {
+                                      try {
+                                        final b64 = item.policyItems!
+                                                .contains(',')
+                                            ? item.policyItems!.split(',').last
+                                            : item.policyItems!;
+
+                                        // Validate base64 first
+                                        final bytes = base64Decode(b64);
+
+                                        // Check if it's a PDF
+                                        final isPdf = b64.startsWith('JVBERi0');
+
+                                        if (isPdf) {
+                                          return Container(
+                                            height: 100,
+                                            width: double.infinity,
+                                            decoration: BoxDecoration(
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              border: Border.all(
+                                                  color: Colors.grey[300]!),
+                                            ),
+                                            child: ClipRRect(
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              child: PdfPreview(
+                                                allowPrinting: true,
+                                                allowSharing: false,
+                                                canChangePageFormat: false,
+                                                canChangeOrientation: false,
+                                                canDebug: false,
+                                                scrollViewDecoration:
+                                                    BoxDecoration(),
+                                                build: (_) async => bytes,
+                                              ),
+                                            ),
+                                          );
+                                        } else {
+                                          // Display image
+                                          return Image.memory(
+                                            bytes,
+                                            height: 100,
+                                            fit: BoxFit.cover,
+                                            errorBuilder:
+                                                (context, error, stackTrace) {
+                                              return Container(
+                                                height: 100,
+                                                child: Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.center,
+                                                  children: [
+                                                    Icon(Icons.error,
+                                                        color: Colors.red),
+                                                    SizedBox(width: 8),
+                                                    Text('Invalid image'),
+                                                  ],
+                                                ),
+                                              );
+                                            },
+                                          );
+                                        }
+                                      } catch (e) {
+                                        return Container(
+                                          height: 100,
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              Icon(Icons.error,
+                                                  color: Colors.red),
+                                              SizedBox(width: 8),
+                                              Text('Invalid attachment'),
+                                            ],
+                                          ),
+                                        );
+                                      }
+                                    },
+                                  )
+                                else
+                                  // Placeholder for consistent layout when no image
+                                  Container(
                                     height: 100,
+                                    width: double.infinity,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(8),
+                                      color: Colors.grey[100],
+                                      border:
+                                          Border.all(color: Colors.grey[300]!),
+                                    ),
+                                    child: Center(
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            Icons.image_not_supported_outlined,
+                                            color: Colors.grey[400],
+                                            size: 32,
+                                          ),
+                                          SizedBox(height: 4),
+                                          Text(
+                                            'No attachment',
+                                            style: TextStyle(
+                                              color: Colors.grey[500],
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
                                   ),
                               ],
                             ),

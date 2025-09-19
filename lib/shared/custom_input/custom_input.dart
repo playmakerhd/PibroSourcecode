@@ -134,7 +134,7 @@ class _CustomInputState extends State<CustomInput> {
 
     return Container(
       padding: EdgeInsets.only(bottom: widget.noBottomPadding ? 0 : 20),
-      width: widget.width ?? MediaQuery.of(context).size.width,
+      width: widget.width ?? double.infinity,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

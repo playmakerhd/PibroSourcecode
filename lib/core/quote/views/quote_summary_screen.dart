@@ -99,15 +99,15 @@ class QuoteSummaryScreen extends StatelessWidget {
                             : Get.put(QuotePaymentController()),
                         builder: (qp) => Obx(() => PolicyButton(
                               text: 'Make Payment',
-                              onPressed: () async {
-                                // Start loader, run payment
-                                qp.paymentLoading.value = true;
-                                await qp.beginPayment();
+                              onPressed: () {
+                                if (!qp.paymentLoading.value) {
+                                  qp.paymentLoading.value = true;
+                                  qp.beginPayment();
+                                }
                               },
                               width: 160,
                               bgColor: AppColors.primaryColor,
-                              loading: qp.paymentLoading
-                                  .value, // <-- loader shows/hides here
+                              loading: qp.paymentLoading.value,
                             )),
                       ),
                       const SizedBox(width: 12),

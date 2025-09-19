@@ -1,19 +1,17 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:printing/printing.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:pibro/constants/app_colors.dart';
 import 'package:pibro/constants/app_constants.dart';
-import 'package:pibro/constants/app_images.dart';
 import 'package:pibro/constants/app_styles.dart';
 import 'package:pibro/constants/storage_keys.dart';
 import 'package:pibro/core/policy/model/item_data.dart';
 import 'package:pibro/core/policy/views/items_to_insure_screen.dart';
 import 'package:pibro/core/policy/widget/policy_button.dart';
-import 'package:pibro/core/profile/widget/profile_button.dart';
 import 'package:pibro/internalization/app_strings.dart';
 import 'package:pibro/navigation/routes.dart';
 import 'package:pibro/network/api/api_provider.dart';
@@ -26,7 +24,6 @@ import 'package:pibro/shared/custom_input/custom_input.dart';
 
 import 'package:pibro/utils/api_utils.dart';
 import 'package:pibro/utils/app_utils.dart';
-import 'package:pibro/utils/image_factory.dart';
 import 'package:pibro/utils/validators.dart';
 import 'package:pibro/utils/view_utils.dart';
 
@@ -135,8 +132,16 @@ class GetQuoteController extends GetxController {
   /// - If user is logged in: create enquiry now, fetch it, branch to summary/confirmation.
   /// - If not logged in: persist pending quote + set flag, navigate to signup/login.
   Future<void> submit() async {
+    print('🔍 SUBMIT: Starting submit process...');
+    submitLoading.value = true;
+
+    // Add minimum loading duration for better UX
+    final loadingStartTime = DateTime.now();
+
     try {
+      print('🔍 SUBMIT: Checking login status...');
       final loggedIn = decryptData(StorageKeys.loginData) != null;
+      print('🔍 SUBMIT: User logged in: $loggedIn');
 
       // Stash quote draft so we can resume after auth
       final startIso = (startDate.value ?? DateTime.now()).toIso8601String();
@@ -175,35 +180,56 @@ class GetQuoteController extends GetxController {
           "vendorName": selectedVendor.value?.vendorName
         },
       };
+
+      print('🔍 SUBMIT: Saving draft with ${items.length} items...');
       GetStorage().write(StorageKeys.pendingQuote, draft);
 
+      // Ensure minimum loading duration (500ms)
+      final elapsed = DateTime.now().difference(loadingStartTime);
+      if (elapsed.inMilliseconds < 500) {
+        await Future.delayed(
+            Duration(milliseconds: 500 - elapsed.inMilliseconds));
+      }
+
       if (loggedIn) {
+        print(
+            '🔍 SUBMIT: User logged in, calling _createEnquiryAndNavigate...');
         await _createEnquiryAndNavigate();
       } else {
+        print('🔍 SUBMIT: User not logged in, navigating to signup...');
         GetStorage().write(StorageKeys.quoteFlowFlag, true);
         // go to login/signup; use your existing route name
         Get.offNamed(AppRoutes.signup);
       }
     } catch (e, st) {
+      print('❌ SUBMIT: Error in submit: $e');
       //PibroLogger.e('submit() error', e, st);
       showSnackbarMessage(
           message: AppStrings.genericErrorMessage.tr, isSuccess: false);
+    } finally {
+      print('🔍 SUBMIT: Setting submitLoading to false');
+      submitLoading.value = false;
     }
   }
 
   /// Called post-auth (login/signup) when quoteFlowFlag is set.
   Future<void> resumeAfterAuth() async {
+    submitLoading.value = true;
     await _createEnquiryAndNavigate();
   }
 
   Future<void> _createEnquiryAndNavigate() async {
+    print('🔍 API: Starting _createEnquiryAndNavigate...');
     try {
       // Create enquiry (reuse your ApiUtils.createQuote)
       final draft = GetStorage().read(StorageKeys.pendingQuote) as Map? ?? {};
       if (draft.isEmpty) {
+        print('❌ API: No draft found');
         showSnackbarMessage(message: 'Nothing to submit', isSuccess: false);
         return;
       }
+
+      print('🔍 API: Creating enquiry with draft data...');
       final v = draft['preferredInsurer'] as Map?;
       final payload = ApiUtils.createQuote(
         // product / risk type (ProductId)
@@ -219,16 +245,24 @@ class GetQuoteController extends GetxController {
         vendorID: v?['vendorID']?.toString(),
         vendorName: v?['vendorName']?.toString(),
       );
+
+      print('🔍 API: Sending to broker...');
       final createRes = await pibroRepository.sendToBroker(payload);
       if (createRes.messageResponse.status != AppConstants.responseSuccess) {
+        print(
+            '❌ API: sendToBroker failed: ${createRes.messageResponse.message}');
         showSnackbarMessage(
             message: createRes.messageResponse.message, isSuccess: false);
         return;
       }
+
       final caseId = createRes.messageResponse.message;
+      print('🔍 API: Got case ID: $caseId, fetching enquiry...');
+
       final byId = await pibroRepository.getCustomerEnquiryById(caseId);
       final quote = byId.quote;
       if (quote == null) {
+        print('❌ API: Could not fetch enquiry');
         showSnackbarMessage(
             message: 'Could not fetch enquiry', isSuccess: false);
         return;
@@ -253,12 +287,21 @@ class GetQuoteController extends GetxController {
         "premium": premium, // Store as number, not string
         "sumInsured": sumInsured, // Store as number, not string
         "riskName": draft['riskName'],
+        // Ensure we persist the canonical product/risk type id so downstream
+        // payment and create-policy flows can read it even when this is
+        // marked as a fresh_quote.
+        "riskTypeID":
+            (draft['riskTypeID'] ?? draft['riskName'] ?? '').toString(),
+        // Ensure we include the canonical businessClassID so downstream flows
+        // that read StorageKeys.lastEnquiry (fresh_quote) have the ID available.
+        "businessClassID": (draft['businessClassID'] ?? '').toString(),
         "businessClassName": draft['businessClassName'],
         "startDate": draft['startDate'],
         "endDate": draft['endDate'],
         "renewalDate": draft['renewalDate'],
         "preferredInsurer": draft['preferredInsurer'],
         "items": draft['items'],
+        "_source": "fresh_quote", // Flag to identify this as fresh quote data
       };
 
       print('🔍 ENQUIRY: Storing enquiry data: $enquiryData');
@@ -277,6 +320,7 @@ class GetQuoteController extends GetxController {
           message: AppStrings.genericErrorMessage.tr, isSuccess: false);
     } finally {
       GetStorage().remove(StorageKeys.quoteFlowFlag);
+      submitLoading.value = false;
     }
   }
 
@@ -286,11 +330,21 @@ class GetQuoteController extends GetxController {
     isPickingFile.value = true;
 
     try {
-      FilePickerResult? result = await FilePicker.platform.pickFiles();
-
-      if (result != null) {
-        selectedImage.value =
-            await convertFileToBase64(File(result.files.single.path!));
+      const int _maxBytes = 20 * 1024 * 1024; // 20MB
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['jpg', 'jpeg', 'png', 'pdf'],
+        withData: true,
+      );
+      if (result != null && result.files.single.bytes != null) {
+        final f = result.files.single;
+        if (f.size > _maxBytes) {
+          showSnackbarMessage(
+              message: 'Max file size is 20MB', isSuccess: false);
+          selectedImage.value = '';
+        } else {
+          selectedImage.value = base64Encode(f.bytes!); // raw base64
+        }
       } else {
         selectedImage.value = '';
       }
@@ -315,7 +369,9 @@ class GetQuoteController extends GetxController {
         data.value = valueController.text;
         data.location = locationController.text;
         data.subject = selectedRiskTypeID.value!.riskName;
-        data.screenShotURL = selectedImage.value;
+        if (selectedImage.value.isNotEmpty) {
+          data.screenShotURL = selectedImage.value;
+        }
         addData(data);
       } else {
         addData(
@@ -378,6 +434,84 @@ class GetQuoteController extends GetxController {
       chasisIdController.text = data.chasisId!;
       engineNoController.text = data.engineNo!;
       vehicleMakeController.text = data.vehicleMake!;
+    }
+  }
+
+  void previewItemAttachment(ItemData item) {
+    final raw = (item.screenShotURL ?? '');
+    if (raw.isEmpty) return;
+    final b64 = raw.contains(',') ? raw.split(',').last : raw;
+    final isPdf = b64.startsWith('JVBERi0'); // "%PDF-" in base64
+
+    try {
+      final bytes = base64Decode(b64); // Validate base64 first
+
+      if (isPdf) {
+        // PDF Preview - use a different bottom sheet approach to avoid layout issues
+        Get.bottomSheet(
+          Container(
+            height: queryHeight(null) * 0.85,
+            width: queryWidth(null),
+            decoration: BoxDecoration(
+              color: AppColors.white,
+              borderRadius: BorderRadius.vertical(
+                top: Radius.circular(AppConstants.appRadius),
+              ),
+            ),
+            child: Column(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('PDF Preview', style: Styles.mediumTextStyle()),
+                      GestureDetector(
+                        onTap: () => Get.back(),
+                        child: Icon(Icons.close),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: PdfPreview(
+                    allowPrinting: false,
+                    allowSharing: false,
+                    canChangePageFormat: false,
+                    canChangeOrientation: false,
+                    build: (_) async => bytes,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          isDismissible: true,
+          enableDrag: true,
+        );
+      } else {
+        // Image Preview - use the existing method
+        showAppBottomSheet(
+          height: queryHeight(null) * 0.85,
+          isImagePreview: true,
+          child: InteractiveViewer(
+            child: Image.memory(bytes, fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.error, size: 48, color: Colors.red),
+                    SizedBox(height: 16),
+                    Text('Unable to display image'),
+                  ],
+                ),
+              );
+            }),
+          ),
+        );
+      }
+    } catch (e) {
+      showSnackbarMessage(message: 'Invalid attachment data', isSuccess: false);
     }
   }
 
@@ -458,29 +592,90 @@ class GetQuoteController extends GetxController {
             ),
             Padding(
               padding: const EdgeInsets.only(top: 10, bottom: 30),
-              child: Row(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  GestureDetector(
-                    onTap: pickImage,
-                    child: Text(
-                      AppStrings.addImage.tr,
-                      style: Styles.linkTextStyle(),
-                    ),
-                  ),
-                  SizedBox(
-                    width: 30,
-                  ),
-                  Obx(
-                    () => selectedImage.value.isNotEmpty
-                        ? Expanded(
-                            child: Image.memory(
-                              base64Decode(selectedImage.value),
-                              fit: BoxFit.cover,
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      GestureDetector(
+                        onTap: pickImage,
+                        child: Text(
+                          "Add Image/PDF",
+                          style: Styles.linkTextStyle(),
+                        ),
+                      ),
+                      SizedBox(
+                        width: 30,
+                      ),
+                      Obx(() {
+                        if (selectedImage.value.isEmpty)
+                          return const SizedBox();
+
+                        // Safely handle base64 validation and display
+                        try {
+                          final b64 = selectedImage.value.contains(',')
+                              ? selectedImage.value.split(',').last
+                              : selectedImage.value;
+
+                          // Validate base64 first
+                          final bytes = base64Decode(b64);
+
+                          // Check if it's a PDF after successful validation
+                          final isPdf = b64.startsWith('JVBERi0');
+
+                          if (isPdf) {
+                            return const Expanded(
+                              child: Row(children: [
+                                Icon(Icons.picture_as_pdf),
+                                SizedBox(width: 8),
+                                Expanded(
+                                    child: Text('PDF attached',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis))
+                              ]),
+                            );
+                          }
+
+                          // Display image safely
+                          return Expanded(
+                            child: Image.memory(bytes,
+                                fit: BoxFit.cover, height: 100,
+                                errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                height: 100,
+                                child: Row(children: [
+                                  Icon(Icons.error, color: Colors.red),
+                                  SizedBox(width: 8),
+                                  Expanded(child: Text('Invalid image data')),
+                                ]),
+                              );
+                            }),
+                          );
+                        } catch (e) {
+                          return Expanded(
+                            child: Container(
                               height: 100,
+                              child: Row(children: [
+                                Icon(Icons.error, color: Colors.red),
+                                SizedBox(width: 8),
+                                Expanded(
+                                    child: Text('Invalid attachment data')),
+                              ]),
                             ),
-                          )
-                        : SizedBox(),
+                          );
+                        }
+                      }),
+                    ],
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    "File size should not exceed 20MB",
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[600],
+                      fontStyle: FontStyle.italic,
+                    ),
                   ),
                 ],
               ),

@@ -20,6 +20,12 @@ class PaymentConfirmationScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final RenewPolicyController controller = Get.put(RenewPolicyController());
     final HomeController homeController = Get.put(HomeController());
+
+    final Map args = (Get.arguments as Map?) ?? {};
+    final String overrideStart = (args['newStartDate'] ?? '').toString();
+    final String overrideEnd = (args['newEndDate'] ?? '').toString();
+    final String overrideRenew = (args['newRenewalDate'] ?? '').toString();
+
     return Scaffold(
       backgroundColor: AppColors.white,
       body: SingleChildScrollView(
@@ -59,8 +65,9 @@ class PaymentConfirmationScreen extends StatelessWidget {
                               text: '${AppStrings.congratulations.tr} ',
                               children: [
                                 TextSpan(
-                                  text: homeController
-                                      .user.value!.customerName!.capitalize!,
+                                  text: homeController.user.value?.customerName
+                                          ?.capitalize ??
+                                      '-',
                                   style: Styles.boldTextStyle(size: 14),
                                 ),
                               ],
@@ -76,7 +83,8 @@ class PaymentConfirmationScreen extends StatelessWidget {
                                 children: [
                                   TextSpan(
                                       text: controller
-                                          .policy.value!.policyBrokerID,
+                                              .policy.value?.policyBrokerID ??
+                                          '-',
                                       style: Styles.boldTextStyle(size: 14)),
                                   TextSpan(
                                       text:
@@ -108,34 +116,50 @@ class PaymentConfirmationScreen extends StatelessWidget {
                       children: [
                         DetailRow(
                           title: '${AppStrings.policyNumber.tr}:',
-                          value: controller.policy.value!.policyBrokerID,
+                          value: controller.policy.value?.policyBrokerID ?? '-',
                         ),
                         DetailRow(
                           title: '${AppStrings.insuranceClass.tr}:',
-                          value: controller.policy.value!.businessClassID!,
+                          value:
+                              controller.policy.value?.businessClassID ?? '-',
                         ),
                         DetailRow(
                           title: '${AppStrings.product.tr}:',
-                          value: controller.policy.value!.riskTypeID!,
+                          value: controller.policy.value?.riskTypeID ?? '-',
                         ),
                         DetailRow(
                           title: '${AppStrings.startDate.tr}:',
-                          value: formatDate(
-                              controller.policy.value!.policyStartDate!),
+                          value: overrideStart.isNotEmpty
+                              ? formatDate(overrideStart)
+                              : (controller.policy.value?.policyStartDate !=
+                                      null
+                                  ? formatDate(
+                                      controller.policy.value!.policyStartDate!)
+                                  : '-'),
                         ),
                         DetailRow(
                           title: '${AppStrings.endDate.tr}:',
-                          value: formatDate(
-                              controller.policy.value!.policyEndDate!),
+                          value: overrideEnd.isNotEmpty
+                              ? formatDate(overrideEnd)
+                              : (controller.policy.value?.policyEndDate != null
+                                  ? formatDate(
+                                      controller.policy.value!.policyEndDate!)
+                                  : '-'),
                         ),
                         DetailRow(
                           title: '${AppStrings.renewalDate.tr}:',
-                          value:
-                              formatDate(controller.policy.value!.renewalDate!),
+                          value: overrideRenew.isNotEmpty
+                              ? formatDate(overrideRenew)
+                              : (controller.policy.value?.renewalDate != null
+                                  ? formatDate(
+                                      controller.policy.value!.renewalDate!)
+                                  : '-'),
                         ),
                         DetailRow(
                           title: '${AppStrings.sumInsured.tr} (NGN):',
-                          value: controller.policy.value!.sumInsured.toString(),
+                          value:
+                              controller.policy.value?.sumInsured?.toString() ??
+                                  '-',
                         ),
                         DetailRow(
                           title: '${AppStrings.premiumDue.tr} (NGN):',

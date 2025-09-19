@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:pibro/constants/app_colors.dart';
 import 'package:pibro/constants/app_constants.dart';
 import 'package:pibro/constants/app_styles.dart';
-import 'package:pibro/utils/view_utils.dart';
 
 class PolicyButton extends StatelessWidget {
   const PolicyButton({
@@ -30,7 +29,7 @@ class PolicyButton extends StatelessWidget {
       onTap: loading ? () {} : onPressed,
       child: Container(
         height: height,
-        width: width ?? queryWidth(context),
+        width: width ?? double.infinity,
         decoration: BoxDecoration(
           color: bgColor,
           borderRadius: BorderRadius.circular(AppConstants.snackBarRadius),

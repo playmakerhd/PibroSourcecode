@@ -19,7 +19,7 @@ void main() async {
   await GetStorage.init();
   PibroLogger.init();
   await initializeDateFormatting('en_US', null);
-  runApp(const MyApp());
+  runApp(const    MyApp());
 }
 
 class MyApp extends StatelessWidget {

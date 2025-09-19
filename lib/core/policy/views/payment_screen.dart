@@ -3,6 +3,7 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:get/get.dart';
 import 'package:pibro/constants/app_styles.dart';
 import 'package:pibro/core/policy/controller/renew_policy_controller.dart';
+import 'package:pibro/core/policy/controller/endorsement_controller.dart';
 
 class PaymentScreen extends StatelessWidget {
   const PaymentScreen({super.key, required this.paystackUrl});
@@ -11,13 +12,25 @@ class PaymentScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final RenewPolicyController renewPolicyController =
-        Get.put(RenewPolicyController());
+    // Use whichever flow is active. Do NOT create new controllers here.
+    final EndorsementController? endorseCtrl =
+        Get.isRegistered<EndorsementController>()
+            ? Get.find<EndorsementController>()
+            : null;
+    final RenewPolicyController? renewCtrl =
+        Get.isRegistered<RenewPolicyController>()
+            ? Get.find<RenewPolicyController>()
+            : null;
     return Scaffold(
       appBar: AppBar(
           leading: GestureDetector(
             onTap: () {
-              renewPolicyController.paymentLoading.value = false;
+              // Set payment loading to false for whichever controller is active
+              if (endorseCtrl != null) {
+                endorseCtrl.paymentLoading.value = false;
+              } else if (renewCtrl != null) {
+                renewCtrl.paymentLoading.value = false;
+              }
               Get.back();
             },
             child: Icon(Icons.arrow_back),
@@ -32,11 +45,20 @@ class PaymentScreen extends StatelessWidget {
           javaScriptEnabled: true,
         ),
         onWebViewCreated: (controller) {
-          renewPolicyController.webViewController = controller;
+          if (endorseCtrl != null) {
+            endorseCtrl.webViewController = controller;
+          } else if (renewCtrl != null) {
+            renewCtrl.webViewController = controller;
+          }
         },
         onUpdateVisitedHistory: (controller, url, androidIsReload) {
           if (url != null) {
-            renewPolicyController.checkPaymentStatus(url.toString());
+            // Delegate to the active flow's handler
+            if (endorseCtrl != null) {
+              endorseCtrl.checkPaymentStatus(url.toString());
+            } else if (renewCtrl != null) {
+              renewCtrl.checkPaymentStatus(url.toString());
+            }
           }
         },
       ),

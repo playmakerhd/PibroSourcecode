@@ -13,6 +13,9 @@ import 'package:pibro/core/landing/views/landing_screen.dart';
 import 'package:pibro/core/login/view/login_screen.dart';
 import 'package:pibro/core/main_screen/view/main_screen.dart';
 import 'package:pibro/core/policy/views/payment_confirmation_screen.dart';
+import 'package:pibro/core/policy/views/endorsement_screen.dart';
+import 'package:pibro/core/policy/views/endorsement_summary_screen.dart';
+import 'package:pibro/core/policy/views/endorsement_confirmation_screen.dart';
 import 'package:pibro/core/policy/views/policies_screen.dart';
 import 'package:pibro/core/policy/views/policy_details_screen.dart';
 import 'package:pibro/core/policy/views/renew_policy_confirmation_screen.dart';
@@ -44,6 +47,9 @@ class AppRoutes {
 
   static const String policy = '/policy';
   static const String renewPolicy = '/renew-policy';
+  static const String endorsePolicy = '/endorse-policy';
+  static const String endorseSummary = '/endorse-summary';
+  static const String endorseConfirmation = '/endorse-confirmation';
   static const String renewPolicyConfirmation = '/renew-policy-confirmation';
   static const String itemsToInsure = '/items-to-insure';
   static const String policyDetail = '/policy-detail';
@@ -66,7 +72,6 @@ class AppRoutes {
   static const String customerTransactionsList = '/customer-transactions';
   static const String customerTransactionDetail =
       '/customer-transaction-detail';
-
 
   static const String claim = '/claim';
   static const String claimDetail = '/claim-detail';
@@ -137,11 +142,16 @@ class AppRoutes {
       name: quoteConfirmation,
       page: () => const QuoteConfirmationScreen(),
     ),
-     GetPage(name: quoteSummary, page: () => const QuoteSummaryScreen()),
+    GetPage(name: quoteSummary, page: () => const QuoteSummaryScreen()),
     GetPage(
       name: paymentConfirmation,
       page: () => const PaymentConfirmationScreen(),
     ),
+    GetPage(name: endorsePolicy, page: () => const EndorsementScreen()),
+    GetPage(name: endorseSummary, page: () => const EndorsementSummaryScreen()),
+    GetPage(
+        name: endorseConfirmation,
+        page: () => const EndorsementConfirmationScreen()),
     GetPage(
       name: quote,
       page: () => const QuoteScreen(),
@@ -154,11 +164,10 @@ class AppRoutes {
       name: getQuote,
       page: () => const GetQuoteScreen(),
     ),
-        GetPage(
+    GetPage(
       name: transactionsHub,
       page: () => const TransactionsHubScreen(),
     ),
-    
     GetPage(
       name: customerTransactionsList,
       page: () => const CustomerTransactionsListScreen(),
@@ -167,7 +176,6 @@ class AppRoutes {
       name: customerTransactionDetail,
       page: () => const CustomerTransactionDetailScreen(),
     ),
-
     GetPage(
       name: claim,
       page: () => const ClaimScreen(),

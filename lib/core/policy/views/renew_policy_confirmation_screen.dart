@@ -22,7 +22,7 @@ class RenewPolicyConfirmationScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             CommonHeader(
-              title: AppStrings.policyConfirmation.tr,
+              title: AppStrings.policySummary.tr,
               isTransparent: true,
             ),
             Padding(

@@ -50,11 +50,17 @@ class QuoteConfirmationScreen extends StatelessWidget {
         ? Get.find<RenewPolicyController>()
         : Get.put(RenewPolicyController());
 
-    final c = Get.put(QuoteConfirmationController());
+    Get.put(QuoteConfirmationController());
     //final e = c.quoteData;
 
     final store = GetStorage();
     final args = (Get.arguments as Map?) ?? {};
+
+    final String overrideStart = (args['newStartDate'] ?? '').toString();
+    final String overrideEnd = (args['newEndDate'] ?? '').toString();
+    final String overrideRenew = (args['newRenewalDate'] ?? '').toString();
+
+    // Already present:
     final enquiry = (store.read(StorageKeys.lastEnquiry) as Map?) ?? {};
 
     // If we have a policyId or payment fields, render as Policy Confirmation
@@ -81,9 +87,20 @@ class QuoteConfirmationScreen extends StatelessWidget {
     final String businessClass =
         (enquiry['businessClassName'] ?? '').toString();
     final String product = (enquiry['riskName'] ?? '').toString();
-    final String startDate = (enquiry['startDate'] ?? '').toString();
-    final String endDate = (enquiry['endDate'] ?? '').toString();
-    final String renewalDate = (enquiry['renewalDate'] ?? '').toString();
+
+    // Stored by quote flow as pretty strings; by renew we pass ISO strings.
+    // Prefer overrides (if any), otherwise use stored strings.
+    final String startDate = overrideStart.isNotEmpty
+        ? formatDatePretty(overrideStart)
+        : formatDatePretty((enquiry['startDate'] ?? '').toString());
+
+    final String endDate = overrideEnd.isNotEmpty
+        ? formatDatePretty(overrideEnd)
+        : formatDatePretty((enquiry['endDate'] ?? '').toString());
+
+    final String renewalDate = overrideRenew.isNotEmpty
+        ? formatDatePretty(overrideRenew)
+        : formatDatePretty((enquiry['renewalDate'] ?? '').toString());
 
     final double sumInsured = double.tryParse(
           '${enquiry['sumInsured'] ?? 0}'.toString().replaceAll(',', ''),

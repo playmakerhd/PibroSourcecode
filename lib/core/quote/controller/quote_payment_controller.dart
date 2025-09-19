@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:pibro/constants/app_constants.dart';
@@ -17,7 +16,6 @@ import 'package:pibro/network/models/request/create_receipt_request.dart';
 import 'package:pibro/network/models/request/renew_policy_requesst.dart';
 import 'package:pibro/network/models/request/update_enquiry_status_request.dart';
 import 'package:pibro/network/repository/pibro_repository.dart';
-import 'package:pibro/utils/app_utils.dart';
 import 'package:pibro/utils/view_utils.dart';
 import 'package:pibro/utils/qlog.dart';
 import 'package:intl/intl.dart';
@@ -395,6 +393,19 @@ class QuotePaymentController extends GetxController {
             ) ??
             0.0;
 
+        // Extract base64 attachment data from ScreenShotURL
+        final attachmentData =
+            (m['ScreenShotURL'] ?? m['screenShotURL'] ?? '').toString();
+
+        print('🔨 Creating PolicyItem $i:');
+        print('   Description: $desc');
+        print('   Location: $location');
+        print('   Sum: $sum');
+        print('   Has attachment: ${attachmentData.isNotEmpty}');
+        if (attachmentData.isNotEmpty) {
+          print('   Attachment size: ${attachmentData.length} chars');
+        }
+
         policyItems.add(CreatePolicyItem(
           manualNumbering: '${i + 1}',
           itemsDescription: desc,
@@ -403,6 +414,9 @@ class QuotePaymentController extends GetxController {
           policyBrokerID: "",
           sectionTypeID: "SECTIONA",
           brokingSlipItemCount: 0,
+          policyItems: attachmentData.isNotEmpty
+              ? attachmentData
+              : null, // Pass base64 data
         ));
       }
 
@@ -692,8 +706,35 @@ class QuotePaymentController extends GetxController {
                 '')
             : '');
 
+    // Defensive fallback: if riskTypeID is still empty, use riskName as fallback
+    if (riskTypeID.isEmpty &&
+        (ctx['riskName']?.toString().isNotEmpty ?? false)) {
+      riskTypeID = ctx['riskName'].toString();
+      print('🔄 FALLBACK: Using riskName as riskTypeID: $riskTypeID');
+    }
+
+    // Debug logging for payment flow
+    print('💳 QuotePaymentController Context:');
+    print('   - riskTypeID: $riskTypeID');
+    print('   - riskName: ${ctx['riskName']}');
+    print('   - hasContext: ${ctx.isNotEmpty}');
+
     preferredInsurer = _normalizeVendor(ctx['preferredInsurer']);
     items = _normalizeItems(ctx['items']);
+
+    // Debug logging for document tracking
+    print('📋 Payment Controller - Items received: ${items.length}');
+    for (int i = 0; i < items.length; i++) {
+      final item = items[i];
+      final hasDoc = item.containsKey('screenShotURL') &&
+          (item['screenShotURL']?.toString().isNotEmpty ?? false);
+      print(
+          '   Item $i: ${item['itemsDescription'] ?? 'No desc'} - Document: $hasDoc');
+      if (hasDoc) {
+        final docLength = item['screenShotURL'].toString().length;
+        print('     Document size: $docLength characters');
+      }
+    }
 
     QLog.d('CTX', 'Hydrated context', {
       'sessionId': sessionId,

@@ -1,7 +1,9 @@
+// ignore_for_file: strict_top_level_inference, sized_box_for_whitespace
+
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
-import 'package:dotted_border/dotted_border.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -24,6 +26,7 @@ import 'package:pibro/network/models/response/customer_policy_response.dart';
 import 'package:pibro/network/repository/pibro_repository.dart';
 import 'package:pibro/shared/custom_button.dart';
 import 'package:pibro/utils/api_utils.dart';
+import 'package:printing/printing.dart';
 import 'package:pibro/utils/app_utils.dart';
 import 'package:pibro/utils/image_factory.dart';
 import 'package:pibro/utils/view_utils.dart';
@@ -296,15 +299,35 @@ class LodgeClaimController extends GetxController {
     isPickingFile.value = true;
 
     try {
-      FilePickerResult? result = await FilePicker.platform.pickFiles();
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['jpg', 'jpeg', 'png', 'pdf'],
+      );
 
       if (result != null) {
-        selectedFile.value = File(result.files.single.path!);
+        PlatformFile file = result.files.first;
+
+        // Check file size (5MB limit)
+        const int maxSizeInBytes = 20 * 1024 * 1024; // 20MB
+        if (file.size > maxSizeInBytes) {
+          showSnackbarMessage(
+            message: 'File size must be less than 5MB',
+            isSuccess: false,
+          );
+          isPickingFile.value = false;
+          return;
+        }
+
+        selectedFile.value = File(file.path!);
       } else {
         selectedFile.value = null;
       }
     } catch (e) {
       debugPrint("Error picking file: $e");
+      showSnackbarMessage(
+        message: 'Error selecting file. Please try again.',
+        isSuccess: false,
+      );
     } finally {
       isPickingFile.value = false;
     }
@@ -335,10 +358,14 @@ class LodgeClaimController extends GetxController {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  title,
-                  style: Styles.semiBoldTextStyle(
-                      size: 16, color: AppColors.white),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: Styles.semiBoldTextStyle(
+                        size: 16, color: AppColors.white),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
                 ),
                 GestureDetector(
                   onTap: Get.back,
@@ -357,11 +384,69 @@ class LodgeClaimController extends GetxController {
               horizontal: queryWidth(null) * 0.05,
             ),
             width: queryWidth(null),
-            child: Image.memory(
-              base64Decode(image),
-              fit: BoxFit.cover,
-              height: 300,
-              width: queryWidth(null),
+            child: Builder(
+              builder: (context) {
+                try {
+                  final b64 =
+                      image.contains(',') ? image.split(',').last : image;
+                  final bytes = base64Decode(b64);
+                  final isPdf = b64.startsWith('JVBERi0');
+
+                  if (isPdf) {
+                    return Container(
+                      height: 300,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.grey[300]!),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: PdfPreview(
+                          allowPrinting: false,
+                          allowSharing: false,
+                          canChangePageFormat: false,
+                          canChangeOrientation: false,
+                          canDebug: false,
+                          scrollViewDecoration: BoxDecoration(),
+                          build: (_) async => bytes,
+                        ),
+                      ),
+                    );
+                  } else {
+                    return Image.memory(
+                      bytes,
+                      fit: BoxFit.cover,
+                      height: 300,
+                      width: queryWidth(null),
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          height: 300,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.error, size: 48, color: Colors.red),
+                              SizedBox(height: 16),
+                              Text('Unable to display image'),
+                            ],
+                          ),
+                        );
+                      },
+                    );
+                  }
+                } catch (e) {
+                  return Container(
+                    height: 300,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.error, size: 48, color: Colors.red),
+                        SizedBox(height: 16),
+                        Text('Invalid attachment data'),
+                      ],
+                    ),
+                  );
+                }
+              },
             ),
           ),
         ],
@@ -383,13 +468,14 @@ class LodgeClaimController extends GetxController {
           SizedBox(
             height: 20,
           ),
-          DottedBorder(
-            borderType: BorderType.RRect,
-            radius: Radius.circular(AppConstants.snackBarRadius),
-            // padding: EdgeInsets.all(20),
-            strokeWidth: 2,
-            dashPattern: [20, 10],
-            color: AppColors.blue,
+          Container(
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: AppColors.blue,
+                width: 2,
+              ),
+              borderRadius: BorderRadius.circular(12),
+            ),
             child: ClipRRect(
               borderRadius: BorderRadius.all(
                   Radius.circular(AppConstants.snackBarRadius)),
@@ -400,11 +486,93 @@ class LodgeClaimController extends GetxController {
                   () => selectedFile.value != null
                       ? Stack(
                           children: [
-                            Image.file(
-                              selectedFile.value!,
-                              fit: BoxFit.cover,
-                              height: 250,
-                              width: queryWidth(null),
+                            Builder(
+                              builder: (context) {
+                                try {
+                                  // Check if it's a PDF file
+                                  final fileName =
+                                      selectedFile.value!.path.toLowerCase();
+                                  final isPdf = fileName.endsWith('.pdf');
+
+                                  if (isPdf) {
+                                    return FutureBuilder<Uint8List>(
+                                      future: selectedFile.value!.readAsBytes(),
+                                      builder: (context, snapshot) {
+                                        if (snapshot.hasData) {
+                                          return ClipRRect(
+                                            borderRadius: BorderRadius.circular(
+                                                AppConstants.snackBarRadius),
+                                            child: PdfPreview(
+                                              allowPrinting: false,
+                                              allowSharing: false,
+                                              canChangePageFormat: false,
+                                              canChangeOrientation: false,
+                                              canDebug: false,
+                                              scrollViewDecoration:
+                                                  BoxDecoration(),
+                                              build: (_) async =>
+                                                  snapshot.data!,
+                                            ),
+                                          );
+                                        } else {
+                                          return Container(
+                                            height: 250,
+                                            child: Column(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
+                                                Icon(Icons.picture_as_pdf,
+                                                    size: 64,
+                                                    color: Colors.red),
+                                                SizedBox(height: 16),
+                                                Text('Loading PDF...'),
+                                              ],
+                                            ),
+                                          );
+                                        }
+                                      },
+                                    );
+                                  } else {
+                                    // Display image
+                                    return Image.file(
+                                      selectedFile.value!,
+                                      fit: BoxFit.cover,
+                                      height: 250,
+                                      width: queryWidth(null),
+                                      errorBuilder:
+                                          (context, error, stackTrace) {
+                                        return Container(
+                                          height: 250,
+                                          child: Column(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              Icon(Icons.error,
+                                                  size: 48, color: Colors.red),
+                                              SizedBox(height: 16),
+                                              Text('Unable to display file'),
+                                            ],
+                                          ),
+                                        );
+                                      },
+                                    );
+                                  }
+                                } catch (e) {
+                                  return Container(
+                                    height: 250,
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(Icons.error,
+                                            size: 48, color: Colors.red),
+                                        SizedBox(height: 16),
+                                        Text('Unable to preview file'),
+                                      ],
+                                    ),
+                                  );
+                                }
+                              },
                             ),
                             Positioned(
                               right: 0,

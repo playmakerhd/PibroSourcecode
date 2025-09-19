@@ -32,7 +32,6 @@ import 'package:pibro/network/models/response/profile_response.dart';
 import 'package:pibro/network/models/response/quotes_response.dart';
 import 'package:pibro/network/models/response/vendor_response.dart';
 import 'package:pibro/network/models/response/message_response.dart'; // CustomMessageResponse
-import 'package:pibro/network/models/response/quotes_response.dart'; // QuoteInfo/QuoteByIdResponse
 import 'package:pibro/network/models/response/quote_by_id_response.dart';
 import 'package:pibro/network/models/response/debit_note_list_response.dart';
 import 'package:pibro/network/models/response/customer_transactions_response.dart';
@@ -260,6 +259,26 @@ class ApiProvider extends BaseProvider {
     final responseData =
         await makePostCall(Uri.parse(endpoint), jsonEncode(requestBody), false);
     return CustomMessageResponse(responseData);
+  }
+
+  // Endorse policy – returns additional premium in Message
+  Future<CustomMessageResponse> callEndorsePolicy(
+      Map<String, dynamic> body) async {
+    final endpoint =
+        '$_baseApiPath${Endpoints.endorsePolicy}?token=$_acessToken';
+    final resp =
+        await makePostCall(Uri.parse(endpoint), jsonEncode(body), false);
+    return CustomMessageResponse(resp);
+  }
+
+  // Create endorsement debit note (DBN) after payment
+  Future<CustomMessageResponse> callCreateClientNoteEndorsement(
+      Map<String, dynamic> body) async {
+    final endpoint =
+        '$_baseApiPath${Endpoints.createClientNoteEndorsement}?token=$_acessToken';
+    final resp =
+        await makePostCall(Uri.parse(endpoint), jsonEncode(body), false);
+    return CustomMessageResponse(resp);
   }
 
   Future<CustomMessageResponse> callBookClientNote(

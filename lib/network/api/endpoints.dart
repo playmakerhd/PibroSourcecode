@@ -19,6 +19,10 @@ class Endpoints {
       '/GetInsuranceRiskTypeByBusinessClassID';
   static const String renewPolicy = '/InsurancePolicyRenewal';
   static const String updateInsurancePolicy = '/UpdateInsurancePolicyByID';
+  // +++ ADD:
+  static const String endorsePolicy = '/EndorseInsurancePolicy';
+  static const String createClientNoteEndorsement =
+      '/CreateInsuranceClientNoteEndorsement';
   static const String bookPolicy = '/InsurancePolicyBooking';
   static const String postPolicy = '/InsurancePolicyPost';
   static const String createClientNote = '/CreateInsuranceClientNote';
