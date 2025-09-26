@@ -64,4 +64,6 @@ class Endpoints {
   static const String getCompanyInfo = '/GetCompanyInformationByID';
   static const String getCompanyFaq = '/GetCompanyFAQ';
   static const String getCompanyChat = '/GetCompanyChat';
+  // Policy documents
+  static const String viewInsuranceCertificate = '/viewInsuranceCertificate';
 }

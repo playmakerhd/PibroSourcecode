@@ -124,6 +124,19 @@ class ApiProvider extends BaseProvider {
     return DebitNoteListResponse(responseData!);
   }
 
+  Future<CustomMessageResponse> callViewInsuranceCertificate({
+    required String policyBrokerID,
+    required String customerID,
+  }) async {
+    final endpoint = '$_baseApiPath${Endpoints.viewInsuranceCertificate}'
+        '?PolicyBrokerID=$policyBrokerID'
+        '&CustomerID=$customerID'
+        '&token=$_acessToken';
+
+    final responseData = await makeGetCall(Uri.parse(endpoint), false);
+    return CustomMessageResponse(responseData!);
+  }
+
   Future<CustomerTransactionsResponse> callGetCustomerTransactions({
     required String customerID,
     required int pageNum,

@@ -42,7 +42,7 @@ class PolicyDetailsScreen extends StatelessWidget {
                     onPressed: controller.navigateToRenewPolicyScreen,
                     isExpanded: true,
                   ),
-                  SizedBox(width: 10),
+                  SizedBox(width: 7),
                   if (policy != null &&
                       getPolicyStatus(
                                   policy.policyEndDate ?? '', policy.approved)
@@ -53,7 +53,7 @@ class PolicyDetailsScreen extends StatelessWidget {
                       onPressed: controller.navigateToEndorsePolicyScreen,
                       isExpanded: true,
                     ),
-                  SizedBox(width: 10),
+                  SizedBox(width: 7),
                   PolicyButton(
                     text: AppStrings.claim.tr,
                     onPressed: controller.navigateToLodgeClaimScreen,

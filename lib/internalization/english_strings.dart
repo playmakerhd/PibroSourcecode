@@ -190,6 +190,8 @@ class EnglishStrings {
           'Configuration data is not set. Please set the service URL and token.',
       AppStrings.configIncorrect:
           'Configuration data is incorrect. Please set the correct service URL and token.',
+      AppStrings.insuranceCertificate: 'Insurance Certificate',
+      AppStrings.insuranceCertificateSaved: 'Insurance certificate saved to:',
     };
   }
 }

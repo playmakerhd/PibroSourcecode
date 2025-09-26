@@ -87,6 +87,7 @@ class EndorsementScreen extends StatelessWidget {
                             list: c.policyItems.toList(),
                             edit: (it) => c.showAddOrUpdateItemSheet(
                                 data: it, isNew: false),
+                            view: (it) => c.previewItemAttachment(it),
                           )),
                       const SizedBox(height: 8),
                       Obx(() => ItemsInsuredList(
@@ -94,6 +95,7 @@ class EndorsementScreen extends StatelessWidget {
                             edit: (it) => c.showAddOrUpdateItemSheet(
                                 data: it, isNew: true),
                             delete: (it) => c.removeItem(it, isNew: true),
+                            view: (it) => c.previewItemAttachment(it),
                           )),
 
                       const SizedBox(height: 10),
@@ -120,7 +122,7 @@ class EndorsementScreen extends StatelessWidget {
                       const SizedBox(height: 30),
                       Center(
                         child: Obx(() => PolicyButton(
-                          width: 170,
+                              width: 170,
                               text: c.loading.value
                                   ? 'Please wait...'
                                   : AppStrings.continueText.tr,

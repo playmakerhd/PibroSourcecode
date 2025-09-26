@@ -129,6 +129,8 @@ class AppStrings extends Translations {
   static const String paymentSuccess = 'paymentSuccess';
   static const String paymentSuccessNowActive = 'paymentSuccessNowActive';
   static const String detailsBelow = 'detailsBelow';
+  static const String insuranceCertificate = 'insuranceCertificate';
+  static const String insuranceCertificateSaved = 'insuranceCertificateSaved';
 
   // Quote
   static const String lifeInsurance = 'lifeInsurance';

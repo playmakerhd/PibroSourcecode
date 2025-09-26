@@ -197,4 +197,13 @@ class PibroRepository {
         transactionNumber: transactionNumber,
         reportType: reportType,
       );
+
+  Future<CustomMessageResponse> viewInsuranceCertificate({
+    required String policyBrokerID,
+    required String customerID,
+  }) async =>
+      appApiProvider.callViewInsuranceCertificate(
+        policyBrokerID: policyBrokerID,
+        customerID: customerID,
+      );
 }

@@ -79,7 +79,7 @@ void showAppDialog(Widget child,
   );
 }
 
-void showAppBottomSheet({
+Future<dynamic> showAppBottomSheet({
   required Widget child,
   double height = 460,
   bool isDismissible = true,
@@ -87,7 +87,7 @@ void showAppBottomSheet({
   bool willPop = true,
   bool isImagePreview = false,
 }) {
-  Get.bottomSheet(
+  return Get.bottomSheet(
     WillPopScope(
       onWillPop: () async => willPop,
       child: Container(

@@ -3,6 +3,7 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:pibro/constants/app_colors.dart';
+import 'package:pibro/constants/app_styles.dart';
 import 'package:pibro/constants/app_constants.dart';
 import 'package:pibro/core/policy/views/payment_screen.dart';
 import 'package:pibro/network/models/request/create_receipt_request.dart';
@@ -15,14 +16,16 @@ import 'package:pibro/utils/validators.dart';
 import 'package:pibro/utils/view_utils.dart';
 import 'package:pibro/shared/custom_input/custom_input.dart';
 import 'package:pibro/core/policy/widget/policy_button.dart';
-import 'package:pibro/shared/widget/attachment_manager.dart';
+import 'package:pibro/internalization/app_strings.dart';
 import 'package:screenshot/screenshot.dart';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:file_picker/file_picker.dart';
 
 class EndorsementController extends GetxController {
   final PibroRepository repo = PibroRepository(appApiProvider: ApiProvider());
@@ -47,8 +50,9 @@ class EndorsementController extends GetxController {
   final valueCtrl = TextEditingController();
   final locationCtrl = TextEditingController();
   final descCtrl = TextEditingController();
-  // Attachments
-  final attachmentManager = AttachmentManager();
+  // Attachments - switch to selectedImage to match quote/renewal pattern
+  RxString selectedImage = ''.obs;
+  RxBool isPickingFile = false.obs;
 
   // Flags
   RxBool loading = false.obs;
@@ -185,15 +189,83 @@ class EndorsementController extends GetxController {
     super.dispose();
   }
 
+  void clearInputData() {
+    valueCtrl.clear();
+    locationCtrl.clear();
+    descCtrl.clear();
+    selectedImage.value = '';
+  }
+
+  void pickImage() async {
+    if (isPickingFile.value) return;
+    isPickingFile.value = true;
+    try {
+      const int maxBytes = 20 * 1024 * 1024; // 20MB
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['jpg', 'jpeg', 'png', 'pdf'],
+        withData: true,
+      );
+      if (result != null && result.files.single.bytes != null) {
+        final f = result.files.single;
+        if (f.size > maxBytes) {
+          showSnackbarMessage(
+              message: 'Max file size is 20MB', isSuccess: false);
+          selectedImage.value = '';
+        } else {
+          selectedImage.value = base64Encode(f.bytes!); // raw base64
+        }
+      } else {
+        selectedImage.value = '';
+      }
+    } catch (e) {
+      debugPrint("Error picking file: $e");
+    } finally {
+      isPickingFile.value = false;
+    }
+  }
+
+  void addOrUpdateItem({ItemToInsure? data, bool? isNew}) {
+    if (addItemFormKey.currentState!.validate()) {
+      if (data != null) {
+        // Update existing
+        (isNew == true ? newItems : policyItems).remove(data);
+        data.itemsDescription = descCtrl.text;
+        data.sumInsured = double.tryParse(valueCtrl.text) ?? 0;
+        data.itemLocation = locationCtrl.text;
+        data.policyItems = selectedImage.value;
+        (isNew == true ? newItems : policyItems).add(data);
+      } else {
+        final it = ItemToInsure(
+          companyID: policy.value!.companyID,
+          departmentID: policy.value!.departmentID,
+          divisionID: policy.value!.divisionID,
+          policyBrokerID: policy.value!.policyBrokerID,
+          manualNumbering: '1',
+          brokingSlipItemCount: 0,
+          itemsDescription: descCtrl.text,
+          sumInsured: double.tryParse(valueCtrl.text) ?? 0,
+          itemLocation: locationCtrl.text,
+          policyItems: selectedImage.value,
+        );
+        (isNew == true ? newItems : policyItems).add(it);
+      }
+      clearInputData();
+      Get.back();
+    }
+  }
+
   // ============== Items ==============
   void showAddOrUpdateItemSheet({ItemToInsure? data, bool isNew = false}) {
     if (data != null) {
       descCtrl.text = data.itemsDescription ?? '';
       valueCtrl.text = (data.sumInsured ?? 0).toString();
       locationCtrl.text = data.itemLocation ?? '';
+      selectedImage.value = data.policyItems ?? '';
     }
+    // Show bottom sheet and await dismissal so we can clear inputs afterwards
     showAppBottomSheet(
-      height: 520,
+      height: 600,
       isDismissible: false,
       willPop: false,
       child: Form(
@@ -204,33 +276,39 @@ class EndorsementController extends GetxController {
             Align(
               alignment: Alignment.topRight,
               child: GestureDetector(
-                onTap: Get.back,
+                onTap: () {
+                  clearInputData();
+                  Get.back();
+                },
                 child: const Icon(Icons.clear,
-                    size: 28, color: AppColors.primaryColor),
+                    size: 30, color: AppColors.primaryColor),
               ),
             ),
             CustomInput(
               controller: valueCtrl,
-              label: 'Value',
+              label: AppStrings.value.tr,
               hint: '',
-              validator: (v) => Validators.requiredValidator(v, 'Value'),
+              validator: (v) =>
+                  Validators.requiredValidator(v, AppStrings.value.tr),
+              inputType: TextInputType.number,
             ),
             CustomInput(
               controller: locationCtrl,
-              label: 'Location',
+              label: AppStrings.location.tr,
               hint: '',
-              validator: (v) => Validators.requiredValidator(v, 'Location'),
+              validator: (v) =>
+                  Validators.requiredValidator(v, AppStrings.location.tr),
             ),
             CustomInput(
               controller: descCtrl,
-              label: 'Description',
+              label: AppStrings.description.tr,
               hint: '',
               maxLines: 3,
-              validator: (v) => Validators.requiredValidator(v, 'Description'),
+              validator: (v) =>
+                  Validators.requiredValidator(v, AppStrings.description.tr),
             ),
-            const SizedBox(height: 8),
             Padding(
-              padding: const EdgeInsets.only(top: 10, bottom: 20),
+              padding: const EdgeInsets.only(top: 10, bottom: 30),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -238,22 +316,27 @@ class EndorsementController extends GetxController {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       GestureDetector(
-                        onTap: attachmentManager.pickFiles,
-                        child: Text('Add Image/PDF',
-                            style: TextStyle(color: AppColors.primaryColor)),
+                        onTap: pickImage,
+                        child: Text(
+                          "Add Image/PDF",
+                          style: Styles.linkTextStyle(),
+                        ),
                       ),
-                      const SizedBox(width: 30),
+                      SizedBox(width: 30),
                       Obx(() {
-                        if (!attachmentManager.hasFiles)
+                        if (selectedImage.value.isEmpty)
                           return const SizedBox();
+
+                        // Safely handle base64 validation and display
                         try {
-                          final b64 =
-                              attachmentManager.selectedFiles[0].contains(',')
-                                  ? attachmentManager.selectedFiles[0]
-                                      .split(',')
-                                      .last
-                                  : attachmentManager.selectedFiles[0];
+                          final b64 = selectedImage.value.contains(',')
+                              ? selectedImage.value.split(',').last
+                              : selectedImage.value;
+
+                          // Validate base64 first
                           final bytes = base64Decode(b64);
+
+                          // Check if it's a PDF after successful validation
                           final isPdf = b64.startsWith('JVBERi0');
 
                           if (isPdf) {
@@ -269,6 +352,7 @@ class EndorsementController extends GetxController {
                             );
                           }
 
+                          // Display image safely
                           return Expanded(
                             child: Image.memory(bytes,
                                 fit: BoxFit.cover, height: 100,
@@ -311,47 +395,98 @@ class EndorsementController extends GetxController {
                 ],
               ),
             ),
-            Center(
-              child: PolicyButton(
-                text: 'Save',
-                onPressed: () {
-                  if (!addItemFormKey.currentState!.validate()) return;
-                  if (data != null) {
-                    // Update existing
-                    (isNew ? newItems : policyItems).remove(data);
-                    data.itemsDescription = descCtrl.text;
-                    data.sumInsured = double.tryParse(valueCtrl.text) ?? 0;
-                    data.itemLocation = locationCtrl.text;
-                    (isNew ? newItems : policyItems).add(data);
-                  } else {
-                    final it = ItemToInsure(
-                      companyID: policy.value!.companyID,
-                      departmentID: policy.value!.departmentID,
-                      divisionID: policy.value!.divisionID,
-                      policyBrokerID: policy.value!.policyBrokerID,
-                      manualNumbering: '1',
-                      brokingSlipItemCount: 0,
-                      itemsDescription: descCtrl.text,
-                      sumInsured: double.tryParse(valueCtrl.text) ?? 0,
-                      itemLocation: locationCtrl.text,
-                    );
-                    (isNew ? newItems : policyItems).add(it);
-                  }
-                  descCtrl.clear();
-                  valueCtrl.clear();
-                  locationCtrl.clear();
-                  Get.back();
-                },
-                isExpanded: false,
-                height: 50,
-                width: queryWidth(null) * 0.5,
-                bgColor: AppColors.primaryColor,
-              ),
+            PolicyButton(
+              text: AppStrings.save.tr,
+              onPressed: () => addOrUpdateItem(data: data, isNew: isNew),
+              height: 50,
+              width: queryWidth(null) * 0.5,
+              bgColor: AppColors.primaryColor,
             ),
           ],
         ),
       ),
-    );
+    ).then((_) {
+      // Sheet dismissed - clear inputs to ensure next open is clean
+      clearInputData();
+    });
+  }
+
+  void previewItemAttachment(ItemToInsure item) {
+    final raw = (item.policyItems ?? '');
+    if (raw.isEmpty) return;
+
+    try {
+      final b64 = raw.contains(',') ? raw.split(',').last : raw;
+      final bytes = base64Decode(b64); // Validate base64 first
+      final isPdf = b64.startsWith('JVBERi0');
+
+      if (isPdf) {
+        // PDF Preview - use a different bottom sheet approach to avoid layout issues
+        Get.bottomSheet(
+          Container(
+            height: queryHeight(null) * 0.85,
+            width: queryWidth(null),
+            decoration: BoxDecoration(
+              color: AppColors.white,
+              borderRadius: BorderRadius.vertical(
+                top: Radius.circular(AppConstants.appRadius),
+              ),
+            ),
+            child: Column(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('PDF Preview', style: Styles.mediumTextStyle()),
+                      GestureDetector(
+                        onTap: () => Get.back(),
+                        child: Icon(Icons.close),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: PdfPreview(
+                    allowPrinting: false,
+                    allowSharing: false,
+                    canChangePageFormat: false,
+                    canChangeOrientation: false,
+                    build: (_) async => bytes,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          isDismissible: true,
+          enableDrag: true,
+        );
+      } else {
+        // Image Preview - use the existing method
+        showAppBottomSheet(
+          height: queryHeight(null) * 0.85,
+          isImagePreview: true,
+          child: InteractiveViewer(
+            child: Image.memory(bytes, fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.error, size: 48, color: Colors.red),
+                    SizedBox(height: 16),
+                    Text('Unable to display image'),
+                  ],
+                ),
+              );
+            }),
+          ),
+        );
+      }
+    } catch (e) {
+      showSnackbarMessage(message: 'Invalid attachment data', isSuccess: false);
+    }
   }
 
   void removeItem(ItemToInsure it, {required bool isNew}) {
