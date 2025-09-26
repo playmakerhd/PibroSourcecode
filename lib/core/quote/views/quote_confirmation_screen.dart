@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:pibro/constants/app_colors.dart';
 import 'package:pibro/constants/app_styles.dart';
 import 'package:pibro/constants/storage_keys.dart';
+import 'package:pibro/core/home/controller/home_controller.dart';
 import 'package:pibro/core/policy/controller/renew_policy_controller.dart';
 import 'package:pibro/core/policy/widget/detail_row.dart';
 import 'package:pibro/core/policy/widget/policy_button.dart';
@@ -123,6 +124,7 @@ class QuoteConfirmationScreen extends StatelessWidget {
               title:
                   isPolicyMode ? 'Policy Confirmation' : 'Quote Confirmation',
               isTransparent: true,
+              hasBackIcon: false,
             ),
             const LargeLine(height: 0),
             Expanded(
@@ -202,8 +204,11 @@ class QuoteConfirmationScreen extends StatelessWidget {
                         PolicyButton(
                           text: 'OK',
                           onPressed: () {
-                            // Navigate to the main route. It will handle routing for
-                            // both logged-in users (to dashboard) and guests (to landing).
+                            if (Get.isRegistered<HomeController>()) {
+                              try {
+                                Get.delete<HomeController>();
+                              } catch (_) {}
+                            }
                             Get.offAllNamed(AppRoutes.main);
                           },
                           width: 120,

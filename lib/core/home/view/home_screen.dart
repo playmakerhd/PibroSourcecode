@@ -83,7 +83,7 @@ class HomeScreen extends StatelessWidget {
                                                         .value!
                                                         .customerName!
                                                         .capitalize!
-                                                    : 'Bayo Atekoja'
+                                                    : ''
                                               }),
                                               style: Styles.boldTextStyle(
                                                 size: 18,

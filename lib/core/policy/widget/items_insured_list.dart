@@ -4,6 +4,7 @@ import 'package:pibro/internalization/app_strings.dart';
 import 'package:pibro/network/models/response/customer_policy_response.dart';
 import 'package:pibro/shared/item_row_container.dart';
 import 'package:pibro/shared/title_value_row.dart';
+import 'package:pibro/utils/app_utils.dart';
 
 class ItemsInsuredList extends StatelessWidget {
   const ItemsInsuredList({
@@ -40,7 +41,7 @@ class ItemsInsuredList extends StatelessWidget {
                         const SizedBox(height: 6),
                         TitleValueRow(
                           title: '${AppStrings.sumInsured.tr}:',
-                          value: (item.sumInsured ?? 0).toString(),
+                          value: (formatAmount(item.sumInsured ?? 0)).toString(),
                         ),
                         const SizedBox(height: 6),
                         TitleValueRow(

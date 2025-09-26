@@ -566,6 +566,7 @@ class RenewPolicyController extends GetxController {
               hint: '',
               validator: (value) =>
                   Validators.requiredValidator(value, AppStrings.value.tr),
+                  inputType: TextInputType.number,
             ),
             CustomInput(
               controller: locationController,

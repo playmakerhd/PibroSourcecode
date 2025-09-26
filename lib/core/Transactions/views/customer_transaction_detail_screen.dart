@@ -9,12 +9,12 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:pibro/constants/app_colors.dart';
 import 'package:pibro/core/policy/widget/detail_row.dart';
 import 'package:pibro/core/policy/widget/policy_button.dart';
+import 'package:pibro/core/Transactions/controller/customer_transactions_controller.dart';
 import 'package:pibro/network/models/response/customer_transactions_response.dart';
 import 'package:pibro/shared/common_header.dart';
 import 'package:pibro/utils/app_utils.dart';
 import 'package:pibro/utils/view_utils.dart';
 import 'package:screenshot/screenshot.dart';
-import 'package:share_plus/share_plus.dart';
 
 class CustomerTransactionDetailScreen extends StatelessWidget {
   const CustomerTransactionDetailScreen({super.key});
@@ -46,7 +46,8 @@ class CustomerTransactionDetailScreen extends StatelessWidget {
       await file.writeAsBytes(await pdf.save());
       return file;
     } catch (e) {
-      showSnackbarMessage(message: 'Failed to create PDF: $e', isSuccess: false);
+      showSnackbarMessage(
+          message: 'Failed to create PDF: $e', isSuccess: false);
       return null;
     }
   }
@@ -61,20 +62,22 @@ class CustomerTransactionDetailScreen extends StatelessWidget {
 
   Future<void> _onSharePressed(
       BuildContext context, CustomerTransaction t) async {
-    final file = await _exportToPdf(context, t);
-    if (file != null) {
-      await Share.shareXFiles([XFile(file.path)],
-          text: 'Customer transaction');
-    }
+    // Use the existing controller to share the transaction report
+    final ctrl = Get.put(CustomerTransactionsController());
+    await ctrl.shareTransactionReport(
+      transactionNumber: t.transactionNumber ?? '',
+      reportType: t.transactionType ?? '',
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final CustomerTransaction t = Get.arguments as CustomerTransaction;
+    final ctrl = Get.put(CustomerTransactionsController());
     return Scaffold(
       backgroundColor: AppColors.white,
       body: MediaQuery.removePadding(
-        context:context,
+        context: context,
         child: Screenshot(
           controller: _shot,
           child: ListView(
@@ -100,8 +103,9 @@ class CustomerTransactionDetailScreen extends StatelessWidget {
                     DetailRow(
                         title: 'Transaction Type:',
                         value: t.transactionType ?? '-'),
-                  //  DetailRow(title: 'Key Field:', value: t.keyField ?? '-'),
-                    DetailRow(title: 'Customer ID:', value: t.customerID ?? '-'),
+                    //  DetailRow(title: 'Key Field:', value: t.keyField ?? '-'),
+                    DetailRow(
+                        title: 'Customer ID:', value: t.customerID ?? '-'),
                     const SizedBox(height: 80),
                   ],
                 ),
@@ -121,23 +125,20 @@ class CustomerTransactionDetailScreen extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Expanded(
-                child: PolicyButton(
-                  text: 'Export PDF',
-                  onPressed: () => _onExportPressed(context, t),
-                  isExpanded: true,
-                  bgColor: AppColors.primaryColor,
-                ),
+              PolicyButton(
+                text: 'Export PDF',
+                onPressed: () => _onExportPressed(context, t),
+                isExpanded: true,
+                bgColor: AppColors.primaryColor,
               ),
               const SizedBox(width: 12),
-              Expanded(
-                child: PolicyButton(
-                  text: 'Share',
-                  onPressed: () => _onSharePressed(context, t),
-                  isExpanded: true,
-                  bgColor: AppColors.primaryColor,
-                ),
-              ),
+              Obx(() => PolicyButton(
+                    text: 'Share',
+                    onPressed: () => _onSharePressed(context, t),
+                    isExpanded: true,
+                    bgColor: AppColors.primaryColor,
+                    loading: ctrl.shareLoading.value,
+                  )),
             ],
           ),
         ),

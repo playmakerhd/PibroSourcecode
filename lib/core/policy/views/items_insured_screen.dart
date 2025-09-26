@@ -8,6 +8,7 @@ import 'package:pibro/shared/common_header.dart';
 import 'package:pibro/shared/empty_data.dart';
 import 'package:pibro/shared/item_row_container.dart';
 import 'package:pibro/shared/title_value_row.dart';
+import 'package:pibro/utils/app_utils.dart';
 import 'package:printing/printing.dart';
 
 class ItemsInsuredScreen extends StatelessWidget {
@@ -53,7 +54,7 @@ class ItemsInsuredScreen extends StatelessWidget {
                                 TitleValueRow(
                                   title: '${AppStrings.value.tr}:',
                                   value:
-                                      'N${(item.sumInsured ?? 0).toString()}',
+                                      'N${(formatAmount(item.sumInsured ?? 0)).toString()}',
                                 ),
                                 // Always show something in the image area for consistent layout
                                 if (item.policyItems != null &&
@@ -86,7 +87,7 @@ class ItemsInsuredScreen extends StatelessWidget {
                                               borderRadius:
                                                   BorderRadius.circular(8),
                                               child: PdfPreview(
-                                                allowPrinting: true,
+                                                allowPrinting: false,
                                                 allowSharing: false,
                                                 canChangePageFormat: false,
                                                 canChangeOrientation: false,

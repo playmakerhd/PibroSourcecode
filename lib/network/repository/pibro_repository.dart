@@ -188,4 +188,13 @@ class PibroRepository {
   ) async {
     return appApiProvider.callUpdateCustomerEnquiryStatus(body);
   }
+
+  Future<CustomMessageResponse> viewCustomerTransactionReport({
+    required String transactionNumber,
+    required String reportType,
+  }) async =>
+      appApiProvider.callViewCustomerTransactionReport(
+        transactionNumber: transactionNumber,
+        reportType: reportType,
+      );
 }

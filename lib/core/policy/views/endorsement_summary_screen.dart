@@ -211,16 +211,14 @@ class EndorsementSummaryScreen extends StatelessWidget {
                                 bgColor: AppColors.primaryColor,
                                 isExpanded: false,
                               ))
-                          : Obx(() => PolicyButton(
-                                text: 'Pay Additional Premium',
-                                onPressed: c.paymentLoading.value
-                                    ? () {}
-                                    : () => c.getPaymentTokenAndInit(addPrem),
-                                height: 44,
-                                bgColor: AppColors.primaryColor,
-                                isExpanded: false,
-                                loading: c.paymentLoading.value,
-                              )),
+                          : PolicyButton(
+                              text: 'Pay Additional Premium',
+                              onPressed: () =>
+                                  c.getPaymentTokenAndInit(addPrem),
+                              height: 44,
+                              bgColor: AppColors.primaryColor,
+                              isExpanded: false,
+                            ),
                     ),
                   ),
                   const SizedBox(height: 50),

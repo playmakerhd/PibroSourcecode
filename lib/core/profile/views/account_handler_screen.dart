@@ -13,6 +13,14 @@ class AccountHandlerScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final HomeController controller = Get.put(HomeController());
+    // local helper to display '-' for null/empty values
+    String safe(String? v) => (v == null || v.trim().isEmpty) ? '-' : v.trim();
+
+    // guard access to customer contacts and pick the first contact if available
+    final user = controller.user.value;
+    final contacts = user?.customerContacts;
+    final firstContact =
+        (contacts != null && contacts.isNotEmpty) ? contacts[0] : null;
     return Scaffold(
       backgroundColor: AppColors.white,
       body: SizedBox(
@@ -30,18 +38,17 @@ class AccountHandlerScreen extends StatelessWidget {
               children: [
                 InfoContainer(
                   title: AppStrings.name.tr,
-                  value:
-                      '${controller.user.value!.customerContacts![0].contactFirstName!} ${controller.user.value!.customerContacts![0].contactLastName!}',
+                  value: safe(
+                      '${firstContact?.contactFirstName ?? ''} ${firstContact?.contactLastName ?? ''}'
+                          .trim()),
                 ),
                 InfoContainer(
                   title: AppStrings.phoneNumber.tr,
-                  value:
-                      controller.user.value!.customerContacts![0].contactPhone!,
+                  value: safe(firstContact?.contactPhone),
                 ),
                 InfoContainer(
                   title: AppStrings.email.tr,
-                  value:
-                      controller.user.value!.customerContacts![0].contactEmail!,
+                  value: safe(firstContact?.contactEmail),
                 ),
               ],
             ),

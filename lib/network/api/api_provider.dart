@@ -501,4 +501,17 @@ class ApiProvider extends BaseProvider {
     final resp = await makePutCall(Uri.parse(endpoint), body, false);
     return CustomMessageResponse(resp);
   }
+
+  Future<CustomMessageResponse> callViewCustomerTransactionReport({
+    required String transactionNumber,
+    required String reportType,
+  }) async {
+    final endpoint = '$_baseApiPath${Endpoints.viewCustomerTransactionReport}'
+        '?TransactionNumber=$transactionNumber'
+        '&ReportType=$reportType'
+        '&token=$_acessToken';
+
+    final responseData = await makeGetCall(Uri.parse(endpoint), false);
+    return CustomMessageResponse(responseData!);
+  }
 }

@@ -51,6 +51,8 @@ class Endpoints {
       '/GetInsuranceClientNotesByCustomerID';
   static const String getCustomerTransactions =
       '/GetCustomerTransactionsByCustomer';
+  static const String viewCustomerTransactionReport =
+      '/ViewCustomerTransactionReport';
 
   // Vendors / Enquiries
   static const String getVendors = '/GetVendorInformation';

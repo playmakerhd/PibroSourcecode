@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:pibro/constants/app_colors.dart';
-import 'package:pibro/core/transactions/controller/customer_transactions_controller.dart';
+import 'package:pibro/core/Transactions/controller/customer_transactions_controller.dart';
 import 'package:pibro/shared/common_header.dart';
 import 'package:pibro/shared/item_row_container.dart';
 import 'package:pibro/shared/title_value_row.dart';
@@ -220,7 +220,20 @@ class _DateBox extends StatelessWidget {
       noHorizontalMargin: true,
       child: Padding(
         padding: const EdgeInsets.all(8.0),
-        child: TitleValueRow(title: label, value: value.isEmpty ? '-' : value),
+        child: Row(
+          children: [
+            Expanded(
+              child: TitleValueRow(title: label, value: value.isEmpty ? '-' : value),
+            ),
+            const SizedBox(width: 8),
+            // Calendar icon to indicate tappable date picker
+            Icon(
+              Icons.calendar_today,
+              size: 18,
+              color: AppColors.primaryColor,
+            ),
+          ],
+        ),
       ),
     );
   }

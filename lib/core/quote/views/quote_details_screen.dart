@@ -14,18 +14,25 @@ class QuoteDetailsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final QuoteController controller = Get.put(QuoteController());
+    final bool isCompleted =
+        ((controller.selectedQuote.value?.supportStatus ?? '')
+                .toString()
+                .toLowerCase() ==
+            'completed');
     return Scaffold(
       backgroundColor: AppColors.tileColor,
-      floatingActionButton: PolicyButton(
-        height: 40,
-        width: 180,
-        text: AppStrings.makePayment.tr,
-        bgColor: AppColors.primaryColor,
-        onPressed: () {
-          QuoteDetailsWidget(data: controller.selectedQuote.value!);
-          controller.navigateToQuoteSummaryForPayment();
-        },
-      ),
+      floatingActionButton: isCompleted
+          ? null
+          : PolicyButton(
+              height: 40,
+              width: 180,
+              text: AppStrings.makePayment.tr,
+              bgColor: AppColors.primaryColor,
+              onPressed: () {
+                QuoteDetailsWidget(data: controller.selectedQuote.value!);
+                controller.navigateToQuoteSummaryForPayment();
+              },
+            ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       body: SafeArea(
         bottom: false,

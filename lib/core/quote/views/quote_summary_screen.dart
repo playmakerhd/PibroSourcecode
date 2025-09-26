@@ -65,9 +65,9 @@ class QuoteSummaryScreen extends StatelessWidget {
               child: ListView(
                 children: [
                   DetailRow(title: 'Customer ID:', value: customerid),
-                  DetailRow(
-                      title: 'Customer Name:',
-                      value: '${data['customerName'] ?? 'N/A'}'),
+                  // DetailRow(
+                  //     title: 'Customer Name:',
+                  //     value: '${data['customerName'] ?? 'N/A'}'),
                   DetailRow(
                       title: 'Insurance Class:',
                       value: '${data['businessClassName'] ?? 'N/A'}'),

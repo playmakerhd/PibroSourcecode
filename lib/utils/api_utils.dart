@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:pibro/constants/storage_keys.dart';
 import 'package:pibro/core/login/model/login_data.dart';
+import 'package:pibro/core/policy/controller/endorsement_controller.dart';
 import 'package:pibro/network/models/platform_user/platform_user.dart';
 import 'package:pibro/network/models/request/claim_request.dart';
 import 'package:pibro/network/models/request/client_note_request.dart';
@@ -13,6 +14,7 @@ import 'package:pibro/network/models/response/quotes_response.dart';
 import 'package:pibro/utils/app_utils.dart';
 
 class ApiUtils {
+  
   static Map<String, dynamic> receiptPayload(CreateReceiptRequest requestData) {
     print('🧾 RECEIPT_PAYLOAD: Starting receipt payload creation');
     print(
@@ -337,9 +339,10 @@ class ApiUtils {
 
     return full;
   }
-
+ 
   /// CreateInsuranceClientNoteEndorsement payload
   static Map<String, dynamic> endorsementNotePayload({
+   
     required PolicyData policy,
     required DateTime startDate,
     required DateTime endDate,
@@ -349,6 +352,7 @@ class ApiUtils {
     required String receiptId,
   }) {
     return {
+      
       "NoteTypeID": "DBN",
       "PolicyBrokerID": policy.policyBrokerID,
       "CustomerID": policy.customerID ?? "",
