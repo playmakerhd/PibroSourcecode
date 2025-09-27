@@ -9,7 +9,7 @@ import 'package:pibro/network/api/api_provider.dart';
 import 'package:pibro/network/repository/pibro_repository.dart';
 import 'package:pibro/utils/view_utils.dart';
 
-class PolicyDetailController extends GetxController {
+class PolicyCertificateController extends GetxController {
   final PibroRepository _repo = PibroRepository(appApiProvider: ApiProvider());
 
   final RxBool certificateLoading = false.obs;

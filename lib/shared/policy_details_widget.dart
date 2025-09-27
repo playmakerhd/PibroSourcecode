@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:pibro/core/policy/controller/policy_detail_controller.dart';
+import 'package:pibro/core/policy/controller/policy_certificate_controller.dart';
 import 'package:pibro/core/policy/views/insurers_screen.dart';
 import 'package:pibro/core/policy/views/items_insured_screen.dart';
 import 'dart:io';
@@ -45,10 +45,12 @@ class PolicyDetailsWidget extends StatelessWidget {
                 const SizedBox(width: 8),
                 Builder(builder: (ctx) {
                   // Use a unique controller tag to avoid conflicts
-                  final ctl = Get.isRegistered<PolicyDetailController>(
+                  final ctl = Get.isRegistered<PolicyCertificateController>(
                           tag: 'policy_cert')
-                      ? Get.find<PolicyDetailController>(tag: 'policy_cert')
-                      : Get.put(PolicyDetailController(), tag: 'policy_cert');
+                      ? Get.find<PolicyCertificateController>(
+                          tag: 'policy_cert')
+                      : Get.put(PolicyCertificateController(),
+                          tag: 'policy_cert');
                   return Tooltip(
                     message: AppStrings.insuranceCertificate.tr,
                     child: Material(
@@ -168,7 +170,7 @@ class PolicyDetailsWidget extends StatelessWidget {
 }
 
 class _CertificateBottomSheet extends StatefulWidget {
-  final PolicyDetailController controller;
+  final PolicyCertificateController controller;
   final String policyBrokerID;
   final String customerID;
 
@@ -320,8 +322,7 @@ class _CertificateBottomSheetState extends State<_CertificateBottomSheet> {
                           : const Icon(Icons.share),
                       label: Text(_shareLoading ? 'Preparing...' : 'Share'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                            Theme.of(context).colorScheme.secondary,
+                        backgroundColor: Theme.of(context).primaryColor,
                         foregroundColor: Colors.white,
                       ),
                     ),

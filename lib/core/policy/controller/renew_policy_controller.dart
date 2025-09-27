@@ -406,7 +406,7 @@ class RenewPolicyController extends GetxController {
         final f = result.files.single;
         if (f.size > maxBytes) {
           showSnackbarMessage(
-              message: 'Max file size is 5MB', isSuccess: false);
+              message: 'Max file size is 20MB', isSuccess: false);
           selectedImage.value = '';
         } else {
           selectedImage.value = base64Encode(f.bytes!); // raw base64
@@ -659,7 +659,7 @@ class RenewPolicyController extends GetxController {
                   ),
                   SizedBox(height: 8),
                   Text(
-                    "File size should not exceed 5MB",
+                    "File size should not exceed 20MB",
                     style: TextStyle(
                       fontSize: 12,
                       color: Colors.grey[600],

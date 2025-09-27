@@ -20,7 +20,7 @@ class QuoteListScreen extends StatelessWidget {
           size: 50,
           color: AppColors.white,
         ),
-        onPressed: () => Get.toNamed(AppRoutes.quote),
+        onPressed: () => Get.toNamed(AppRoutes.getQuote),
       ),
       body: Column(
         children: [
