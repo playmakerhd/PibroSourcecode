@@ -115,7 +115,7 @@ class CustomerTransactionsController extends GetxController {
 
       if (status.toLowerCase() != 'success' || (msg).isEmpty) {
         print(
-            '❌ SHARE_REPORT: API failed - Status: "$status", Message: "${msg.length > 100 ? msg.substring(0, 100) + '...' : msg}"');
+            '❌ SHARE_REPORT: API failed - Status: "$status", Message: "${msg.length > 100 ? '${msg.substring(0, 100)}...' : msg}"');
         showSnackbarMessage(
           message: AppStrings.genericErrorMessage.tr,
           isSuccess: false,

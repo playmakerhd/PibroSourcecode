@@ -753,9 +753,9 @@ class QuotePaymentController extends GetxController {
   List<Map<String, dynamic>> _normalizeItems(dynamic v) {
     final out = <Map<String, dynamic>>[];
     void addOne(dynamic x) {
-      if (x is Map)
+      if (x is Map) {
         out.add(Map<String, dynamic>.from(x));
-      else if (x is String) {
+      } else if (x is String) {
         try {
           final m = jsonDecode(x);
           if (m is Map) out.add(Map<String, dynamic>.from(m));
@@ -764,11 +764,15 @@ class QuotePaymentController extends GetxController {
     }
 
     if (v is List)
-      for (final it in v) addOne(it);
+      for (final it in v) {
+        addOne(it);
+      }
     else if (v is String) {
       try {
         final l = jsonDecode(v);
-        if (l is List) for (final it in l) addOne(it);
+        if (l is List) for (final it in l) {
+          addOne(it);
+        }
       } catch (_) {}
     }
     return out;
@@ -859,8 +863,9 @@ class QuotePaymentController extends GetxController {
       final dynamic resp = (de as dynamic).response;
       final dynamic data = resp is dynamic ? resp.data : null;
       final msgFromResp = _messageFromData(data);
-      if (msgFromResp != null && msgFromResp.trim().isNotEmpty)
+      if (msgFromResp != null && msgFromResp.trim().isNotEmpty) {
         return msgFromResp;
+      }
 
       final dynamic mr = (de as dynamic).messageResponse;
       final dynamic mrMsg =
@@ -871,16 +876,18 @@ class QuotePaymentController extends GetxController {
       if (m is String && m.trim().isNotEmpty) return m.trim();
     } catch (_) {}
 
-    if (e is SocketException)
+    if (e is SocketException) {
       return 'Network error. Please check your connection and try again.';
+    }
     if (e is HttpException) return e.message;
     if (e is FormatException) return e.message;
 
     final s = e.toString();
     if (s.isNotEmpty) {
       final fromString = _messageFromData(s);
-      if (fromString != null && fromString.trim().isNotEmpty)
+      if (fromString != null && fromString.trim().isNotEmpty) {
         return fromString.trim();
+      }
       final idx = s.indexOf('Exception:');
       if (idx >= 0 && idx + 10 < s.length) return s.substring(idx + 10).trim();
       return s;

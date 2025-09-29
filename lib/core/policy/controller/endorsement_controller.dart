@@ -324,8 +324,9 @@ class EndorsementController extends GetxController {
                       ),
                       SizedBox(width: 30),
                       Obx(() {
-                        if (selectedImage.value.isEmpty)
+                        if (selectedImage.value.isEmpty) {
                           return const SizedBox();
+                        }
 
                         // Safely handle base64 validation and display
                         try {
@@ -357,7 +358,7 @@ class EndorsementController extends GetxController {
                             child: Image.memory(bytes,
                                 fit: BoxFit.cover, height: 100,
                                 errorBuilder: (context, error, stackTrace) {
-                              return Container(
+                              return SizedBox(
                                 height: 100,
                                 child: Row(children: [
                                   Icon(Icons.error, color: Colors.red),
@@ -369,7 +370,7 @@ class EndorsementController extends GetxController {
                           );
                         } catch (e) {
                           return Expanded(
-                            child: Container(
+                            child: SizedBox(
                               height: 100,
                               child: Row(children: [
                                 Icon(Icons.error, color: Colors.red),

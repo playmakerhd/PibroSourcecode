@@ -41,14 +41,15 @@ class MyApp extends StatelessWidget {
       translations: AppStrings(),
       debugShowCheckedModeBanner: false,
       builder: (context, child) {
+        // Clamp the numeric textScaleFactor instead of using TextScaler.clamp
+        // to avoid an assertion in certain Flutter SDK versions where
+        // TextScaler.clamp can receive invalid bounds. Limiting scaling to
+        // 1.0..1.1 prevents extreme layout overflows (e.g. BottomNavigationBar)
         final mediaQueryData = MediaQuery.of(context);
-        final scale = mediaQueryData.textScaler.clamp(
-          minScaleFactor: 1.0,
-          maxScaleFactor: 1.1,
-        );
+        final double scale = mediaQueryData.textScaleFactor.clamp(1.0, 1.1);
         return MediaQuery(
           data: mediaQueryData.copyWith(
-            textScaler: scale,
+            textScaleFactor: scale,
           ),
           child: child!,
         );

@@ -110,7 +110,7 @@ class GetQuoteController extends GetxController {
     try {
       final res = await pibroRepository.getVendors();
       vendors.assignAll(res.vendors);
-    } catch (e, st) {
+    } catch (e) {
       // PibroLogger.e('loadVendors error', e, st);
       vendors.clear();
     } finally {
@@ -201,7 +201,7 @@ class GetQuoteController extends GetxController {
         // go to login/signup; use your existing route name
         Get.offNamed(AppRoutes.signup);
       }
-    } catch (e, st) {
+    } catch (e) {
       print('❌ SUBMIT: Error in submit: $e');
       //PibroLogger.e('submit() error', e, st);
       showSnackbarMessage(
@@ -330,7 +330,7 @@ class GetQuoteController extends GetxController {
     isPickingFile.value = true;
 
     try {
-      const int _maxBytes = 20 * 1024 * 1024; // 20MB
+      const int maxBytes = 20 * 1024 * 1024; // 20MB
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['jpg', 'jpeg', 'png', 'pdf'],
@@ -338,7 +338,7 @@ class GetQuoteController extends GetxController {
       );
       if (result != null && result.files.single.bytes != null) {
         final f = result.files.single;
-        if (f.size > _maxBytes) {
+        if (f.size > maxBytes) {
           showSnackbarMessage(
               message: 'Max file size is 20MB', isSuccess: false);
           selectedImage.value = '';
@@ -610,8 +610,9 @@ class GetQuoteController extends GetxController {
                         width: 30,
                       ),
                       Obx(() {
-                        if (selectedImage.value.isEmpty)
+                        if (selectedImage.value.isEmpty) {
                           return const SizedBox();
+                        }
 
                         // Safely handle base64 validation and display
                         try {
@@ -643,7 +644,7 @@ class GetQuoteController extends GetxController {
                             child: Image.memory(bytes,
                                 fit: BoxFit.cover, height: 100,
                                 errorBuilder: (context, error, stackTrace) {
-                              return Container(
+                              return SizedBox(
                                 height: 100,
                                 child: Row(children: [
                                   Icon(Icons.error, color: Colors.red),
@@ -655,7 +656,7 @@ class GetQuoteController extends GetxController {
                           );
                         } catch (e) {
                           return Expanded(
-                            child: Container(
+                            child: SizedBox(
                               height: 100,
                               child: Row(children: [
                                 Icon(Icons.error, color: Colors.red),

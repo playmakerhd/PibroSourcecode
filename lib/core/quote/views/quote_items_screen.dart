@@ -106,7 +106,7 @@ class QuoteItemsScreen extends StatelessWidget {
                                             fit: BoxFit.cover,
                                             errorBuilder:
                                                 (context, error, stackTrace) {
-                                              return Container(
+                                              return SizedBox(
                                                 height: 100,
                                                 child: Row(
                                                   mainAxisAlignment:
@@ -123,7 +123,7 @@ class QuoteItemsScreen extends StatelessWidget {
                                           );
                                         }
                                       } catch (e) {
-                                        return Container(
+                                        return SizedBox(
                                           height: 100,
                                           child: Row(
                                             mainAxisAlignment:

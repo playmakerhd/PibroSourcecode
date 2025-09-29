@@ -107,8 +107,9 @@ class QuoteController extends GetxController {
       final md = RegExp(r'Description\s*[:\-\s]*([^,]+)', caseSensitive: false)
           .firstMatch(msg);
       if (md != null) descTxt = (md.group(1) ?? '').trim();
-      if (descTxt.isEmpty)
+      if (descTxt.isEmpty) {
         descTxt = (it.subject ?? it.message ?? 'Item').toString();
+      }
 
       // Location: parse from Message if present
       String loc = '';
@@ -223,15 +224,10 @@ class QuoteController extends GetxController {
         vendorName: v?['vendorName']?.toString(),
       );
       final createRes = await pibroRepository.sendToBroker(payload);
-      if (createRes != null) {
-        showSnackbarMessage(
-            message: 'Quote sent to broker successfully', isSuccess: true);
-        // Optionally: navigate to another page or clear the form
-      } else {
-        showSnackbarMessage(
-            message: 'Failed to send quote to broker', isSuccess: false);
-      }
-    } catch (e) {
+      showSnackbarMessage(
+          message: 'Quote sent to broker successfully', isSuccess: true);
+      // Optionally: navigate to another page or clear the form
+        } catch (e) {
       showSnackbarMessage(
           message: AppStrings.genericErrorMessage.tr, isSuccess: false);
     }

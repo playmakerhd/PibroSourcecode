@@ -598,8 +598,9 @@ class RenewPolicyController extends GetxController {
                       ),
                       const SizedBox(width: 30),
                       Obx(() {
-                        if (selectedImage.value.isEmpty)
+                        if (selectedImage.value.isEmpty) {
                           return const SizedBox();
+                        }
 
                         // Safely handle base64 validation and display
                         try {
@@ -631,7 +632,7 @@ class RenewPolicyController extends GetxController {
                             child: Image.memory(bytes,
                                 fit: BoxFit.cover, height: 100,
                                 errorBuilder: (context, error, stackTrace) {
-                              return Container(
+                              return SizedBox(
                                 height: 100,
                                 child: Row(children: [
                                   Icon(Icons.error, color: Colors.red),
@@ -643,7 +644,7 @@ class RenewPolicyController extends GetxController {
                           );
                         } catch (e) {
                           return Expanded(
-                            child: Container(
+                            child: SizedBox(
                               height: 100,
                               child: Row(children: [
                                 Icon(Icons.error, color: Colors.red),
@@ -1175,8 +1176,9 @@ class RenewPolicyController extends GetxController {
     } catch (_) {}
 
     // 2) Well-known Dart exceptions
-    if (e is SocketException)
+    if (e is SocketException) {
       return 'Network error. Please check your connection and try again.';
+    }
     if (e is HttpException) return e.message;
     if (e is FormatException) return e.message;
 
@@ -1185,8 +1187,9 @@ class RenewPolicyController extends GetxController {
     if (s.isNotEmpty) {
       // Try to fish out JSON message from a stringified payload
       final fromString = _messageFromData(s);
-      if (fromString != null && fromString.trim().isNotEmpty)
+      if (fromString != null && fromString.trim().isNotEmpty) {
         return fromString.trim();
+      }
       // Trim "Exception:" noise
       final idx = s.indexOf('Exception:');
       if (idx >= 0 && idx + 10 < s.length) return s.substring(idx + 10).trim();

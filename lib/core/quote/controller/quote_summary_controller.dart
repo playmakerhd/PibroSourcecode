@@ -94,7 +94,7 @@ class QuoteSummaryController extends GetxController {
     try {
       // Build/ensure lastEnquiry is already persisted as you do now
       await Get.put(QuotePaymentController()).beginPayment();
-    } catch (err, st) {
+    } catch (err) {
       // PibroLogger.logResponse('beginPayment error: $err\n$st');
       showSnackbarMessage(
         message: AppStrings.genericErrorMessage.tr,
