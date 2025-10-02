@@ -15,9 +15,6 @@ class ClaimDetailsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ClaimController controller = Get.put(ClaimController());
-    // Settled = closed && cleared (same rule as getClaimStatus)
-    final bool isSettled = (controller.selectedClaim.value!.closed == true) &&
-        (controller.selectedClaim.value!.cleared == true);
     return Scaffold(
       body: SingleChildScrollView(
         child: Column(
@@ -89,7 +86,10 @@ class ClaimDetailsScreen extends StatelessWidget {
                           borderRadius: 10,
                           color: AppColors.primaryColor,
                         ),
-                        if (!isSettled)
+                        if (controller.selectedClaim.value != null &&
+                            controller.selectedClaim.value!.submitClaim !=
+                                null &&
+                            !controller.selectedClaim.value!.submitClaim!)
                           Padding(
                             padding: const EdgeInsets.only(left: 20.0),
                             child: Obx(

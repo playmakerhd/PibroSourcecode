@@ -88,6 +88,9 @@ class ClaimController extends GetxController {
         showSnackbarMessage(
             message: response.messageResponse.message, isSuccess: false);
       } else {
+        // Update submitClaim flag locally to immediately hide the button
+        selectedClaim.value!.submitClaim = true;
+        selectedClaim.refresh();
         _showSuccessDialog();
       }
       submitLoading.value = false;
