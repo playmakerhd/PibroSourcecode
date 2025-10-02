@@ -4,6 +4,7 @@ import 'package:pibro/constants/app_colors.dart';
 import 'package:pibro/core/claim/controller/lodge_claim_controller.dart';
 import 'package:pibro/core/policy/widget/policy_button.dart';
 import 'package:pibro/internalization/app_strings.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:pibro/navigation/routes.dart';
 import 'package:pibro/shared/common_header.dart';
 import 'package:pibro/shared/custom_button.dart';
@@ -15,6 +16,8 @@ class LodgeClaimsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final LodgeClaimController controller = Get.put(LodgeClaimController());
+    final bool isSettled = (controller.selectedClaim.value!.closed == true) &&
+        (controller.selectedClaim.value!.cleared == true);
     return Scaffold(
       body: SingleChildScrollView(
         physics: NeverScrollableScrollPhysics(),
@@ -52,6 +55,7 @@ class LodgeClaimsScreen extends StatelessWidget {
                       color: controller.tabIndex.value == 1
                           ? AppColors.blue
                           : AppColors.tileColor,
+                      enabled: !controller.prefillLoading.value,
                     ),
                   ),
                   Container(
@@ -70,6 +74,7 @@ class LodgeClaimsScreen extends StatelessWidget {
                       color: controller.tabIndex.value == 2
                           ? AppColors.blue
                           : AppColors.tileColor,
+                      enabled: !controller.prefillLoading.value,
                     ),
                   ),
                   Container(
@@ -88,145 +93,187 @@ class LodgeClaimsScreen extends StatelessWidget {
                       color: controller.tabIndex.value == 3
                           ? AppColors.blue
                           : AppColors.tileColor,
+                      enabled: !controller.prefillLoading.value,
                     ),
                   ),
                 ],
               ),
             ),
-            Form(
-              key: controller.claimFormKey,
-              child: Container(
-                height: queryHeight(context) * 0.76,
-                padding: EdgeInsets.symmetric(
-                    horizontal: queryWidth(context) * 0.05, vertical: 20),
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Obx(
-                        () => controller
-                            .tabScreens[controller.tabIndex.value - 1],
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(top: 40.0, bottom: 50),
-                        child: Center(
-                          child: Obx(
-                            () => controller.isEdit &&
-                                    (controller.tabIndex.value == 1 ||
-                                        controller.tabIndex.value == 3)
-                                ? PolicyButton(
-                                    text: controller.tabIndex.value == 3
-                                        ? AppStrings.close.tr
-                                        : AppStrings.continueText.tr,
-                                    onPressed: controller.tabIndex.value == 3
-                                        ? () => Get.offNamedUntil(
-                                            AppRoutes.claim, (route) => false)
-                                        : () => controller.tabIndex.value = 2,
-                                    height: 50,
-                                    width: queryWidth(context) * 0.7,
-                                    bgColor: AppColors.primaryColor,
-                                  )
-                                : Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      PolicyButton(
-                                        text: controller.tabIndex.value == 1
-                                            ? controller.selectedClaim.value !=
-                                                    null
-                                                ? AppStrings.continueText.tr
-                                                : AppStrings.saveAndContinue.tr
-                                            : AppStrings.close.tr,
-                                        onPressed: controller.tabIndex.value ==
-                                                1
-                                            ? controller.selectedClaim.value !=
-                                                    null
-                                                ? () => controller
-                                                    .tabIndex.value = 2
-                                                : controller.submit
-                                            : () {
-                                                Get.offNamedUntil(
-                                                    AppRoutes.claim,
-                                                    (route) =>
-                                                        route.settings.name ==
-                                                        AppRoutes.claim);
-                                                Get.back();
-                                              },
-                                        height: 50,
-                                        width: controller.tabIndex.value == 1
-                                            ? controller.selectedClaim.value !=
-                                                    null
-                                                ? 150
-                                                : 170
-                                            : 120,
-                                        bgColor: AppColors.primaryColor,
-                                        loading: controller.tabIndex.value ==
-                                                1 &&
-                                            // controller.saveAndContinue_.value &&
-                                            controller.submitLoading.value,
-                                      ),
-                                      SizedBox(
-                                        width: queryWidth(context) * 0.05,
-                                      ),
-                                      Obx(
-                                        () => controller.selectedClaim.value !=
-                                                    null &&
-                                                !controller.selectedClaim.value!
-                                                    .submitClaim!
-                                            ? PolicyButton(
-                                                text:
-                                                    AppStrings.sendToBroker.tr,
-                                                onPressed: () =>
-                                                    controller.sendToBroker(),
-                                                loading: controller
-                                                    .sendToBrokerLoading.value,
+            Obx(() {
+              final loading = controller.prefillLoading.value;
+              return Stack(
+                children: [
+                  AbsorbPointer(
+                    absorbing: loading,
+                    child: Form(
+                      key: controller.claimFormKey,
+                      child: Container(
+                        height: queryHeight(context) * 0.76,
+                        padding: EdgeInsets.symmetric(
+                            horizontal: queryWidth(context) * 0.05,
+                            vertical: 20),
+                        child: SingleChildScrollView(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Obx(
+                                () => controller
+                                    .tabScreens[controller.tabIndex.value - 1],
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                    top: 40.0, bottom: 50),
+                                child: Center(
+                                  child: Obx(
+                                    () => controller.isEdit &&
+                                            (controller.tabIndex.value == 1 ||
+                                                controller.tabIndex.value == 3)
+                                        ? PolicyButton(
+                                            text: controller.tabIndex.value == 3
+                                                ? AppStrings.close.tr
+                                                : AppStrings.continueText.tr,
+                                            onPressed:
+                                                controller.tabIndex.value == 3
+                                                    ? () => Get.offNamedUntil(
+                                                        AppRoutes.claim,
+                                                        (route) => false)
+                                                    : () => controller
+                                                        .tabIndex.value = 2,
+                                            height: 50,
+                                            width: queryWidth(context) * 0.7,
+                                            bgColor: AppColors.primaryColor,
+                                          )
+                                        : Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              PolicyButton(
+                                                text: controller
+                                                            .tabIndex.value ==
+                                                        1
+                                                    ? controller.selectedClaim
+                                                                .value !=
+                                                            null
+                                                        ? AppStrings
+                                                            .continueText.tr
+                                                        : AppStrings
+                                                            .saveAndContinue.tr
+                                                    : AppStrings.close.tr,
+                                                onPressed: controller
+                                                            .tabIndex.value ==
+                                                        1
+                                                    ? controller.selectedClaim
+                                                                .value !=
+                                                            null
+                                                        ? () => controller
+                                                            .tabIndex.value = 2
+                                                        : controller.submit
+                                                    : () {
+                                                        Get.offNamedUntil(
+                                                            AppRoutes.claim,
+                                                            (route) =>
+                                                                route.settings
+                                                                    .name ==
+                                                                AppRoutes
+                                                                    .claim);
+                                                        Get.back();
+                                                      },
                                                 height: 50,
-                                                width: 150,
+                                                width: controller
+                                                            .tabIndex.value ==
+                                                        1
+                                                    ? controller.selectedClaim
+                                                                .value !=
+                                                            null
+                                                        ? 150
+                                                        : 170
+                                                    : 120,
                                                 bgColor: AppColors.primaryColor,
-                                              )
-                                            : SizedBox(),
-                                      ),
-                                      // controller.tabIndex.value == 1 ||
-                                      //         controller.tabIndex.value > 1 &&
-                                      //             controller
-                                      //                 .claimDocuments.isNotEmpty
-                                      //     ? PolicyButton(
-                                      //         text: controller.tabIndex.value == 1
-                                      //             ? AppStrings.sendToBroker.tr
-                                      //             : controller.isEdit
-                                      //                 ? AppStrings
-                                      //                     .updateDocuments.tr
-                                      //                 : AppStrings
-                                      //                     .uploadDocuments.tr,
-                                      //         onPressed: () => controller
-                                      //                     .tabIndex.value ==
-                                      //                 1
-                                      //             ? controller.submit(false)
-                                      //             : controller.isEdit
-                                      //                 ? controller.updateClaim()
-                                      //                 : controller.uploadDoc(),
-                                      //         loading: (controller
-                                      //                     .submitLoading.value &&
-                                      //                 !controller.saveAndContinue_
-                                      //                     .value) ||
-                                      //             controller.updateLoading.value,
-                                      //         height: 50,
-                                      //         width:
-                                      //             controller.tabIndex.value == 1
-                                      //                 ? 130
-                                      //                 : 170,
-                                      //         bgColor: AppColors.primaryColor,
-                                      //       )
-                                      //     : SizedBox(),
-                                    ],
+                                                loading: controller
+                                                            .tabIndex.value ==
+                                                        1 &&
+                                                    // controller.saveAndContinue_.value &&
+                                                    controller
+                                                        .submitLoading.value,
+                                              ),
+                                              SizedBox(
+                                                width:
+                                                    queryWidth(context) * 0.05,
+                                              ),
+
+                                              if (!isSettled)
+                                                Obx(() => PolicyButton(
+                                                      text: AppStrings
+                                                          .sendToBroker.tr,
+                                                      onPressed: () =>
+                                                          controller
+                                                              .sendToBroker(),
+                                                      loading: controller
+                                                          .sendToBrokerLoading
+                                                          .value,
+                                                      height: 50,
+                                                      width: 150,
+                                                      bgColor: AppColors
+                                                          .primaryColor,
+                                                    )),
+                                              // controller.tabIndex.value == 1 ||
+                                              //         controller.tabIndex.value > 1 &&
+                                              //             controller
+                                              //                 .claimDocuments.isNotEmpty
+                                              //     ? PolicyButton(
+                                              //         text: controller.tabIndex.value == 1
+                                              //             ? AppStrings.sendToBroker.tr
+                                              //             : controller.isEdit
+                                              //                 ? AppStrings
+                                              //                     .updateDocuments.tr
+                                              //                 : AppStrings
+                                              //                     .uploadDocuments.tr,
+                                              //         onPressed: () => controller
+                                              //                     .tabIndex.value ==
+                                              //                 1
+                                              //             ? controller.submit(false)
+                                              //             : controller.isEdit
+                                              //                 ? controller.updateClaim()
+                                              //                 : controller.uploadDoc(),
+                                              //         loading: (controller
+                                              //                     .submitLoading.value &&
+                                              //                 !controller.saveAndContinue_
+                                              //                     .value) ||
+                                              //             controller.updateLoading.value,
+                                              //         height: 50,
+                                              //         width:
+                                              //             controller.tabIndex.value == 1
+                                              //                 ? 130
+                                              //                 : 170,
+                                              //         bgColor: AppColors.primaryColor,
+                                              //       )
+                                              //     : SizedBox(),
+                                            ],
+                                          ),
                                   ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
-                    ],
+                    ),
                   ),
-                ),
-              ),
-            ),
+                  if (loading)
+                    Positioned.fill(
+                      child: Container(
+                        color: Colors.white.withOpacity(0.6),
+                        child: Center(
+                          child: LoadingAnimationWidget.staggeredDotsWave(
+                            color: AppColors.primaryColor,
+                            size: 100,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            }),
           ],
         ),
       ),

@@ -513,6 +513,8 @@ class RenewPolicyController extends GetxController {
   void showAddOrUpdateItemSheet({ItemToInsure? data, bool isNew = false}) {
     if (data != null) {
       populateInputFields(data);
+      // Populate the selectedImage so the bottom sheet shows existing attachment
+      selectedImage.value = data.policyItems ?? '';
     }
     showAppBottomSheet(
       height: 500,
@@ -566,7 +568,7 @@ class RenewPolicyController extends GetxController {
               hint: '',
               validator: (value) =>
                   Validators.requiredValidator(value, AppStrings.value.tr),
-                  inputType: TextInputType.number,
+              inputType: TextInputType.number,
             ),
             CustomInput(
               controller: locationController,

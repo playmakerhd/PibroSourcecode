@@ -37,6 +37,8 @@ class LodgeClaimController extends GetxController {
   RxInt tabIndex = 1.obs;
   RxBool policyLoading = false.obs;
   RxBool submitLoading = false.obs;
+  RxBool prefillLoading =
+      false.obs; // shows loader only while pre-filling edit form
   RxBool sendToBrokerLoading = false.obs;
   RxBool updateLoading = false.obs;
   RxBool isPickingFile = false.obs;
@@ -97,10 +99,14 @@ class LodgeClaimController extends GetxController {
         PolicyData policyData = policies.firstWhere((element) =>
             element.policyBrokerID == selectedClaim.value!.policyBrokerID);
         selectPolicy(policyData);
-        getClaim(selectedClaim.value!.brokerClaimID!);
+
+        // Wait for claim details to hydrate the form before removing the loader
+        await getClaim(selectedClaim.value!.brokerClaimID!);
+        prefillLoading.value = false; // stop loader after fields are populated
       }
       policyLoading.value = false;
     } catch (e) {
+      prefillLoading.value = false; // fail-safe
       policyLoading.value = false;
       showSnackbarMessage(
           message: AppStrings.genericErrorMessage.tr, isSuccess: false);
@@ -833,8 +839,9 @@ class LodgeClaimController extends GetxController {
             formatClaimDate(DateTime.now().toIso8601String());
       } else {
         selectedClaim.value = Get.arguments;
-        getCustomerPolicies();
         isEdit = true;
+        prefillLoading.value = true; // start loader right away for edit prefill
+        getCustomerPolicies();
       }
     } else {
       lodgementDate.value = DateTime.now();
