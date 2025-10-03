@@ -12,7 +12,7 @@ class TawkScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final HomeController controller = Get.put(HomeController());
+    final HomeController controller = Get.find<HomeController>();
     return Scaffold(
       appBar: AppBar(
         title: Text(

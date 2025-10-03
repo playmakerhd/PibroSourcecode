@@ -19,7 +19,7 @@ class PaymentConfirmationScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final RenewPolicyController controller = Get.put(RenewPolicyController());
-    final HomeController homeController = Get.put(HomeController());
+    final HomeController homeController = Get.find<HomeController>();
 
     final Map args = (Get.arguments as Map?) ?? {};
     final String overrideStart = (args['newStartDate'] ?? '').toString();
@@ -200,7 +200,14 @@ class PaymentConfirmationScreen extends StatelessWidget {
                 children: [
                   PolicyButton(
                     text: AppStrings.ok.tr,
-                    onPressed: () => Get.offAllNamed(AppRoutes.main),
+                    onPressed: () {
+                      if (Get.isRegistered<HomeController>()) {
+                        try {
+                          Get.delete<HomeController>();
+                        } catch (_) {}
+                      }
+                      Get.offAllNamed(AppRoutes.main);
+                    },
                     height: 50,
                     width: 100,
                     bgColor: AppColors.primaryColor,

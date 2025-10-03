@@ -27,7 +27,7 @@ class LoginController extends GetxController {
   RxBool otherOption = false.obs;
   RxBool loading = false.obs;
 
-  updateObscure() {
+  void updateObscure() {
     obscurePassword.value = !obscurePassword.value;
   }
 
@@ -97,11 +97,11 @@ class LoginController extends GetxController {
     }
   }
 
-  updateIsRemember(bool? value) {
+  void updateIsRemember(bool? value) {
     isRemember.value = value!;
   }
 
-  updateOtherOption() {
+  void updateOtherOption() {
     otherOption.value = !otherOption.value;
   }
 

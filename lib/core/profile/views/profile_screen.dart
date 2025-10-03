@@ -17,7 +17,7 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final headerHeight = MediaQuery.of(context).padding.top + 210;
     final ProfileController controller = Get.put(ProfileController());
-    final HomeController homeController = Get.put(HomeController());
+    final HomeController homeController = Get.find<HomeController>();
     return Scaffold(
       backgroundColor: AppColors.white,
       body: SizedBox(

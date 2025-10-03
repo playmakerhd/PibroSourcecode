@@ -102,7 +102,7 @@ class EndorsementSummaryScreen extends StatelessWidget {
                   ),
                   // const SizedBox(height: 8),
                   DetailRow(
-                    title: 'Premium Due(NGN):',
+                    title: 'Old Premium(NGN):',
                     value: formatAmount(oldPremium),
                   ),
                   const SizedBox(height: 16),
@@ -128,12 +128,12 @@ class EndorsementSummaryScreen extends StatelessWidget {
                   ),
                   // const SizedBox(height: 8),
                   DetailRow(
-                    title: 'Updated Premium Due(NGN):',
+                    title: 'Updated Premium(NGN):',
                     value: formatAmount(updatedPremium),
                   ),
                   // const SizedBox(height: 8),
                   DetailRow(
-                    title: 'Premium Adjustment(NGN):',
+                    title: 'Premium Adjustment Due(NGN):',
                     value: formatAmount(addPrem),
                   ),
                   const SizedBox(height: 24),
@@ -211,14 +211,16 @@ class EndorsementSummaryScreen extends StatelessWidget {
                                 bgColor: AppColors.primaryColor,
                                 isExpanded: false,
                               ))
-                          : PolicyButton(
-                              text: 'Pay Additional Premium',
-                              onPressed: () =>
-                                  c.getPaymentTokenAndInit(addPrem),
-                              height: 44,
-                              bgColor: AppColors.primaryColor,
-                              isExpanded: false,
-                            ),
+                          : Obx(() => PolicyButton(
+                                text: 'Pay Additional Premium',
+                                loading: c.paymentLoading.value,
+                                onPressed: c.paymentLoading.value
+                                    ? () {}
+                                    : () => c.getPaymentTokenAndInit(addPrem),
+                                height: 44,
+                                bgColor: AppColors.primaryColor,
+                                isExpanded: false,
+                              )),
                     ),
                   ),
                   const SizedBox(height: 50),

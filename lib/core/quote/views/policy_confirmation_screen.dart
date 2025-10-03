@@ -4,6 +4,7 @@ import 'package:get_storage/get_storage.dart';
 import 'package:pibro/constants/app_colors.dart';
 import 'package:pibro/constants/app_styles.dart';
 import 'package:pibro/core/policy/controller/renew_policy_controller.dart';
+import 'package:pibro/core/home/controller/home_controller.dart';
 import 'package:pibro/core/policy/widget/detail_row.dart';
 import 'package:pibro/core/policy/widget/policy_button.dart';
 import 'package:pibro/navigation/routes.dart';
@@ -151,7 +152,18 @@ class PolicyConfirmationScreen extends StatelessWidget {
                           children: [
                             PolicyButton(
                               text: 'OK',
-                              onPressed: () {
+                              onPressed: () async {
+                                if (Get.isRegistered<HomeController>()) {
+                                  try {
+                                    final HomeController home =
+                                        Get.find<HomeController>();
+                                    await home.getProfile();
+                                  } catch (e) {
+                                    try {
+                                      Get.delete<HomeController>(force: true);
+                                    } catch (_) {}
+                                  }
+                                }
                                 Get.offAllNamed(AppRoutes.main);
                               },
                               height: 50,

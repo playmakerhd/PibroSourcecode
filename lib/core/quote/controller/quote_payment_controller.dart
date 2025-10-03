@@ -770,9 +770,10 @@ class QuotePaymentController extends GetxController {
     else if (v is String) {
       try {
         final l = jsonDecode(v);
-        if (l is List) for (final it in l) {
-          addOne(it);
-        }
+        if (l is List)
+          for (final it in l) {
+            addOne(it);
+          }
       } catch (_) {}
     }
     return out;
@@ -861,7 +862,7 @@ class QuotePaymentController extends GetxController {
     try {
       final dynamic de = e;
       final dynamic resp = (de as dynamic).response;
-      final dynamic data = resp is dynamic ? resp.data : null;
+      final dynamic data = resp != null ? resp.data : null;
       final msgFromResp = _messageFromData(data);
       if (msgFromResp != null && msgFromResp.trim().isNotEmpty) {
         return msgFromResp;
@@ -869,7 +870,7 @@ class QuotePaymentController extends GetxController {
 
       final dynamic mr = (de as dynamic).messageResponse;
       final dynamic mrMsg =
-          mr is dynamic ? (mr.message ?? mr['message'] ?? mr['Message']) : null;
+          mr != null ? (mr.message ?? mr['message'] ?? mr['Message']) : null;
       if (mrMsg is String && mrMsg.trim().isNotEmpty) return mrMsg.trim();
 
       final dynamic m = (de as dynamic).message;

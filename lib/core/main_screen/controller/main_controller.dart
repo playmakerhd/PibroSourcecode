@@ -9,7 +9,7 @@ import 'package:pibro/utils/image_factory.dart';
 class MainController extends GetxController {
   RxInt currentIndex = 0.obs;
 
-  updateBottomTab(int index) {
+  void updateBottomTab(int index) {
     currentIndex.value = index;
   }
 

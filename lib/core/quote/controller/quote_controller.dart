@@ -223,11 +223,11 @@ class QuoteController extends GetxController {
         vendorID: v?['vendorID']?.toString(),
         vendorName: v?['vendorName']?.toString(),
       );
-      final createRes = await pibroRepository.sendToBroker(payload);
+      await pibroRepository.sendToBroker(payload);
       showSnackbarMessage(
           message: 'Quote sent to broker successfully', isSuccess: true);
       // Optionally: navigate to another page or clear the form
-        } catch (e) {
+    } catch (e) {
       showSnackbarMessage(
           message: AppStrings.genericErrorMessage.tr, isSuccess: false);
     }

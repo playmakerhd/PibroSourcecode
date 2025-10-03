@@ -81,7 +81,7 @@ class PolicyDetailsWidget extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: Theme.of(context)
                                 .primaryColor
-                                .withOpacity(0.12),
+                                .withValues(alpha: 0.12),
                             shape: BoxShape.circle,
                           ),
                           child: CircleAvatar(
@@ -463,7 +463,7 @@ class _CertificateBottomSheetState extends State<_CertificateBottomSheet> {
         // User cancelled
         showSnackbarMessage(
           message: 'Save cancelled',
-          isSuccess: false,
+          isWarning: true,
         );
       }
     } catch (e) {

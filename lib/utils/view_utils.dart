@@ -64,8 +64,8 @@ void showAppDialog(Widget child,
     barrierDismissible: dismissible,
     Dialog(
       backgroundColor: AppColors.tileColor,
-      child: WillPopScope(
-        onWillPop: () async => willPop,
+      child: PopScope(
+        canPop: willPop,
         child: Container(
           height: height,
           padding: EdgeInsets.symmetric(horizontal: 30),
@@ -88,8 +88,8 @@ Future<dynamic> showAppBottomSheet({
   bool isImagePreview = false,
 }) {
   return Get.bottomSheet(
-    WillPopScope(
-      onWillPop: () async => willPop,
+    PopScope(
+      canPop: willPop,
       child: Container(
         height: height,
         width: queryWidth(null),

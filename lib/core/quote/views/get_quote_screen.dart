@@ -163,7 +163,7 @@ class GetQuoteScreen extends StatelessWidget {
                             value, AppStrings.endDate),
                       ),
                       // Preferred Insurer dropdown (uses your CustomDropdown)
-Obx(
+                      Obx(
                         () => CustomDropdown(
                           label: 'Select Preferred Insurer',
                           hint: 'Select Preferred Insurer',
@@ -187,12 +187,46 @@ Obx(
                         ),
                       ),
 
-
                       Padding(
                         padding: const EdgeInsets.only(top: 40.0),
                         child: PolicyButton(
                           text: AppStrings.continueText.tr,
-                          onPressed: controller.navigateToItemsToInsure,
+                          onPressed: () {
+                            // Validate required fields before continuing
+                            if (controller.selectedBusinessPolicy.value ==
+                                null) {
+                              showSnackbarMessage(
+                                  message: 'Please select an insurance class',
+                                  isSuccess: false);
+                              return;
+                            }
+                            if (controller.selectedRiskTypeID.value == null) {
+                              showSnackbarMessage(
+                                  message: 'Please select a product',
+                                  isSuccess: false);
+                              return;
+                            }
+                            if (controller.startDate.value == null) {
+                              showSnackbarMessage(
+                                  message: 'Please select a start date',
+                                  isSuccess: false);
+                              return;
+                            }
+                            if (controller.endDate.value == null) {
+                              showSnackbarMessage(
+                                  message: 'Please select an end date',
+                                  isSuccess: false);
+                              return;
+                            }
+                            if (controller.selectedVendor.value == null) {
+                              showSnackbarMessage(
+                                  message: 'Please select a preferred insurer',
+                                  isSuccess: false);
+                              return;
+                            }
+
+                            controller.navigateToItemsToInsure();
+                          },
                           height: 50,
                           width: queryWidth(context) * 0.7,
                           bgColor: AppColors.primaryColor,

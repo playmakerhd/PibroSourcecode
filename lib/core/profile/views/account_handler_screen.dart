@@ -12,7 +12,7 @@ class AccountHandlerScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final HomeController controller = Get.put(HomeController());
+    final HomeController controller = Get.find<HomeController>();
     // local helper to display '-' for null/empty values
     String safe(String? v) => (v == null || v.trim().isEmpty) ? '-' : v.trim();
 

@@ -1,9 +1,7 @@
-import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:pibro/constants/app_colors.dart';
@@ -15,20 +13,22 @@ import 'package:pibro/shared/common_header.dart';
 import 'package:pibro/utils/app_utils.dart';
 import 'package:pibro/utils/view_utils.dart';
 import 'package:screenshot/screenshot.dart';
+import 'package:file_picker/file_picker.dart';
 
 class CustomerTransactionDetailScreen extends StatelessWidget {
   const CustomerTransactionDetailScreen({super.key});
 
   static final ScreenshotController _shot = ScreenshotController();
+  static final RxBool _exportLoading = false.obs;
 
-  Future<File?> _exportToPdf(
-      BuildContext context, CustomerTransaction t) async {
+  Future<void> _exportToPdf(BuildContext context, CustomerTransaction t) async {
+    _exportLoading.value = true;
     try {
       final Uint8List? bytes = await _shot.capture();
       if (bytes == null) {
         showSnackbarMessage(
             message: 'Failed to capture content', isSuccess: false);
-        return null;
+        return;
       }
       final pdf = pw.Document();
       final img = pw.MemoryImage(bytes);
@@ -39,25 +39,47 @@ class CustomerTransactionDetailScreen extends StatelessWidget {
         ),
       );
 
-      final dir = await getTemporaryDirectory();
-      final name =
-          'transaction_${(t.transactionNumber ?? 'txn').replaceAll('/', '-')}.pdf';
-      final file = File('${dir.path}/$name');
-      await file.writeAsBytes(await pdf.save());
-      return file;
+      final pdfBytes = await pdf.save();
+
+      // Generate default filename
+      final rawId = (t.transactionNumber ?? 'txn').toString();
+      final safeId = rawId.replaceAll(RegExp(r'[\/]+'), '_');
+      final defaultName =
+          'transaction_${safeId}_${DateTime.now().millisecondsSinceEpoch}.pdf';
+
+      // Let user pick save location
+      final String? outputFile = await FilePicker.platform.saveFile(
+        dialogTitle: 'Save Transaction PDF',
+        fileName: defaultName,
+        type: FileType.custom,
+        allowedExtensions: ['pdf'],
+        bytes: pdfBytes,
+      );
+
+      if (outputFile != null) {
+        // File was saved successfully by FilePicker
+        showSnackbarMessage(
+          message: 'Transaction PDF saved\n$outputFile',
+          isSuccess: true,
+        );
+      } else {
+        // User cancelled
+        showSnackbarMessage(
+          message: 'Save cancelled',
+          isWarning: true,
+        );
+      }
     } catch (e) {
       showSnackbarMessage(
           message: 'Failed to create PDF: $e', isSuccess: false);
-      return null;
+    } finally {
+      _exportLoading.value = false;
     }
   }
 
   Future<void> _onExportPressed(
       BuildContext context, CustomerTransaction t) async {
-    final file = await _exportToPdf(context, t);
-    if (file != null) {
-      showSnackbarMessage(message: 'Saved PDF: ${file.path}', isSuccess: true);
-    }
+    await _exportToPdf(context, t);
   }
 
   Future<void> _onSharePressed(
@@ -125,12 +147,13 @@ class CustomerTransactionDetailScreen extends StatelessWidget {
           ),
           child: Row(
             children: [
-              PolicyButton(
-                text: 'Export PDF',
-                onPressed: () => _onExportPressed(context, t),
-                isExpanded: true,
-                bgColor: AppColors.primaryColor,
-              ),
+              Obx(() => PolicyButton(
+                    text: 'Export PDF',
+                    onPressed: () => _onExportPressed(context, t),
+                    isExpanded: true,
+                    bgColor: AppColors.primaryColor,
+                    loading: _exportLoading.value,
+                  )),
               const SizedBox(width: 12),
               Obx(() => PolicyButton(
                     text: 'Share',

@@ -396,12 +396,14 @@ class EndorsementController extends GetxController {
                 ],
               ),
             ),
-            PolicyButton(
-              text: AppStrings.save.tr,
-              onPressed: () => addOrUpdateItem(data: data, isNew: isNew),
-              height: 50,
-              width: queryWidth(null) * 0.5,
-              bgColor: AppColors.primaryColor,
+            Center(
+              child: PolicyButton(
+                text: AppStrings.save.tr,
+                onPressed: () => addOrUpdateItem(data: data, isNew: isNew),
+                height: 50,
+                width: queryWidth(null) * 0.5,
+                bgColor: AppColors.primaryColor,
+              ),
             ),
           ],
         ),

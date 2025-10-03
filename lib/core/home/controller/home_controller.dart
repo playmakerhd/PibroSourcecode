@@ -85,7 +85,7 @@ class HomeController extends GetxController {
             .obs;
   }
 
-  categorizePolicies(String status) {
+  void categorizePolicies(String status) {
     policyScreenTitle.value = status.isEmpty
         ? AppStrings.policies.tr
         : status == AppStrings.active.tr
@@ -103,7 +103,7 @@ class HomeController extends GetxController {
             .toList();
   }
 
-  navigateToPolicyScreens({String? status = ''}) {
+  void navigateToPolicyScreens({String? status = ''}) {
     // Always set the requested status, categorize and navigate.
     // This allows opening the Policies screen even when the policies list is empty.
     policyStatus.value = status ?? '';
@@ -111,7 +111,7 @@ class HomeController extends GetxController {
     Get.toNamed(AppRoutes.policy);
   }
 
-  navigateToQuoteScreen() {
+  void navigateToQuoteScreen() {
     // if (policies.isNotEmpty) {
     Get.toNamed(AppRoutes.quoteList);
     // } else {
@@ -132,12 +132,12 @@ class HomeController extends GetxController {
     }
   }
 
-  navigateToClaimScreen() {
+  void navigateToClaimScreen() {
     // Allow opening the Claims screen even if there are no policies yet.
     Get.toNamed(AppRoutes.claim);
   }
 
-  navigateToPolicyDetails(PolicyData data) {
+  void navigateToPolicyDetails(PolicyData data) {
     selectedPolicy.value = data;
     if (isRenewPolicyClicked.value) {
       navigateToRenewPolicyScreen();
@@ -146,14 +146,14 @@ class HomeController extends GetxController {
     }
   }
 
-  navigateToRenewPolicyScreen() {
+  void navigateToRenewPolicyScreen() {
     Get.toNamed(
       AppRoutes.renewPolicy,
       arguments: selectedPolicy.value,
     );
   }
 
-  navigateToLodgeClaimScreen() {
+  void navigateToLodgeClaimScreen() {
     Get.toNamed(
       AppRoutes.lodgeClaims,
       arguments: selectedPolicy.value,

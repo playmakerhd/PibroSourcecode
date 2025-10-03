@@ -1169,7 +1169,7 @@ class RenewPolicyController extends GetxController {
       // Custom error model with messageResponse?
       final dynamic mr = (de as dynamic).messageResponse;
       final dynamic mrMsg =
-          mr is dynamic ? (mr.message ?? mr['message'] ?? mr['Message']) : null;
+          mr != null ? (mr.message ?? mr['message'] ?? mr['Message']) : null;
       if (mrMsg is String && mrMsg.trim().isNotEmpty) return mrMsg.trim();
 
       // Plain .message field on exception
