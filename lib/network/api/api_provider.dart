@@ -66,10 +66,25 @@ class ApiProvider extends BaseProvider {
   }
 
   Future<CustomMessageResponse> callLoginApi(AuthRequest body) async {
-    dynamic endpoint = body.isOtherOption
-        ? '$_baseApiPath${Endpoints.otherLogin}/${body.email}/${body.phoneNumber}/${body.password}/$_acessToken'
-        : '$_baseApiPath${Endpoints.login}/${body.username}/${body.password}/$_acessToken';
-    final responseData = await makeGetCall(Uri.parse(endpoint), false);
+    final Uri endpoint = body.isOtherOption
+        // {baseUrl}/CustomerLoginByEmailPhone/{token}?CustomerEmail=...&CustomerPhone=...&CustomerPassword=...
+        ? Uri.parse('$_baseApiPath${Endpoints.otherLogin}/$_acessToken')
+            .replace(
+            queryParameters: {
+              'CustomerEmail': body.email ?? '',
+              'CustomerPhone': body.phoneNumber ?? '',
+              'CustomerPassword': body.password ?? '',
+            },
+          )
+        // {baseUrl}/CustomerLoginByID/{token}?CustomerID=...&CustomerPassword=...
+        : Uri.parse('$_baseApiPath${Endpoints.login}/$_acessToken').replace(
+            queryParameters: {
+              'CustomerID': body.username,
+              'CustomerPassword': body.password ?? '',
+            },
+          );
+
+    final responseData = await makeGetCall(endpoint, false);
     return CustomMessageResponse(responseData!);
   }
 
@@ -95,23 +110,37 @@ class ApiProvider extends BaseProvider {
   }
 
   Future<ProfileResponse> callGetProfile() async {
-    LoginData data =
+    final LoginData data =
         LoginData.fromJson(convertToJsonStringQuotes(StorageKeys.loginData));
-    dynamic endpoint = data.customerID!.isNotEmpty
-        ? '$_baseApiPath${Endpoints.profile}/${data.customerID}/$_acessToken'
-        : '$_baseApiPath${Endpoints.profileByEmail}/${data.email}/${data.phone}/$_acessToken';
-    final responseData = await makeGetCall(Uri.parse(endpoint), false);
+
+    final Uri endpoint = (data.customerID?.isNotEmpty ?? false)
+        // {baseUrl}/GetCustomerInformationByID/{token}?CustomerID=...
+        ? Uri.parse('$_baseApiPath${Endpoints.profile}/$_acessToken').replace(
+            queryParameters: {
+              'CustomerID': data.customerID!,
+            },
+          )
+        // keep email/phone variant as-is (path params retained)
+        : Uri.parse(
+            '$_baseApiPath${Endpoints.profileByEmail}/${data.email}/${data.phone}/$_acessToken',
+          );
+
+    final responseData = await makeGetCall(endpoint, false);
     return ProfileResponse(responseData!);
   }
 
   Future<CustomerPolicyResponse> callGetCustomerPolicies() async {
-    // PlatformUser data = PlatformUser.fromJson(
-    //     convertToJsonStringQuotes(StorageKeys.profileData));
-    PlatformUser data =
+    final PlatformUser data =
         PlatformUser.fromJson(GetStorage().read(StorageKeys.profileData) ?? {});
-    dynamic endpoint =
-        '$_baseApiPath${Endpoints.customerPolicies}/${data.customerID}/$_acessToken';
-    final responseData = await makeGetCall(Uri.parse(endpoint), false);
+
+    // {baseUrl}/GetInsurancePolicyByCustomerID/{token}?CustomerID=...
+    final Uri endpoint =
+        Uri.parse('$_baseApiPath${Endpoints.customerPolicies}/$_acessToken')
+            .replace(queryParameters: {
+      'CustomerID': (data.customerID ?? '').trim(),
+    });
+
+    final responseData = await makeGetCall(endpoint, false);
     return CustomerPolicyResponse(responseData!);
   }
 
@@ -154,24 +183,37 @@ class ApiProvider extends BaseProvider {
   }
 
   Future<QuotesResponse> callGetQuotes() async {
-    // PlatformUser data = PlatformUser.fromJson(
-    //     convertToJsonStringQuotes(StorageKeys.profileData));
-    PlatformUser data =
+    final PlatformUser data =
         PlatformUser.fromJson(GetStorage().read(StorageKeys.profileData) ?? {});
-    dynamic endpoint =
-        '$_baseApiPath${Endpoints.quotes}/${data.customerID}/$_acessToken?PageNum=1&Size=50&SupportType=Quote';
-    final responseData = await makeGetCall(Uri.parse(endpoint), false);
+
+    // {baseUrl}/GetCustomerEnquiriesByCustomerID/{token}?CustomerID=...&PageNum=1&Size=50[&SupportType=Quote]
+    final Uri endpoint =
+        Uri.parse('$_baseApiPath${Endpoints.quotes}/$_acessToken').replace(
+      queryParameters: {
+        'CustomerID': (data.customerID ?? '').trim(),
+        'PageNum': '1',
+        'Size': '50',
+        // Preserving current behavior (backend already accepts this)
+        'SupportType': 'Quote',
+      },
+    );
+
+    final responseData = await makeGetCall(endpoint, false);
     return QuotesResponse(responseData!);
   }
 
   Future<CustomerPolicyClaimsResponse> callGetCustomerClaims() async {
-    // PlatformUser data = PlatformUser.fromJson(
-    //     convertToJsonStringQuotes(StorageKeys.profileData));
-    PlatformUser data =
+    final PlatformUser data =
         PlatformUser.fromJson(GetStorage().read(StorageKeys.profileData) ?? {});
-    dynamic endpoint =
-        '$_baseApiPath${Endpoints.customerClaims}/${data.customerID}/$_acessToken';
-    final responseData = await makeGetCall(Uri.parse(endpoint), false);
+
+    // {baseUrl}/GetInsurancePolicyClaimsByCustomerID/{token}?CustomerID=...
+    final Uri endpoint =
+        Uri.parse('$_baseApiPath${Endpoints.customerClaims}/$_acessToken')
+            .replace(queryParameters: {
+      'CustomerID': (data.customerID ?? '').trim(),
+    });
+
+    final responseData = await makeGetCall(endpoint, false);
     return CustomerPolicyClaimsResponse(responseData!);
   }
 

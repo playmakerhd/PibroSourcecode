@@ -156,14 +156,22 @@ class PaymentConfirmationScreen extends StatelessWidget {
                                   : '-'),
                         ),
                         DetailRow(
-                          title: '${AppStrings.sumInsured.tr} (NGN):',
-                          value:
-                              controller.policy.value?.sumInsured?.toString() ??
-                                  '-',
+                          title: ('${AppStrings.sumInsured.tr} (NGN):'),
+                          value: controller.policy.value?.sumInsured != null
+                              ? formatAmount(double.tryParse(controller
+                                      .policy.value!.sumInsured
+                                      .toString()
+                                      .replaceAll(',', '')) ??
+                                  0)
+                              : '-',
                         ),
                         DetailRow(
                           title: '${AppStrings.premiumDue.tr} (NGN):',
-                          value: controller.policyPremiumAmount,
+                          value: formatAmount(double.tryParse(controller
+                                  .policyPremiumAmount
+                                  .toString()
+                                  .replaceAll(',', '')) ??
+                              0),
                         ),
                         DetailRow(
                           title: '${AppStrings.paymentDate.tr}:',

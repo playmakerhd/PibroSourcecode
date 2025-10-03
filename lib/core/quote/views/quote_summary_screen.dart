@@ -10,6 +10,7 @@ import 'package:pibro/core/policy/widget/policy_button.dart';
 import 'package:pibro/shared/common_header.dart';
 import 'package:pibro/shared/widget/large_line.dart';
 import 'package:intl/intl.dart';
+import 'package:pibro/utils/app_utils.dart';
 
 class QuoteSummaryScreen extends StatelessWidget {
   // Helper to format date strings to 'MMM dd, yyyy'
@@ -85,10 +86,10 @@ class QuoteSummaryScreen extends StatelessWidget {
                           formatDatePretty('${data['renewalDate'] ?? 'N/A'}')),
                   DetailRow(
                       title: 'Sum Insured(NGN):',
-                      value: '${data['sumInsured'] ?? 'N/A'}'),
+                      value: formatAmount(data['sumInsured'])),
                   DetailRow(
                       title: 'Premium Due(NGN):',
-                      value: '${data['premium'] ?? 'N/A'}'),
+                      value: formatAmount(data['premium'])),
                   const SizedBox(height: 28),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
