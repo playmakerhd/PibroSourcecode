@@ -58,9 +58,9 @@ class SignupScreen extends StatelessWidget {
                   Obx(() {
                     final value = controller.selectedAccountType.value;
                     final isSelected = [
-                      value == 'individual',
-                      value == 'company',
-                      value == 'joint',
+                      value == 'Individual',
+                      value == 'Company',
+                      value == 'Joint Account',
                     ];
 
                     return Container(
@@ -74,13 +74,13 @@ class SignupScreen extends StatelessWidget {
                         onPressed: (index) {
                           switch (index) {
                             case 0:
-                              controller.setAccountType('individual');
+                              controller.setAccountType('Individual');
                               break;
                             case 1:
-                              controller.setAccountType('company');
+                              controller.setAccountType('Company');
                               break;
                             case 2:
-                              controller.setAccountType('joint');
+                              controller.setAccountType('Joint Account');
                               break;
                           }
                         },
@@ -123,9 +123,9 @@ class SignupScreen extends StatelessWidget {
                   // Name - dynamic hint based on account type
                   Obx(() {
                     final t = controller.selectedAccountType.value;
-                    final nameHint = t == 'company'
+                    final nameHint = t == 'Company'
                         ? AppStrings.companyName.tr
-                        : t == 'joint'
+                        : t == 'Joint Account'
                             ? AppStrings.accountName.tr
                             : AppStrings.name.tr;
                     return CustomInput(
@@ -152,9 +152,9 @@ class SignupScreen extends StatelessWidget {
                   // Date of Birth / Date of Incorporation / Primary Holder DOB
                   Obx(() {
                     final t = controller.selectedAccountType.value;
-                    final dobHint = t == 'company'
+                    final dobHint = t == 'Company'
                         ? AppStrings.dateOfIncorporation.tr
-                        : t == 'joint'
+                        : t == 'Joint Account'
                             ? AppStrings.primaryHolderDob.tr
                             : AppStrings.dob.tr;
 
