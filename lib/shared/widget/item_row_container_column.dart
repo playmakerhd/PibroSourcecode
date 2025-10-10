@@ -58,23 +58,17 @@ class ItemRowContainerColumn extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Expanded(
-              child: Text(
-                type,
-                style: Styles.boldTextStyle(
-                  size: 12,
-                ),
-                overflow: TextOverflow.ellipsis,  
-                maxLines: 1,
+            Text(
+              type,
+              style: Styles.boldTextStyle(
+                size: 12,
               ),
             ),
-            Flexible(
-              child: Text(
-                status,
-                style: Styles.regularTextStyle(
-                  size: 12,
-                  color: color,
-                ),
+            Text(
+              status,
+              style: Styles.regularTextStyle(
+                size: 12,
+                color: color,
               ),
             ),
           ],

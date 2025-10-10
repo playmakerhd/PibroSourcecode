@@ -27,7 +27,8 @@ class SignupController extends GetxController {
   RxBool obscurePassword = true.obs;
   RxBool loading = false.obs;
   Rx<DateTime?> selectedDateOfBirth = Rx<DateTime?>(null);
-  RxString selectedAccountType = 'individual'.obs;
+  // Default to 'Individual' to match the display strings used by the UI
+  RxString selectedAccountType = 'Individual'.obs;
 
   void updateObscure() {
     obscurePassword.value = !obscurePassword.value;
