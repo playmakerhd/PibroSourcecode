@@ -9,6 +9,7 @@ import 'package:pibro/shared/empty_data.dart';
 import 'package:pibro/shared/item_row_container.dart';
 import 'package:pibro/shared/title_value_row.dart';
 import 'package:pibro/utils/api_utils.dart';
+import 'package:pibro/utils/app_utils.dart';
 import 'package:printing/printing.dart';
 
 class QuoteItemsScreen extends StatelessWidget {
@@ -52,7 +53,15 @@ class QuoteItemsScreen extends StatelessWidget {
                                 ),
                                 TitleValueRow(
                                   title: '${AppStrings.value.tr}(NGN):',
-                                  value: getQuoteItemsData(item)[0],
+                                  value: (() {
+                                    final raw = getQuoteItemsData(item)[0];
+                                    // Strip non-numeric characters except dot and minus
+                                    final cleaned = raw.replaceAll(
+                                        RegExp(r'[^0-9\.\-]'), '');
+                                    final parsed =
+                                        double.tryParse(cleaned) ?? 0.0;
+                                    return formatAmount(parsed);
+                                  })(),
                                 ),
                                 // Always show something in the image area for consistent layout
                                 if (item.screenShotURL != null &&

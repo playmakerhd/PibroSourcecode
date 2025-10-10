@@ -31,36 +31,153 @@ class SignupScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Header row (title + settings)
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 30),
-                    child: Text(
-                      AppStrings.signUp.tr,
-                      style: Styles.boldTextStyle(size: 20),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          AppStrings.signUp.tr,
+                          style: Styles.boldTextStyle(size: 20),
+                        ),
+                        GestureDetector(
+                          child: const Icon(Icons.settings, size: 20),
+                          onTap: () => Get.offAllNamed(AppRoutes.serviceConfig),
+                        ),
+                      ],
                     ),
                   ),
+
+                  // Account Type selector
+                  Text(
+                    AppStrings.accountType.tr,
+                    style: Styles.mediumTextStyle(size: 14),
+                  ),
+                  const SizedBox(height: 8),
+                  Obx(() {
+                    final value = controller.selectedAccountType.value;
+                    final isSelected = [
+                      value == 'Individual',
+                      value == 'Company',
+                      value == 'Joint Account',
+                    ];
+
+                    return Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: BoxDecoration(
+                        color: AppColors.inputGrey.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: ToggleButtons(
+                        isSelected: isSelected,
+                        onPressed: (index) {
+                          switch (index) {
+                            case 0:
+                              controller.setAccountType('Individual');
+                              break;
+                            case 1:
+                              controller.setAccountType('Company');
+                              break;
+                            case 2:
+                              controller.setAccountType('Joint Account');
+                              break;
+                          }
+                        },
+                        borderRadius: BorderRadius.circular(999),
+                        selectedBorderColor: AppColors.primaryColor,
+                        borderColor: AppColors.tileColor,
+                        selectedColor: AppColors.primaryColor,
+                        fillColor:
+                            AppColors.primaryColor.withValues(alpha: 0.12),
+                        textStyle: Styles.mediumTextStyle(size: 12),
+                        constraints:
+                            const BoxConstraints(minHeight: 36, minWidth: 0),
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 14),
+                            child: Text(AppStrings.individual.tr),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 14),
+                            child: Text(AppStrings.company.tr),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 14),
+                            child: Text(AppStrings.jointAccount.tr),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                  const SizedBox(height: 20),
+
+                  // Email
                   CustomInput(
                     hint: AppStrings.email.tr,
                     controller: controller.emailController,
                     validator: Validators.emailValidator,
                     inputType: TextInputType.emailAddress,
                   ),
-                   CustomInput(
-                    hint: AppStrings.name.tr,
-                    controller: controller.nameController,
-                    validator: (value) => Validators.requiredValidator(
-                      value,
-                      AppStrings.username.tr,
-                    ),
-                    inputType: TextInputType.name,
-                  ),
+
+                  // Name - dynamic hint based on account type
+                  Obx(() {
+                    final t = controller.selectedAccountType.value;
+                    final nameHint = t == 'Company'
+                        ? AppStrings.companyName.tr
+                        : t == 'Joint Account'
+                            ? AppStrings.accountName.tr
+                            : AppStrings.name.tr;
+                    return CustomInput(
+                      hint: nameHint,
+                      controller: controller.nameController,
+                      validator: (value) => Validators.requiredValidator(
+                        value,
+                        AppStrings.username.tr,
+                      ),
+                    );
+                  }),
+
+                  // Phone
                   CustomInput(
                     hint: AppStrings.phoneNumber.tr,
                     controller: controller.phoneController,
                     validator: (value) => Validators.requiredValidator(
-                        value, AppStrings.phoneNumber.tr),
+                      value,
+                      AppStrings.phoneNumber.tr,
+                    ),
                     inputType: TextInputType.phone,
                   ),
-                 
+
+                  // Date of Birth / Date of Incorporation / Primary Holder DOB
+                  Obx(() {
+                    final t = controller.selectedAccountType.value;
+                    final dobHint = t == 'Company'
+                        ? AppStrings.dateOfIncorporation.tr
+                        : t == 'Joint Account'
+                            ? AppStrings.primaryHolderDob.tr
+                            : AppStrings.dob.tr;
+
+                    return CustomInput(
+                      hint: dobHint,
+                      controller: controller.dobController,
+                      readonly: true,
+                      onTap: () => controller.pickDateOfBirth(context),
+                      validator: (value) =>
+                          Validators.requiredValidator(value, dobHint),
+                      inputType: TextInputType.none,
+                      suffixIcon: const Padding(
+                        padding: EdgeInsets.only(right: 20),
+                        child: Icon(
+                          Icons.calendar_today,
+                          size: 24,
+                          color: AppColors.tileColor,
+                        ),
+                      ),
+                    );
+                  }),
+
+                  // Password
                   Obx(
                     () => CustomInput(
                       hint: AppStrings.password.tr,
@@ -80,21 +197,28 @@ class SignupScreen extends StatelessWidget {
                         ),
                       ),
                       validator: Validators.passwordValidator,
-                      inputType: TextInputType.visiblePassword,
                     ),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 30, bottom: 20),
-                    child: Obx(
-                      () => CustomButton(
-                        text: AppStrings.signUp.tr.capitalizeFirst!,
-                        loading: controller.loading.value,
-                        onPressed: controller.signup,
-                      ),
+
+                  const SizedBox(height: 30),
+
+                  // Submit button
+                  Obx(
+                    () => CustomButton(
+                      text: AppStrings.signUp.tr,
+                      loading: controller.loading.value,
+                      onPressed: () {
+                        if (controller.signupFormKey.currentState?.validate() ??
+                            false) {
+                          controller.signup();
+                        }
+                      },
                     ),
                   ),
+
+                  // Navigation back to login
                   Padding(
-                    padding: const EdgeInsets.only(bottom: 30),
+                    padding: const EdgeInsets.only(top: 20, bottom: 30),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -102,19 +226,17 @@ class SignupScreen extends StatelessWidget {
                           AppStrings.alreadyHaveAccount.tr,
                           style: Styles.regularTextStyle(),
                         ),
-                        SizedBox(
-                          width: 10,
-                        ),
+                        const SizedBox(width: 10),
                         GestureDetector(
                           onTap: () => Get.offNamed(AppRoutes.login),
                           child: Text(
                             AppStrings.login.tr,
                             style: Styles.mediumTextStyle(size: 14),
                           ),
-                        )
+                        ),
                       ],
                     ),
-                  )
+                  ),
                 ],
               ),
             ),
