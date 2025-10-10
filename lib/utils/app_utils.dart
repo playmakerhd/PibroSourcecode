@@ -18,6 +18,26 @@ import 'package:pibro/network/models/response/customer_policy_claims_response.da
 import 'package:pibro/utils/view_utils.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+// Normalizes display values from API/model to a user-friendly string.
+String displayValue(dynamic v) {
+  if (v == null) return '-';
+  final s = v.toString().trim();
+  if (s.isEmpty) return '-';
+  final lower = s.toLowerCase();
+  const nullTokens = {
+    'null',
+    'nil',
+    'n/a',
+    'na',
+    'undefined',
+    'unknown',
+    'none',
+    '-'
+  };
+  if (nullTokens.contains(lower)) return '-';
+  return s;
+}
+
 void persistLoginData({
   required LoginData data,
   required bool remember,

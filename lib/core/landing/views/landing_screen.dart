@@ -122,19 +122,31 @@ class LandingScreen extends StatelessWidget {
                   ),
                 ],
               ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  GestureDetector(
+                    child: Icon(Icons.settings, size: 20),
+                    onTap: () {
+                      Get.offAllNamed(AppRoutes.serviceConfig);
+                    },
+                  ),
+                ],
+              ),
               Column(
                 children: [
+                  
                   SizedBox(
                     height: 120,
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
-                        RotatedContainer(
-                          text: AppStrings.explore.tr,
-                          image: AppImages.explore,
-                          hasBoxShadow: false,
-                          onPressed: () => Get.toNamed(AppRoutes.getQuote),
-                        ),
+                        // RotatedContainer(
+                        //   text: AppStrings.explore.tr,
+                        //   image: AppImages.explore,
+                        //   hasBoxShadow: false,
+                        //   onPressed: () => Get.toNamed(AppRoutes.getQuote),
+                        // ),
                         RotatedContainer(
                           text: AppStrings.getQuote.tr,
                           image: AppImages.getQuote,

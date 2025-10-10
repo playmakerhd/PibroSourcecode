@@ -204,11 +204,11 @@ class QuoteConfirmationScreen extends StatelessWidget {
                         PolicyButton(
                           text: 'OK',
                           onPressed: () {
-                            if (Get.isRegistered<HomeController>()) {
-                              try {
-                                Get.delete<HomeController>();
-                              } catch (_) {}
-                            }
+                            // if (Get.isRegistered<HomeController>()) {
+                            //   try {
+                            //     Get.delete<HomeController>();
+                            //   } catch (_) {}
+                            // }
                             Get.offAllNamed(AppRoutes.main);
                           },
                           width: 120,

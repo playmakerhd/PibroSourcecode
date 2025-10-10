@@ -28,16 +28,23 @@ class ItemRowContainerColumn extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              id,
-              style: Styles.boldTextStyle(
-                size: 12,
+            // Constrain the left text so it won't push the amount off-screen
+            Expanded(
+              child: Text(
+                id,
+                style: Styles.boldTextStyle(size: 12),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
-            Text(
-              amount,
-              style: Styles.boldTextStyle(
-                size: 12,
+            const SizedBox(width: 8),
+            // Keep the amount visible but allow truncation if space is very tight
+            Flexible(
+              child: Text(
+                amount,
+                style: Styles.boldTextStyle(size: 12),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
@@ -51,17 +58,23 @@ class ItemRowContainerColumn extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              type,
-              style: Styles.boldTextStyle(
-                size: 12,
+            Expanded(
+              child: Text(
+                type,
+                style: Styles.boldTextStyle(
+                  size: 12,
+                ),
+                overflow: TextOverflow.ellipsis,  
+                maxLines: 1,
               ),
             ),
-            Text(
-              status,
-              style: Styles.regularTextStyle(
-                size: 12,
-                color: color,
+            Flexible(
+              child: Text(
+                status,
+                style: Styles.regularTextStyle(
+                  size: 12,
+                  color: color,
+                ),
               ),
             ),
           ],

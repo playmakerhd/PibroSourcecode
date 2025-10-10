@@ -32,16 +32,9 @@ class HomeController extends GetxController {
     try {
       final response = await pibroRepository.getCustomerPolicies();
       policies.value = response.policies;
-
-      // Apply categorization based on provided status or current filter
       if (status != null) {
         categorizePolicies(status);
-      } else if (policyStatus.value.isNotEmpty) {
-        // Re-apply the current filter if user already opened a tab
-        // This ensures displayPolicies gets updated after loading
-        categorizePolicies(policyStatus.value);
       }
-
       loading.value = false;
     } catch (e) {
       loading.value = false;
@@ -99,19 +92,15 @@ class HomeController extends GetxController {
             ? AppStrings.activePolicies.trParams({'break': ' '})
             : AppStrings.expiredPolicies.trParams({'break': ' '});
     isRenewPolicyClicked.value = false;
-
-    // Always create a new list to ensure GetX reactivity detects the change
-    if (status.isEmpty) {
-      displayPolicies.value = List<PolicyData>.from(policies);
-    } else {
-      displayPolicies.value = policies
-          .where((item) =>
-              getPolicyStatus(item.policyEndDate ?? DateTime.now().toString(),
-                      item.approved ?? false)
-                  .status ==
-              status)
-          .toList();
-    }
+    displayPolicies.value = status.isEmpty
+        ? policies
+        : policies
+            .where((item) =>
+                getPolicyStatus(item.policyEndDate ?? DateTime.now().toString(),
+                        item.approved ?? false)
+                    .status ==
+                status)
+            .toList();
   }
 
   void navigateToPolicyScreens({String? status = ''}) {

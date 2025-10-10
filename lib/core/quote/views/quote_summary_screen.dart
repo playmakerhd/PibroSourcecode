@@ -7,6 +7,7 @@ import 'package:pibro/core/quote/controller/quote_payment_controller.dart';
 import 'package:pibro/core/quote/controller/quote_summary_controller.dart';
 import 'package:pibro/core/policy/widget/detail_row.dart';
 import 'package:pibro/core/policy/widget/policy_button.dart';
+import 'package:pibro/navigation/routes.dart';
 import 'package:pibro/shared/common_header.dart';
 import 'package:pibro/shared/widget/large_line.dart';
 import 'package:intl/intl.dart';
@@ -114,7 +115,7 @@ class QuoteSummaryScreen extends StatelessWidget {
                       const SizedBox(width: 12),
                       PolicyButton(
                         text: 'Cancel',
-                        onPressed: () => Get.back(),
+                        onPressed: () => Get.offAllNamed(AppRoutes.quoteList),
                         width: 120,
                         bgColor: AppColors.greyColor,
                       ),

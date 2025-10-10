@@ -55,7 +55,9 @@ class LodgeClaimsScreen extends StatelessWidget {
                       color: controller.tabIndex.value == 1
                           ? AppColors.blue
                           : AppColors.tileColor,
-                      enabled: !controller.prefillLoading.value,
+                      enabled: !(controller.prefillLoading.value ||
+                          (controller.policyLoading.value &&
+                              !controller.isEdit)),
                     ),
                   ),
                   Container(
@@ -74,7 +76,9 @@ class LodgeClaimsScreen extends StatelessWidget {
                       color: controller.tabIndex.value == 2
                           ? AppColors.blue
                           : AppColors.tileColor,
-                      enabled: !controller.prefillLoading.value,
+                      enabled: !(controller.prefillLoading.value ||
+                          (controller.policyLoading.value &&
+                              !controller.isEdit)),
                     ),
                   ),
                   Container(
@@ -93,7 +97,9 @@ class LodgeClaimsScreen extends StatelessWidget {
                       color: controller.tabIndex.value == 3
                           ? AppColors.blue
                           : AppColors.tileColor,
-                      enabled: !controller.prefillLoading.value,
+                      enabled: !(controller.prefillLoading.value ||
+                          (controller.policyLoading.value &&
+                              !controller.isEdit)),
                     ),
                   ),
                 ],
@@ -104,7 +110,8 @@ class LodgeClaimsScreen extends StatelessWidget {
               return Stack(
                 children: [
                   AbsorbPointer(
-                    absorbing: loading,
+                    absorbing: loading ||
+                        (controller.policyLoading.value && !controller.isEdit),
                     child: Form(
                       key: controller.claimFormKey,
                       child: Container(
@@ -146,7 +153,7 @@ class LodgeClaimsScreen extends StatelessWidget {
                                             : () =>
                                                 controller.tabIndex.value = 2,
                                         height: 50,
-                                        width: queryWidth(context) * 0.7,
+                                        width: queryWidth(context) * 0.3,
                                         bgColor: AppColors.primaryColor,
                                       );
                                     } else {

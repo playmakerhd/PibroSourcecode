@@ -7,6 +7,7 @@ import 'package:pibro/core/profile/widget/info_container.dart';
 import 'package:pibro/internalization/app_strings.dart';
 import 'package:pibro/shared/common_header.dart';
 import 'package:pibro/utils/view_utils.dart';
+import 'package:pibro/utils/app_utils.dart';
 
 class InfoScreen extends StatelessWidget {
   const InfoScreen({super.key});
@@ -32,7 +33,7 @@ class InfoScreen extends StatelessWidget {
                   padding: EdgeInsets.only(top: 15, bottom: 5),
                   child: Center(
                     child: Text(
-                      '${AppStrings.username.tr}:  ${controller.user.value!.customerID}',
+                      '${AppStrings.username.tr}:  ${displayValue(controller.user.value?.customerID)}',
                       style: Styles.boldTextStyle(
                         size: 14,
                       ),
@@ -48,19 +49,19 @@ class InfoScreen extends StatelessWidget {
                 children: [
                   InfoContainer(
                     title: AppStrings.name.tr,
-                    value: controller.user.value!.customerName!,
+                    value: controller.user.value?.customerName,
                   ),
                   InfoContainer(
                     title: AppStrings.phoneNumber.tr,
-                    value: controller.user.value!.customerPhone!,
+                    value: controller.user.value?.customerPhone,
                   ),
                   InfoContainer(
                     title: AppStrings.email.tr,
-                    value: controller.user.value!.customerEmail!,
+                    value: controller.user.value?.customerEmail,
                   ),
                   InfoContainer(
                     title: AppStrings.dob.tr,
-                    value: controller.user.value!.customerDateOfBirth!,
+                    value: formatDate(controller.user.value?.customerDateOfBirth ?? ''),
                   ),
                   Row(
                     children: [
@@ -68,21 +69,21 @@ class InfoScreen extends StatelessWidget {
                         width: queryWidth(context) * 0.5,
                         child: InfoContainer(
                           title: AppStrings.country.tr,
-                          value: controller.user.value!.customerCountry!,
+                          value: controller.user.value?.customerCountry,
                         ),
                       ),
                       SizedBox(
                         width: queryWidth(context) * 0.5,
                         child: InfoContainer(
                           title: AppStrings.state.tr,
-                          value: controller.user.value!.customerState!,
+                          value: controller.user.value?.customerState,
                         ),
                       ),
                     ],
                   ),
                   InfoContainer(
                     title: AppStrings.address.tr,
-                    value: controller.user.value!.customerAddress1!,
+                    value: controller.user.value?.customerAddress1,
                   ),
                   SizedBox(
                     height: 20,

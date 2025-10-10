@@ -10,6 +10,7 @@ import 'package:pibro/shared/custom_input/custom_input.dart';
 import 'package:pibro/utils/app_utils.dart';
 import 'package:pibro/utils/validators.dart';
 import 'package:pibro/utils/view_utils.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 class MainTab extends StatelessWidget {
   const MainTab({super.key});
@@ -20,31 +21,46 @@ class MainTab extends StatelessWidget {
     return Column(
       children: [
         Obx(
-          () => CustomDropdown(
-            label: AppStrings.policyNumber.tr,
-            hint: AppStrings.policyNumber.tr,
-            isRequired: !controller.isEdit,
-            suffixIcon: Icon(
-              Icons.arrow_drop_down,
-              size: 30,
-              color: AppColors.hintColor,
-            ),
-            dropDownValue: controller.selectedPolicy.value,
-            validator: (value) =>
-                Validators.requiredValidator(value, AppStrings.policyNumber.tr),
-            items: controller.policies
-                .map((item) => DropdownMenuItem<PolicyData>(
-                      value: item,
-                      child: Text(
-                        item.policyBrokerID,
-                        style: Styles.mediumTextStyle(
-                          size: 14,
-                        ),
+          () => (controller.policyLoading.value && !controller.isEdit)
+              ? Container(
+                  height: 60,
+                  alignment: Alignment.center,
+                  child: Center(
+                    child: SizedBox(
+                      height: 36,
+                      width: 36,
+                      child: LoadingAnimationWidget.staggeredDotsWave(
+                        color: AppColors.primaryColor,
+                        size: 36,
                       ),
-                    ))
-                .toList(),
-            onChanged: controller.isEdit ? null : controller.selectPolicy,
-          ),
+                    ),
+                  ),
+                )
+              : CustomDropdown(
+                  label: AppStrings.policyNumber.tr,
+                  hint: AppStrings.policyNumber.tr,
+                  isRequired: !controller.isEdit,
+                  suffixIcon: Icon(
+                    Icons.arrow_drop_down,
+                    size: 30,
+                    color: AppColors.hintColor,
+                  ),
+                  dropDownValue: controller.selectedPolicy.value,
+                  validator: (value) => Validators.requiredValidator(
+                      value, AppStrings.policyNumber.tr),
+                  items: controller.policies
+                      .map((item) => DropdownMenuItem<PolicyData>(
+                            value: item,
+                            child: Text(
+                              item.policyBrokerID,
+                              style: Styles.mediumTextStyle(
+                                size: 14,
+                              ),
+                            ),
+                          ))
+                      .toList(),
+                  onChanged: controller.isEdit ? null : controller.selectPolicy,
+                ),
         ),
         CustomInput(
           label: AppStrings.dateOfOccurence.tr,

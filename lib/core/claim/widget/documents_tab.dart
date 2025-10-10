@@ -68,15 +68,16 @@ class DocumentsTab extends StatelessWidget {
                             ),
                             child: DocumentContainer(
                               onTap: () => controller.showUploadSheet(
-                                  claimDocument.documentName!, index),
+                                  claimDocument.documentName ?? '', index),
                               title: claimDocument.documentName ?? '',
                               date: claimDocument.dateSubmited == null
                                   ? '--/--/--'
                                   : formatClaimDate(
                                       claimDocument.dateSubmited!),
                               document: claimDocument.claimsDocument,
-                              status: claimDocument.docStatus!,
-                              preview: claimDocument.claimsDocument != null
+                              status: claimDocument.docStatus ?? false,
+                              preview: claimDocument.claimsDocument != null &&
+                                      claimDocument.documentName != null
                                   ? () => controller.previewImage(
                                       claimDocument.documentName!,
                                       claimDocument.claimsDocument!)

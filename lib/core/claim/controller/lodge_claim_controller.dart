@@ -92,9 +92,13 @@ class LodgeClaimController extends GetxController {
   // }
 
   Future<void> getCustomerPolicies() async {
+    policyLoading.value = true;
     try {
       final response = await pibroRepository.getCustomerPolicies();
       policies.value = response.policies;
+
+
+
       if (isEdit) {
         PolicyData policyData = policies.firstWhere((element) =>
             element.policyBrokerID == selectedClaim.value!.policyBrokerID);

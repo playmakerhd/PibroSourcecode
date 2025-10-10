@@ -52,9 +52,9 @@ class ItemsInsuredScreen extends StatelessWidget {
                                   value: item.itemLocation ?? '-',
                                 ),
                                 TitleValueRow(
-                                  title: '${AppStrings.value.tr}:',
+                                  title: '${AppStrings.value.tr}(NGN):',
                                   value:
-                                      'N${(formatAmount(item.sumInsured ?? 0)).toString()}',
+                                      (formatAmount(item.sumInsured ?? 0)).toString(),
                                 ),
                                 // Always show something in the image area for consistent layout
                                 if (item.policyItems != null &&

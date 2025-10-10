@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pibro/constants/app_styles.dart';
+import 'package:pibro/utils/app_utils.dart';
 import 'package:pibro/shared/item_row_container.dart';
 
 class InfoContainer extends StatelessWidget {
@@ -10,7 +11,7 @@ class InfoContainer extends StatelessWidget {
   });
 
   final String title;
-  final String value;
+  final String? value;
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +26,7 @@ class InfoContainer extends StatelessWidget {
             style: Styles.regularTextStyle(),
           ),
           Text(
-            value,
+            displayValue(value),
             style: Styles.boldTextStyle(size: 12),
           ),
         ],

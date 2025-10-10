@@ -67,7 +67,7 @@ class MainHeader extends StatelessWidget {
                 : SizedBox(
                     width: 30,
                   ),
-            child,
+            Expanded(child: child),
             SizedBox(
               width: 30,
             ),

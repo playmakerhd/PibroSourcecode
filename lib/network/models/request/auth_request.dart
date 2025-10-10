@@ -4,6 +4,7 @@ class AuthRequest {
     this.password,
     this.email,
     this.phoneNumber,
+    this.dateOfBirth,
     this.isOtherOption = false,
   });
 
@@ -11,6 +12,7 @@ class AuthRequest {
   late String? password;
   late String? email;
   late String? phoneNumber;
+  late String? dateOfBirth;
   bool isOtherOption;
 
   Map<String, dynamic> toJson() {
@@ -31,12 +33,12 @@ class AuthRequest {
     map['CustomerFirstName'] = username.split(' ')[0];
     map['CustomerLastName'] =
         username.split(' ').length > 1 ? username.split(' ')[1] : 'null';
-    map['CustomerAddress1'] = 'null';
-    map['CustomerState'] = 'null';
-    map['CustomerCountry'] = 'null';
+    map['CustomerAddress1'] = "null";
+    map['CustomerState'] = "null";
+    map['CustomerCountry'] = "Nigeria";
     map['CustomerPhone'] = phoneNumber;
     map['CustomerEmail'] = email;
-    map['CustomerDateOfBirth'] = DateTime.now().toIso8601String();
+    map['CustomerDateOfBirth'] = dateOfBirth ?? "null";
     map['CurrencyID'] = 'NGN';
     map['ApprovalDate'] = DateTime.now().toIso8601String();
     map['CustomerSince'] = DateTime.now().toIso8601String();

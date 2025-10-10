@@ -29,41 +29,47 @@ class ProfileScreen extends StatelessWidget {
               height: headerHeight,
               borderWidth: 15,
               hasBackIcon: false,
-              child: Column(
-                children: [
-                  CircleAvatar(
-                    radius: 60,
-                    backgroundColor: AppColors.white,
-                    backgroundImage: AssetImage(AppImages.dashboard),
-                  ),
-                  SizedBox(
-                    height: 10,
-                  ),
-                  Obx(
-                    () => homeController.profileLoading.value
-                        ? LoadingAnimationWidget.waveDots(
-                            color: Colors.white,
-                            size: 50,
-                          )
-                        : Column(
-                            children: [
-                              Text(
-                                homeController
-                                    .user.value!.customerName!.capitalize!,
-                                style: Styles.boldTextStyle(
-                                  size: 18,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CircleAvatar(
+                      radius: 60,
+                      backgroundColor: AppColors.white,
+                      backgroundImage: AssetImage(AppImages.dashboard),
+                    ),
+                    SizedBox(
+                      height: 10,
+                    ),
+                    Obx(
+                      () => homeController.profileLoading.value
+                          ? LoadingAnimationWidget.waveDots(
+                              color: Colors.white,
+                              size: 50,
+                            )
+                          : Column(
+                              children: [
+                                Text(
+                                  homeController
+                                      .user.value!.customerName!.capitalize!,
+                                  style: Styles.boldTextStyle(
+                                    size: 16,
+                                  ),
+                                  softWrap: true,
                                 ),
-                              ),
-                              Text(
-                                '${AppStrings.username.tr}: ${homeController.user.value!.customerID!}',
-                                style: Styles.boldTextStyle(
-                                  size: 14,
+                                Text(
+                                  '${AppStrings.username.tr}: ${homeController.user.value!.customerID!}',
+                                  style: Styles.boldTextStyle(
+                                    size: 14,
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                  ),
-                ],
+                              ],
+                            ),
+                    ),
+                  ],
+                ),
               ),
             ),
             Expanded(

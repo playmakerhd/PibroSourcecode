@@ -201,11 +201,11 @@ class PaymentConfirmationScreen extends StatelessWidget {
                   PolicyButton(
                     text: AppStrings.ok.tr,
                     onPressed: () {
-                      if (Get.isRegistered<HomeController>()) {
-                        try {
-                          Get.delete<HomeController>();
-                        } catch (_) {}
-                      }
+                      // if (Get.isRegistered<HomeController>()) {
+                      //   try {
+                      //     Get.delete<HomeController>();
+                      //   } catch (_) {}
+                      // }
                       Get.offAllNamed(AppRoutes.main);
                     },
                     height: 50,

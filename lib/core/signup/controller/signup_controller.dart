@@ -20,13 +20,50 @@ class SignupController extends GetxController {
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
+  final TextEditingController dateOfBirthController = TextEditingController();
+  final TextEditingController dobController = TextEditingController();
   final GlobalKey<FormState> signupFormKey = GlobalKey<FormState>();
 
   RxBool obscurePassword = true.obs;
   RxBool loading = false.obs;
+  Rx<DateTime?> selectedDateOfBirth = Rx<DateTime?>(null);
+  RxString selectedAccountType = 'individual'.obs;
 
-  updateObscure() {
+  void updateObscure() {
     obscurePassword.value = !obscurePassword.value;
+  }
+
+  void setAccountType(String type) {
+    selectedAccountType.value = type;
+  }
+
+  Future<void> selectDateOfBirth() async {
+    final DateTime? picked = await showDatePicker(
+      context: Get.context!,
+      initialDate: selectedDateOfBirth.value ?? DateTime(2000),
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now()
+          .subtract(Duration(days: 365 * 16)), // Minimum 16 years old
+    );
+    if (picked != null && picked != selectedDateOfBirth.value) {
+      selectedDateOfBirth.value = picked;
+      dateOfBirthController.text =
+          "${picked.day}/${picked.month}/${picked.year}";
+    }
+  }
+
+  Future<void> pickDateOfBirth(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: selectedDateOfBirth.value ?? DateTime(2000),
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now()
+          .subtract(Duration(days: 365 * 16)), // Minimum 16 years old
+    );
+    if (picked != null && picked != selectedDateOfBirth.value) {
+      selectedDateOfBirth.value = picked;
+      dobController.text = "${picked.day}/${picked.month}/${picked.year}";
+    }
   }
 
   Future<void> signup() async {
@@ -39,6 +76,7 @@ class SignupController extends GetxController {
             password: passwordController.text,
             email: emailController.text,
             phoneNumber: phoneController.text,
+            dateOfBirth: selectedDateOfBirth.value?.toIso8601String(),
           ),
         );
         if (response.messageResponse.status != AppConstants.responseSuccess) {
@@ -48,10 +86,11 @@ class SignupController extends GetxController {
           // Store the customer ID from the response
           final customerID = response.messageResponse.message;
           persistSignupID(customerID);
-          
+
           persistLoginData(
             data: LoginData(
-              customerID: customerID, // Use the response customer ID, not the text input
+              customerID:
+                  customerID, // Use the response customer ID, not the text input
               email: emailController.text,
               phone: phoneController.text,
             ),
@@ -60,7 +99,7 @@ class SignupController extends GetxController {
 
           // Also persist the email separately for payment flow
           GetStorage().write(StorageKeys.userEmail, emailController.text);
-          
+
           // Store profile data with customer ID for receipt creation
           GetStorage().write(StorageKeys.profileData, {
             'CustomerID': customerID,
@@ -69,7 +108,7 @@ class SignupController extends GetxController {
             'CustomerName': nameController.text,
           });
 
-           // Show success snackbar with customer ID
+          // Show success snackbar with customer ID
           showSnackbarMessage(
             message: 'Signup successful! Your Customer ID is: $customerID',
             isSuccess: true,

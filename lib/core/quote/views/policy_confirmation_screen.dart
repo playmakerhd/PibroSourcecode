@@ -153,17 +153,17 @@ class PolicyConfirmationScreen extends StatelessWidget {
                             PolicyButton(
                               text: 'OK',
                               onPressed: () async {
-                                if (Get.isRegistered<HomeController>()) {
-                                  try {
-                                    final HomeController home =
-                                        Get.find<HomeController>();
-                                    await home.getProfile();
-                                  } catch (e) {
-                                    try {
-                                      Get.delete<HomeController>(force: true);
-                                    } catch (_) {}
-                                  }
-                                }
+                                // if (Get.isRegistered<HomeController>()) {
+                                //   try {
+                                //     final HomeController home =
+                                //         Get.find<HomeController>();
+                                //     await home.getProfile();
+                                //   } catch (e) {
+                                //     try {
+                                //       Get.delete<HomeController>(force: true);
+                                //     } catch (_) {}
+                                //   }
+                                // }
                                 Get.offAllNamed(AppRoutes.main);
                               },
                               height: 50,

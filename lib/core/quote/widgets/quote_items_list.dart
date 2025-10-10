@@ -4,6 +4,7 @@ import 'package:pibro/core/policy/model/item_data.dart';
 import 'package:pibro/internalization/app_strings.dart';
 import 'package:pibro/shared/item_row_container.dart';
 import 'package:pibro/shared/title_value_row.dart';
+import 'package:pibro/utils/app_utils.dart';
 
 class QuoteItemsList extends StatelessWidget {
   const QuoteItemsList({
@@ -38,7 +39,7 @@ class QuoteItemsList extends StatelessWidget {
                         ),
                         TitleValueRow(
                           title: '${AppStrings.sumInsured.tr}:',
-                          value: item.value!,
+                          value: (item.value!),
                         ),
                         TitleValueRow(
                           title: '${AppStrings.location.tr}:',

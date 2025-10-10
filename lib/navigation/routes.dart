@@ -6,6 +6,7 @@ import 'package:pibro/core/claim/views/claim_details_screen.dart';
 import 'package:pibro/core/claim/views/claim_screen.dart';
 import 'package:pibro/core/claim/views/lodge_claims_screen.dart';
 import 'package:pibro/core/config/view/service_config_screen.dart';
+import 'package:pibro/core/home/controller/home_controller.dart';
 import 'package:pibro/core/landing/views/about_us_screen.dart';
 import 'package:pibro/core/landing/views/contact_us_screen.dart';
 import 'package:pibro/core/landing/views/faq_screen.dart';
