@@ -3,6 +3,14 @@ class Endpoints {
   static const String login = '/CustomerLoginByID';
   static const String signup = '/CreateCustomerInformation';
   static const String otherLogin = '/CustomerLoginByEmailPhone';
+  // Forgot password (OTP) flow
+  static const String resetCustomerPasswordOtp = '/ResetCustomerPasswordOTP';
+  static const String resetCustomerEmailPhonePasswordOtp =
+      '/ResetCustomerEmailPhonePasswordOTP';
+  static const String validateCustomerPasswordOtp =
+      '/ValidateCustomerPasswordOTP';
+  static const String validateCustomerPasswordEmailPhoneOtp =
+      '/ValidateCustomerPasswordEmailPhoneOTP';
 
   // Profile
   static const String profile = '/GetCustomerInformationByID';
@@ -53,6 +61,8 @@ class Endpoints {
       '/GetCustomerTransactionsByCustomer';
   static const String viewCustomerTransactionReport =
       '/ViewCustomerTransactionReport';
+  static const String viewCustomerStatementReport =
+      '/ViewCustomerStatementReport';
 
   // Vendors / Enquiries
   static const String getVendors = '/GetVendorInformation';

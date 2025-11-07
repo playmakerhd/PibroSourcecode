@@ -197,8 +197,7 @@ class LodgeClaimsScreen extends StatelessWidget {
                                         SizedBox(
                                             width: queryWidth(context) * 0.05),
 
-                                        // The only condition that controls visibility of the
-                                        // Send to Broker button is the submitClaim flag
+                                        
                                         if (controller.selectedClaim.value !=
                                                 null &&
                                             controller.selectedClaim.value!

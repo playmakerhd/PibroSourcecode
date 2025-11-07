@@ -1,19 +1,15 @@
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pibro/constants/app_colors.dart';
 import 'package:pibro/constants/app_constants.dart';
-import 'package:pibro/constants/app_images.dart';
-import 'package:pibro/constants/app_styles.dart';
 import 'package:pibro/core/home/models/policy_status.dart';
-import 'package:pibro/core/profile/widget/profile_button.dart';
 import 'package:pibro/internalization/app_strings.dart';
 import 'package:pibro/navigation/routes.dart';
 import 'package:pibro/network/api/api_provider.dart';
 import 'package:pibro/network/models/response/customer_policy_claims_response.dart';
 import 'package:pibro/network/repository/pibro_repository.dart';
 import 'package:pibro/utils/api_utils.dart';
-import 'package:pibro/utils/image_factory.dart';
 import 'package:pibro/utils/view_utils.dart';
+import 'package:pibro/shared/widget/success_dialog.dart' as ssd;
 
 class ClaimController extends GetxController {
   PibroRepository pibroRepository =
@@ -102,51 +98,12 @@ class ClaimController extends GetxController {
   }
 
   void _showSuccessDialog() {
-    showAppDialog(
+    ssd.showSuccessDialog(
+      title: AppStrings.submitClaim.tr,
+      message: AppStrings.claimSuccess.tr,
+      onPressed: () => Get.offAllNamed(AppRoutes.main),
       dismissible: false,
       willPop: false,
-      Padding(
-        padding: const EdgeInsets.only(top: 20),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            ImageFactory.getImage(AppImages.passwordSuccess).render(
-              height: 65,
-              width: 65,
-            ),
-            Column(
-              children: [
-                Text(
-                  AppStrings.submitClaim.tr,
-                  style: Styles.semiBoldTextStyle(
-                    color: AppColors.primaryColor,
-                  ),
-                ),
-                SizedBox(
-                  height: 5,
-                ),
-                Text(
-                  AppStrings.claimSuccess.tr,
-                  style: Styles.mediumTextStyle(
-                    size: 12,
-                    color: AppColors.primaryColor,
-                  ),
-                ),
-              ],
-            ),
-            GestureDetector(
-              onTap: () => Get.offAllNamed(AppRoutes.main),
-              child: ProfileButton(
-                text: AppStrings.ok.tr,
-                height: 25,
-                width: 80,
-                textColor: AppColors.activeGreen,
-                bgColor: AppColors.white,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 

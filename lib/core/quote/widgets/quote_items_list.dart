@@ -38,8 +38,8 @@ class QuoteItemsList extends StatelessWidget {
                           value: item.description!,
                         ),
                         TitleValueRow(
-                          title: '${AppStrings.sumInsured.tr}:',
-                          value: (item.value!),
+                          title: '${AppStrings.sumInsured.tr}(NGN):',
+                          value: formatAmount(double.tryParse(item.value!) ?? 0.0),
                         ),
                         TitleValueRow(
                           title: '${AppStrings.location.tr}:',

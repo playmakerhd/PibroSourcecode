@@ -51,17 +51,34 @@ class ApiProvider extends BaseProvider {
   final String _paystackBaseUrl = 'https://api.paystack.co/transaction';
 
   ApiProvider() {
-    ConfigData configData =
-        ConfigData.fromJson(convertToJsonStringQuotes(StorageKeys.configData));
-    if (configData.url == null || configData.token == null) {
+    print('ApiProvider: Constructor called');
+    try {
+      ConfigData configData = ConfigData.fromJson(
+          convertToJsonStringQuotes(StorageKeys.configData));
+      print(
+          'ApiProvider: Config loaded - URL: ${configData.url}, Token: ${configData.token != null ? "***" : "null"}');
+
+      if (configData.url == null || configData.token == null) {
+        print(
+            'ApiProvider: Config data is invalid, redirecting to config screen');
+        showSnackbarMessage(
+          message: AppStrings.configError.tr,
+          isSuccess: false,
+        );
+        Get.offAllNamed(AppRoutes.serviceConfig);
+      } else {
+        _baseApiPath = configData.url!;
+        _acessToken = configData.token!;
+        print(
+            'ApiProvider: Initialized successfully with baseUrl: $_baseApiPath');
+      }
+    } catch (e) {
+      print('ApiProvider: Error loading config: $e');
       showSnackbarMessage(
         message: AppStrings.configError.tr,
         isSuccess: false,
       );
       Get.offAllNamed(AppRoutes.serviceConfig);
-    } else {
-      _baseApiPath = configData.url!;
-      _acessToken = configData.token!;
     }
   }
 
@@ -106,6 +123,70 @@ class ApiProvider extends BaseProvider {
     dynamic endpoint =
         '$_baseApiPath${Endpoints.changePassword}?EntityID=${data.customerID}&OldPassword=${body.oldPassword}&NewPassword=${body.newPassword}&ConfirmPassword=${body.confirmPassword}&token=$_acessToken';
     final responseData = await makeGetCall(Uri.parse(endpoint), false);
+    return CustomMessageResponse(responseData!);
+  }
+
+  // ---------- Forgot Password (OTP) Flow ----------
+  // {baseUrl}/ResetCustomerPasswordOTP/{token}?CustomerID={CustomerID}
+  Future<CustomMessageResponse> callResetCustomerPasswordOtp(
+      String customerId) async {
+    final uri = Uri.parse(
+            '$_baseApiPath${Endpoints.resetCustomerPasswordOtp}/$_acessToken')
+        .replace(queryParameters: {
+      'CustomerID': customerId,
+    });
+    final responseData = await makeGetCall(uri, false);
+    return CustomMessageResponse(responseData!);
+  }
+
+  // {baseUrl}/ResetCustomerEmailPhonePasswordOTP/{token}?CustomerEmail={CustomerEmail}&CustomerPhone={CustomerPhone}
+  Future<CustomMessageResponse> callResetCustomerEmailPhonePasswordOtp({
+    required String email,
+    required String phone,
+  }) async {
+    final uri = Uri.parse(
+            '$_baseApiPath${Endpoints.resetCustomerEmailPhonePasswordOtp}/$_acessToken')
+        .replace(queryParameters: {
+      'CustomerEmail': email,
+      'CustomerPhone': phone,
+    });
+    final responseData = await makeGetCall(uri, false);
+    return CustomMessageResponse(responseData!);
+  }
+
+  // {baseUrl}/ValidateCustomerPasswordOTP/{token}?CustomerID={CustomerID}&OTP={OTP}&NewPassword={NewPassword}
+  Future<CustomMessageResponse> callValidateCustomerPasswordOtp({
+    required String customerId,
+    required String otp,
+    required String newPassword,
+  }) async {
+    final uri = Uri.parse(
+            '$_baseApiPath${Endpoints.validateCustomerPasswordOtp}/$_acessToken')
+        .replace(queryParameters: {
+      'CustomerID': customerId,
+      'OTP': otp,
+      'NewPassword': newPassword,
+    });
+    final responseData = await makeGetCall(uri, false);
+    return CustomMessageResponse(responseData!);
+  }
+
+  // {baseUrl}/ValidateCustomerPasswordEmailPhoneOTP/{token}?CustomerEmail={CustomerEmail}&CustomerPhone={CustomerPhone}&OTP={OTP}&NewPassword={NewPassword}
+  Future<CustomMessageResponse> callValidateCustomerPasswordEmailPhoneOtp({
+    required String email,
+    required String phone,
+    required String otp,
+    required String newPassword,
+  }) async {
+    final uri = Uri.parse(
+            '$_baseApiPath${Endpoints.validateCustomerPasswordEmailPhoneOtp}/$_acessToken')
+        .replace(queryParameters: {
+      'CustomerEmail': email,
+      'CustomerPhone': phone,
+      'OTP': otp,
+      'NewPassword': newPassword,
+    });
+    final responseData = await makeGetCall(uri, false);
     return CustomMessageResponse(responseData!);
   }
 
@@ -510,8 +591,16 @@ class ApiProvider extends BaseProvider {
 
   Future<CompanyInfoResponse> callGetCompanyInformation() async {
     dynamic endpoint = '$_baseApiPath${Endpoints.getCompanyInfo}/$_acessToken';
-    final responseData = await makeGetCall(Uri.parse(endpoint), false);
-    return CompanyInfoResponse(responseData!);
+    print('ApiProvider: callGetCompanyInformation - endpoint: $endpoint');
+    try {
+      final responseData = await makeGetCall(Uri.parse(endpoint), false);
+      print(
+          'ApiProvider: callGetCompanyInformation - response received: ${responseData != null}');
+      return CompanyInfoResponse(responseData!);
+    } catch (e) {
+      print('ApiProvider: callGetCompanyInformation - error: $e');
+      rethrow;
+    }
   }
 
   Future<CompanyDataResponse> callGetCompanyFaq() async {
@@ -564,6 +653,21 @@ class ApiProvider extends BaseProvider {
     final endpoint = '$_baseApiPath${Endpoints.viewCustomerTransactionReport}'
         '?TransactionNumber=$transactionNumber'
         '&ReportType=$reportType'
+        '&token=$_acessToken';
+
+    final responseData = await makeGetCall(Uri.parse(endpoint), false);
+    return CustomMessageResponse(responseData!);
+  }
+
+  Future<CustomMessageResponse> callViewCustomerStatementReport({
+    required String customerID,
+    required String periodFrom,
+    required String periodTo,
+  }) async {
+    final endpoint = '$_baseApiPath${Endpoints.viewCustomerStatementReport}'
+        '?CustomerID=$customerID'
+        '&PeriodFrom=$periodFrom'
+        '&PeriodTo=$periodTo'
         '&token=$_acessToken';
 
     final responseData = await makeGetCall(Uri.parse(endpoint), false);

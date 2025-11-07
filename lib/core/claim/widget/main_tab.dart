@@ -107,7 +107,7 @@ class MainTab extends StatelessWidget {
         ),
         CustomInput(
           controller: controller.lodgementDateController,
-          label: AppStrings.lodgementDate.tr,
+          label: AppStrings.claimReportedDate.tr,
           hint: 'dd/mm/yyyy',
           isRequired: false,
           suffixIcon: Icon(
@@ -137,7 +137,7 @@ class MainTab extends StatelessWidget {
           //         }
           //       },
           validator: (value) =>
-              Validators.requiredValidator(value, AppStrings.lodgementDate.tr),
+              Validators.requiredValidator(value, AppStrings.claimReportedDate.tr),
         ),
         CustomInput(
           controller: controller.policyHolderController,

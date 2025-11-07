@@ -6,7 +6,6 @@ import 'package:pibro/core/claim/views/claim_details_screen.dart';
 import 'package:pibro/core/claim/views/claim_screen.dart';
 import 'package:pibro/core/claim/views/lodge_claims_screen.dart';
 import 'package:pibro/core/config/view/service_config_screen.dart';
-import 'package:pibro/core/home/controller/home_controller.dart';
 import 'package:pibro/core/landing/views/about_us_screen.dart';
 import 'package:pibro/core/landing/views/contact_us_screen.dart';
 import 'package:pibro/core/landing/views/faq_screen.dart';
@@ -32,6 +31,9 @@ import 'package:pibro/core/quote/views/quote_summary_screen.dart';
 import 'package:pibro/core/quote/views/quotes_list_screen.dart';
 import 'package:pibro/core/signup/view/signup_screen.dart';
 import 'package:pibro/core/splash/splash_screen.dart';
+import 'package:pibro/core/auth/view/forgot_password_screen.dart';
+import 'package:pibro/core/auth/view/otp_reset_screen.dart';
+import 'package:pibro/core/auth/view/new_password_screen.dart';
 
 class AppRoutes {
   AppRoutes._();
@@ -45,6 +47,11 @@ class AppRoutes {
   static const String main = '/main';
   static const String login = '/login';
   static const String signup = '/signup';
+
+  // Forgot Password Flow
+  static const String forgotPassword = '/forgot-password';
+  static const String otpReset = '/otp-reset';
+  static const String newPassword = '/new-password';
 
   static const String policy = '/policy';
   static const String renewPolicy = '/renew-policy';
@@ -81,7 +88,11 @@ class AppRoutes {
   static final routes = [
     GetPage(
       name: splash,
-      page: () => const SplashScreen(),
+      page: () {
+        final args = Get.arguments as Map<String, dynamic>?;
+        final forceRefresh = args?['forceRefresh'] ?? false;
+        return SplashScreen(forceRefresh: forceRefresh);
+      },
     ),
     GetPage(
       name: aboutUs,
@@ -106,6 +117,18 @@ class AppRoutes {
     GetPage(
       name: signup,
       page: () => const SignupScreen(),
+    ),
+    GetPage(
+      name: forgotPassword,
+      page: () => const ForgotPasswordScreen(),
+    ),
+    GetPage(
+      name: otpReset,
+      page: () => const OtpResetScreen(),
+    ),
+    GetPage(
+      name: newPassword,
+      page: () => const NewPasswordScreen(),
     ),
     GetPage(
       name: policy,

@@ -14,7 +14,7 @@ class CreateReceiptRequest {
   late String? receiptID;
   late String? transactionDate;
   late String? systemDate;
-  late int? amount;
+  late double? amount;
   late String? documentNumber;
   late String? documentDate;
   late String? channel;

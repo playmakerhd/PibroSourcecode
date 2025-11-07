@@ -61,7 +61,16 @@ class InfoScreen extends StatelessWidget {
                   ),
                   InfoContainer(
                     title: AppStrings.dob.tr,
-                    value: formatDate(controller.user.value?.customerDateOfBirth ?? ''),
+                    // Guard against invalid or empty date strings to avoid FormatException
+                    value:
+                        (controller.user.value?.customerDateOfBirth != null &&
+                                controller.user.value!.customerDateOfBirth!
+                                    .toString()
+                                    .trim()
+                                    .isNotEmpty)
+                            ? formatDate(
+                                controller.user.value!.customerDateOfBirth!)
+                            : '-',
                   ),
                   Row(
                     children: [

@@ -91,36 +91,142 @@ class QuoteSummaryScreen extends StatelessWidget {
                   DetailRow(
                       title: 'Premium Due(NGN):',
                       value: formatAmount(data['premium'])),
+                  // If payment will be made, show Paystack charges and total due
+                  Builder(builder: (context) {
+                    double premiumVal = 0.0;
+                    try {
+                      premiumVal = double.parse('${data['premium'] ?? 0}');
+                    } catch (_) {
+                      try {
+                        premiumVal = (data['premium'] as num).toDouble();
+                      } catch (_) {
+                        premiumVal = 0.0;
+                      }
+                    }
+                    if (premiumVal <= 0) return const SizedBox.shrink();
+                    final double usualCharge = premiumVal * 0.015;
+                    final double extraCharge =
+                        (premiumVal > 2500 ? (usualCharge + 100) : usualCharge);
+                    final double appliedCharge =
+                        (extraCharge > 2000 ? 2000 : extraCharge);
+                    final double totalDue = premiumVal + appliedCharge;
+                    return Column(
+                      children: [
+                        DetailRow(
+                            title: 'Charges (NGN):',
+                            value: formatAmount(appliedCharge)),
+                        DetailRow(
+                            title: 'Total Payment Due (NGN):',
+                            value: formatAmount(totalDue)),
+                      ],
+                    );
+                  }),
                   const SizedBox(height: 28),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      GetBuilder<QuotePaymentController>(
-                        init: Get.isRegistered<QuotePaymentController>()
-                            ? Get.find<QuotePaymentController>()
-                            : Get.put(QuotePaymentController()),
-                        builder: (qp) => Obx(() => PolicyButton(
-                              text: 'Make Payment',
-                              onPressed: () {
-                                if (!qp.paymentLoading.value) {
-                                  qp.paymentLoading.value = true;
-                                  qp.beginPayment();
-                                }
-                              },
-                              width: 160,
-                              bgColor: AppColors.primaryColor,
-                              loading: qp.paymentLoading.value,
-                            )),
-                      ),
-                      const SizedBox(width: 12),
-                      PolicyButton(
+                  // Show Make Payment and Contest buttons when premium due is not zero
+                  Builder(builder: (context) {
+                    double premiumVal = 0.0;
+                    try {
+                      premiumVal = double.parse('${data['premium'] ?? 0}');
+                    } catch (_) {
+                      try {
+                        premiumVal = (data['premium'] as num).toDouble();
+                      } catch (_) {
+                        premiumVal = 0.0;
+                      }
+                    }
+
+                    final qsc = Get.put(QuoteSummaryController());
+
+                    if (premiumVal > 0) {
+                      // Show payment buttons
+                      return Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              GetBuilder<QuotePaymentController>(
+                                init: Get.isRegistered<QuotePaymentController>()
+                                    ? Get.find<QuotePaymentController>()
+                                    : Get.put(QuotePaymentController()),
+                                builder: (qp) => Obx(() => PolicyButton(
+                                      text: 'Make Payment',
+                                      onPressed: () {
+                                        if (!qp.paymentLoading.value) {
+                                          qp.paymentLoading.value = true;
+                                          qp.beginPayment();
+                                        }
+                                      },
+                                      width: MediaQuery.of(context).size.width *
+                                          0.4,
+                                          height: 44,
+                                      bgColor: AppColors.primaryColor,
+                                      loading: qp.paymentLoading.value,
+                                    )),
+                              ),
+                              PolicyButton(
+                                text: 'Contest Payment',
+                                onPressed: qsc.showContestModal,
+                                width: MediaQuery.of(context).size.width * 0.4,
+                                height: 44,
+                                bgColor: AppColors.orange,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+                          GestureDetector(
+                            onTap: () {
+                              // TODO: Wire to API later
+                            },
+                            child: Container(
+                              height: 44,
+                              width: MediaQuery.of(context).size.width * 0.7,
+                              decoration: BoxDecoration(
+                                color: AppColors.primaryColor,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Center(
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.print,
+                                      color: AppColors.white,
+                                      size: 20,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'Print Premium Demand Note',
+                                      style: TextStyle(
+                                        color: AppColors.white,
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          PolicyButton(
+                            text: 'Cancel',
+                            onPressed: () =>
+                                Get.offNamed(AppRoutes.quoteList),
+                            width: 120,
+                            bgColor: AppColors.greyColor,
+                          ),
+                        ],
+                      );
+                    } else {
+                      // Show only cancel button when no payment needed
+                      return PolicyButton(
                         text: 'Cancel',
                         onPressed: () => Get.offAllNamed(AppRoutes.quoteList),
                         width: 120,
                         bgColor: AppColors.greyColor,
-                      ),
-                    ],
-                  ),
+                      );
+                    }
+                  }),
                   const SizedBox(height: 20),
                 ],
               ),

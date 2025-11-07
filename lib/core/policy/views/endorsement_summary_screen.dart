@@ -136,10 +136,34 @@ class EndorsementSummaryScreen extends StatelessWidget {
                     title: 'Premium Adjustment Due(NGN):',
                     value: formatAmount(addPrem),
                   ),
+                  // If there's an additional premium to pay, show gateway charges and total due
+                  if (addPrem > 0)
+                    Builder(builder: (context) {
+                      final double premium = addPrem;
+                      final double usualCharge = premium * 0.015;
+                      final double extraCharge =
+                          (premium > 2500 ? (usualCharge + 100) : usualCharge);
+                      final double appliedCharge =
+                          (extraCharge > 2000 ? 2000 : extraCharge);
+                      final double totalDue = premium + appliedCharge;
+                      return Column(
+                        children: [
+                          DetailRow(
+                            title: 'Charges (NGN):',
+                            value: formatAmount(appliedCharge),
+                          ),
+                          DetailRow(
+                            title: 'Total Payment Due (NGN):',
+                            value: formatAmount(totalDue),
+                          ),
+                        ],
+                      );
+                    }),
                   const SizedBox(height: 24),
                   Center(
                     child: SizedBox(
-                      width: queryWidth(context) * 0.6,
+                      // increased width so the two buttons in the row have more room
+                      width: queryWidth(context) * 0.9,
                       child: addPrem == 0.0
                           ? Obx(() => PolicyButton(
                                 text: c.sendToBrokerLoading.value
@@ -211,16 +235,80 @@ class EndorsementSummaryScreen extends StatelessWidget {
                                 bgColor: AppColors.primaryColor,
                                 isExpanded: false,
                               ))
-                          : Obx(() => PolicyButton(
-                                text: 'Pay Additional Premium',
-                                loading: c.paymentLoading.value,
-                                onPressed: c.paymentLoading.value
-                                    ? () {}
-                                    : () => c.getPaymentTokenAndInit(addPrem),
-                                height: 44,
-                                bgColor: AppColors.primaryColor,
-                                isExpanded: false,
-                              )),
+                          : Column(
+                              children: [
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceEvenly,
+                                  children: [
+                                    Obx(() => Expanded(
+                                          child: PolicyButton(
+                                            text: 'Pay Additional Premium',
+                                            loading: c.paymentLoading.value,
+                                            onPressed: c.paymentLoading.value
+                                                ? () {}
+                                                : () =>
+                                                    c.getPaymentTokenAndInit(
+                                                        addPrem),
+                                            height: 44,
+                                            width: queryWidth(context) * 0.40,
+                                            bgColor: AppColors.primaryColor,
+                                            isExpanded: false,
+                                          ),
+                                        )),
+                                    SizedBox(width: 10),
+                                    Expanded(
+                                      child: PolicyButton(
+                                        text: 'Contest Payment',
+                                        onPressed: c.showContestModal,
+                                        height: 44,
+                                        width: queryWidth(context) * 0.40,
+                                        bgColor: AppColors.orange,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 20),
+                                GestureDetector(
+                                  onTap: () {
+                                    // TODO: Wire to API later
+                                  },
+                                  child: Container(
+                                    height: 50,
+                                    // match the row width increase so the print button is wider
+                                    width: queryWidth(context) * 0.7,
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primaryColor,
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Center(
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            Icons.print,
+                                            color: AppColors.white,
+                                            size: 20,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Flexible(
+                                            child: Text(
+                                              'Print Premium Demand Note',
+                                              style: TextStyle(
+                                                color: AppColors.white,
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                              textAlign: TextAlign.center,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                     ),
                   ),
                   const SizedBox(height: 50),

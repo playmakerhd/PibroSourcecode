@@ -30,6 +30,7 @@ import 'package:printing/printing.dart';
 import 'package:pibro/utils/app_utils.dart';
 import 'package:pibro/utils/image_factory.dart';
 import 'package:pibro/utils/view_utils.dart';
+import 'package:pibro/shared/widget/success_dialog.dart' as ssd;
 
 class LodgeClaimController extends GetxController {
   PibroRepository pibroRepository =
@@ -96,8 +97,6 @@ class LodgeClaimController extends GetxController {
     try {
       final response = await pibroRepository.getCustomerPolicies();
       policies.value = response.policies;
-
-
 
       if (isEdit) {
         PolicyData policyData = policies.firstWhere((element) =>
@@ -787,51 +786,12 @@ class LodgeClaimController extends GetxController {
   }
 
   void showSuccessDialog() {
-    showAppDialog(
+    ssd.showSuccessDialog(
+      title: AppStrings.submitClaim.tr,
+      message: AppStrings.claimSuccess.tr,
+      onPressed: () => Get.offAllNamed(AppRoutes.main),
       dismissible: false,
       willPop: false,
-      Padding(
-        padding: const EdgeInsets.only(top: 20),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            ImageFactory.getImage(AppImages.passwordSuccess).render(
-              height: 65,
-              width: 65,
-            ),
-            Column(
-              children: [
-                Text(
-                  AppStrings.submitClaim.tr,
-                  style: Styles.semiBoldTextStyle(
-                    color: AppColors.white,
-                  ),
-                ),
-                SizedBox(
-                  height: 5,
-                ),
-                Text(
-                  AppStrings.claimSuccess.tr,
-                  style: Styles.mediumTextStyle(
-                    size: 12,
-                    color: AppColors.white,
-                  ),
-                ),
-              ],
-            ),
-            GestureDetector(
-              onTap: () => Get.offAllNamed(AppRoutes.main),
-              child: ProfileButton(
-                text: AppStrings.ok.tr,
-                height: 25,
-                width: 80,
-                textColor: AppColors.activeGreen,
-                bgColor: AppColors.white,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 

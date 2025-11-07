@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "700830657049",
+    "project_id": "pibro-push",
+    "storage_bucket": "pibro-push.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:700830657049:android:3a5d684edd8460792b1888",
+        "android_client_info": {
+          "package_name": "com.example.pibro"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC0jNsu7MXKI8APdjorRgtOpSOHb7F2fnI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

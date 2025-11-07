@@ -48,7 +48,7 @@ class ClaimDetailsScreen extends StatelessWidget {
                         controller.selectedClaim.value!.accidentDate!),
                   ),
                   ItemRow(
-                    title: AppStrings.lodgementDate.tr,
+                    title: AppStrings.claimReportedDate.tr,
                     value: formatDate(
                         controller.selectedClaim.value!.customerReportDate!),
                   ),

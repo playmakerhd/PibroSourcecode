@@ -103,7 +103,7 @@ class LandingContainer extends StatelessWidget {
                           ],
                         ),
                 ),
-                child,
+                Expanded(child: child),
               ],
             ),
           ),

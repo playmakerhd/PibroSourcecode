@@ -152,7 +152,7 @@ class AppStrings extends Translations {
   static const String claimDetails = 'claimDetails';
   static const String claimNumber = 'claimNumber';
   static const String incidentDate = 'incidentDate';
-  static const String lodgementDate = 'lodgementDate';
+  static const String claimReportedDate = 'claimReportedDate';
   static const String claimAmount = 'claimAmount';
   static const String settlementAmount = 'settlementAmount';
   static const String dateOfOccurence = 'dateOfOccurence';

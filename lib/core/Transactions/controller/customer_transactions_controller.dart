@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
@@ -19,6 +20,7 @@ class CustomerTransactionsController extends GetxController {
 
   final RxBool loading = false.obs;
   final RxBool shareLoading = false.obs;
+  final RxBool statementLoading = false.obs;
   final RxList<CustomerTransaction> items = <CustomerTransaction>[].obs;
 
   final Rxn<DateTime> from = Rxn<DateTime>();
@@ -183,6 +185,41 @@ class CustomerTransactionsController extends GetxController {
         // Return the original value if no mapping found
         print('⚠️ UNMAPPED_REPORT_TYPE: "$transactionType" - using as-is');
         return transactionType;
+    }
+  }
+
+  /// Fetches customer statement PDF bytes for the selected date range.
+  /// If no dates selected, defaults to past 6 months.
+  /// Returns null on error.
+  Future<Uint8List?> fetchCustomerStatementBytes() async {
+    try {
+      statementLoading.value = true;
+
+      // Use selected dates or default to past 6 months
+      final now = DateTime.now();
+      final periodFrom = from.value ?? now.subtract(const Duration(days: 180));
+      final periodTo = to.value ?? now;
+
+      final resp = await repo.viewCustomerStatementReport(
+        customerID: customerID,
+        periodFrom: periodFrom.toIso8601String(),
+        periodTo: periodTo.toIso8601String(),
+      );
+
+      final status = resp.messageResponse.status;
+      final msg = resp.messageResponse.message; // Base64 PDF
+
+      if (status.toLowerCase() != 'success' || msg.isEmpty) return null;
+
+      // Decode base64 to bytes
+      final cleanedBase64 = _stripDataPrefix(msg);
+      final bytes = base64Decode(cleanedBase64);
+      return Uint8List.fromList(bytes);
+    } catch (e) {
+      print('❌ CUSTOMER_STATEMENT: Error: $e');
+      return null;
+    } finally {
+      statementLoading.value = false;
     }
   }
 }

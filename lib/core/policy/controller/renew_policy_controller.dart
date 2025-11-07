@@ -10,12 +10,10 @@ import 'package:printing/printing.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pibro/constants/app_colors.dart';
 import 'package:pibro/constants/app_constants.dart';
-import 'package:pibro/constants/app_images.dart';
 import 'package:pibro/constants/app_styles.dart';
 import 'package:pibro/core/policy/views/items_to_insure_screen.dart';
 import 'package:pibro/core/policy/views/payment_screen.dart';
 import 'package:pibro/core/policy/widget/policy_button.dart';
-import 'package:pibro/core/profile/widget/profile_button.dart';
 import 'package:pibro/internalization/app_strings.dart';
 import 'package:pibro/navigation/routes.dart';
 import 'package:pibro/network/api/api_provider.dart';
@@ -30,10 +28,11 @@ import 'package:pibro/network/repository/pibro_repository.dart';
 import 'package:pibro/shared/custom_input/custom_input.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:pibro/constants/storage_keys.dart';
+import 'package:pibro/core/login/model/login_data.dart';
 
 import 'package:pibro/utils/api_utils.dart';
 import 'package:pibro/utils/app_utils.dart';
-import 'package:pibro/utils/image_factory.dart';
+import 'package:pibro/shared/widget/success_dialog.dart';
 import 'package:pibro/utils/validators.dart';
 import 'package:pibro/utils/view_utils.dart';
 import 'package:pdf/pdf.dart';
@@ -50,7 +49,14 @@ class RenewPolicyController extends GetxController {
   RxBool submitQuoteLoading = false.obs;
   RxBool getPremiumAmountLoading = false.obs;
   RxBool paymentLoading = false.obs;
+  RxBool contestLoading = false.obs;
   bool isQuoteFlow = false;
+
+  // Contest fields
+  final TextEditingController contestSubjectController =
+      TextEditingController();
+  final TextEditingController contestMessageController =
+      TextEditingController();
 
   Rxn<DateTime> startDate = Rxn<DateTime>();
   final TextEditingController startDateController = TextEditingController();
@@ -87,7 +93,7 @@ class RenewPolicyController extends GetxController {
 // To make reference available outside the sccope of verifyPayment
   String? lastPaymentReference;
   String? lastPaymentDate;
-  int? lastPaymentAmount;
+  double? lastPaymentAmount;
 
   // PAYMENT
   late InAppWebViewController webViewController;
@@ -167,51 +173,12 @@ class RenewPolicyController extends GetxController {
   }
 
   void _showSuccessDialog() {
-    showAppDialog(
+    showSuccessDialog(
+      title: AppStrings.renewPolicy.tr,
+      message: AppStrings.renewPolicySuccess.tr,
+      onPressed: () => Get.offAllNamed(AppRoutes.main),
       dismissible: false,
       willPop: false,
-      Padding(
-        padding: const EdgeInsets.only(top: 20),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            ImageFactory.getImage(AppImages.passwordSuccess).render(
-              height: 65,
-              width: 65,
-            ),
-            Column(
-              children: [
-                Text(
-                  AppStrings.renewPolicy.tr,
-                  style: Styles.semiBoldTextStyle(
-                    color: AppColors.white,
-                  ),
-                ),
-                SizedBox(
-                  height: 5,
-                ),
-                Text(
-                  AppStrings.renewPolicySuccess.tr,
-                  style: Styles.mediumTextStyle(
-                    size: 12,
-                    color: AppColors.white,
-                  ),
-                ),
-              ],
-            ),
-            GestureDetector(
-              onTap: () => Get.offAllNamed(AppRoutes.main),
-              child: ProfileButton(
-                text: AppStrings.ok.tr,
-                height: 25,
-                width: 80,
-                textColor: AppColors.activeGreen,
-                bgColor: AppColors.white,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -232,6 +199,140 @@ class RenewPolicyController extends GetxController {
       showSnackbarMessage(
           message: AppStrings.genericErrorMessage.tr, isSuccess: false);
     }
+  }
+
+  void showContestModal() {
+    showAppDialog(
+      SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(height: 10),
+            Text(
+              'Contest Payment',
+              style: Styles.semiBoldTextStyle(
+                size: 16,
+                color: AppColors.primaryColor,
+              ),
+            ),
+            const SizedBox(height: 15),
+            CustomInput(
+              controller: contestSubjectController,
+              hint: 'Subject',
+              label: 'Subject',
+              height: 45,
+              hasFillColor: true,
+            ),
+            const SizedBox(height: 8),
+            CustomInput(
+              controller: contestMessageController,
+              hint: 'Message',
+              label: 'Message',
+              maxLines: 3,
+              height: 75,
+            ),
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                PolicyButton(
+                  text: 'Cancel',
+                  onPressed: () => Get.back(),
+                  width: 80,
+                  height: 35,
+                  bgColor: AppColors.primaryColor,
+                ),
+                Obx(
+                  () => PolicyButton(
+                    text: 'Submit',
+                    onPressed: contestLoading.value ? () {} : submitContest,
+                    loading: contestLoading.value,
+                    width: 80,
+                    height: 35,
+                    bgColor: AppColors.primaryColor,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+      height: 340,
+    );
+  }
+
+  Future<void> submitContest() async {
+    if (contestSubjectController.text.trim().isEmpty ||
+        contestMessageController.text.trim().isEmpty) {
+      showSnackbarMessage(
+        message: 'Please fill in both subject and message',
+        isSuccess: false,
+      );
+      return;
+    }
+
+    contestLoading.value = true;
+    try {
+      final response =
+          await pibroRepository.sendToBroker(_createContestPayload());
+      if (response.messageResponse.status != AppConstants.responseSuccess) {
+        showSnackbarMessage(
+            message: response.messageResponse.message, isSuccess: false);
+      } else {
+        Get.back(); // Close modal
+        contestSubjectController.clear();
+        contestMessageController.clear();
+        showSnackbarMessage(
+            message: 'Contest submitted successfully', isSuccess: true);
+      }
+      contestLoading.value = false;
+    } catch (e) {
+      contestLoading.value = false;
+      showSnackbarMessage(
+          message: AppStrings.genericErrorMessage.tr, isSuccess: false);
+    }
+  }
+
+  Map<String, dynamic> _createContestPayload() {
+    // Copy the sendPolicyToBroker structure but modify for contest
+    LoginData loginData =
+        LoginData.fromJson(convertToJsonStringQuotes(StorageKeys.loginData));
+    dynamic userId = decryptData(StorageKeys.signupData);
+    final itemList =
+        policy.value!.itemsToInsure!.map((item) => item.toJson()).toList();
+
+    // Create enhanced description with contest details
+    final originalDescription =
+        "PolicyBrokerID: ${policy.value!.policyBrokerID}, New Start Date: ${policy.value!.policyStartDate}, New End Date: ${policy.value!.policyEndDate}, Renewal Date: ${policy.value!.renewalDate}";
+    final contestDescription =
+        "$originalDescription\n\nCONTEST DETAILS:\nSubject: ${contestSubjectController.text.trim()}\nMessage: ${contestMessageController.text.trim()}";
+
+    return {
+      "CompanyID": policy.value!.companyID,
+      "DivisionID": policy.value!.divisionID,
+      "DepartmentID": policy.value!.departmentID,
+      "CaseId": "",
+      "CustomerId": userId ?? loginData.customerID,
+      "ProductId": policy.value!.riskTypeID,
+      "SupportDate": DateTime.now().toIso8601String(),
+      "SupportKeywords":
+          "Contest, ${policy.value!.businessClassID}, ${policy.value!.riskTypeID}, Sum Insured: ${policy.value!.sumInsured ?? 0}, Premium Due: $policyPremiumAmount",
+      "SupportDescription": contestDescription,
+      "SupportScreenShotURL": "",
+      "SupportEnquiryDate": policy.value!.policyStartDate,
+      "SupportEnquiryLapseDate": policy.value!.policyEndDate,
+      "SupportPriority": 64,
+      "SupportApproved": true,
+      "SupportApprovedBy": "Admin",
+      "SupportAssigned": true,
+      "SupportType": "Contest",
+      "SupportStatus": "Pending",
+      "ContactName": loginData.customerID ?? "",
+      "ContactPhone": loginData.phone ?? "",
+      "ContactEmail": loginData.email ?? "",
+      "QuoteRequest": true,
+      "RequestDetails": itemList,
+    };
   }
 
   Future<void> submitItemToInsure() async {
@@ -768,18 +869,25 @@ class RenewPolicyController extends GetxController {
         // Persist for screens/logs
         lastPaymentReference = data?.reference;
         lastPaymentDate = data?.paidAt ?? DateTime.now().toIso8601String();
-        lastPaymentAmount = (data?.amount ?? 0) ~/ 100;
+        lastPaymentAmount = (data?.amount ?? 0) / 100.0;
         return;
       }
 
       // Persist for confirmation screen
       lastPaymentReference = data?.reference;
       lastPaymentDate = data?.paidAt ?? DateTime.now().toIso8601String();
-      lastPaymentAmount = (data?.amount ?? 0) ~/ 100;
+      lastPaymentAmount = (data?.amount ?? 0) / 100.0;
 
       // Build receipt from payment
       createReceiptRequest.transactionDate = lastPaymentDate;
-      createReceiptRequest.amount = lastPaymentAmount; // kobo → NGN
+      // Use premium amount (exclusive of Paystack charges) for the receipt.
+      // policyPremiumAmount is fetched earlier and represents the premium due.
+      try {
+        createReceiptRequest.amount =
+            double.parse(double.parse(policyPremiumAmount).toStringAsFixed(2));
+      } catch (_) {
+        createReceiptRequest.amount = lastPaymentAmount;
+      }
       createReceiptRequest.systemDate = DateTime.now().toIso8601String();
       createReceiptRequest.channel = "Online";
 

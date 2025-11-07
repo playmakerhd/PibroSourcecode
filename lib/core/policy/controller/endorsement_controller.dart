@@ -5,6 +5,8 @@ import 'package:get/get.dart';
 import 'package:pibro/constants/app_colors.dart';
 import 'package:pibro/constants/app_styles.dart';
 import 'package:pibro/constants/app_constants.dart';
+import 'package:pibro/core/login/model/login_data.dart';
+import 'package:pibro/constants/storage_keys.dart';
 import 'package:pibro/core/policy/views/payment_screen.dart';
 import 'package:pibro/network/models/request/create_receipt_request.dart';
 import 'package:pibro/network/models/response/customer_policy_response.dart';
@@ -57,6 +59,13 @@ class EndorsementController extends GetxController {
   // Flags
   RxBool loading = false.obs;
   RxBool paymentLoading = false.obs;
+
+  // Contest fields
+  RxBool contestLoading = false.obs;
+  final TextEditingController contestSubjectController =
+      TextEditingController();
+  final TextEditingController contestMessageController =
+      TextEditingController();
 
   // Payment
   String _accessToken = '';
@@ -112,7 +121,7 @@ class EndorsementController extends GetxController {
   // Persist for confirmation
   String? lastPaymentReference;
   String? lastPaymentDate;
-  int? lastPaymentAmount;
+  double? lastPaymentAmount;
 
   @override
   void onInit() {
@@ -610,13 +619,24 @@ class EndorsementController extends GetxController {
 
       lastPaymentReference = data?.reference;
       lastPaymentDate = data?.paidAt ?? DateTime.now().toIso8601String();
-      lastPaymentAmount = (data?.amount ?? 0) ~/ 100;
+      lastPaymentAmount = (data?.amount ?? 0) / 100.0;
+
+      // Prefer the computed additional premium for endorsements when creating receipts
+      // (this excludes gateway fees). Fallback to the provider-paid amount if missing.
+      int? receiptAmount;
+      if (additionalPremium.value > 0) {
+        receiptAmount = additionalPremium.value.round();
+      } else {
+        receiptAmount = lastPaymentAmount?.round();
+        print(
+            '⚠️ RECEIPT: additionalPremium missing; falling back to provider amount for receipt.');
+      }
 
       final receiptReq = CreateReceiptRequest()
         ..checkNumber = lastPaymentReference
         ..transactionDate = lastPaymentDate
         ..systemDate = DateTime.now().toIso8601String()
-        ..amount = lastPaymentAmount
+        ..amount = receiptAmount?.toDouble()
         ..channel = 'Card';
 
       // Create receipt
@@ -671,6 +691,129 @@ class EndorsementController extends GetxController {
     } finally {
       paymentLoading.value = false;
     }
+  }
+
+  void showContestModal() {
+    showAppDialog(
+      SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Contest Endorsement',
+              style: Styles.semiBoldTextStyle(
+                size: 16,
+                color: AppColors.primaryColor,
+              ),
+            ),
+            const SizedBox(height: 15),
+            CustomInput(
+              controller: contestSubjectController,
+              hint: 'Subject',
+              label: 'Subject',
+              height: 45,
+            ),
+            const SizedBox(height: 12),
+            CustomInput(
+              controller: contestMessageController,
+              hint: 'Message',
+              label: 'Message',
+              maxLines: 3,
+              height: 75,
+            ),
+            const SizedBox(height: 15),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                PolicyButton(
+                  text: 'Cancel',
+                  onPressed: () => Get.back(),
+                  width: 80,
+                  height: 35,
+                  bgColor: AppColors.tileColor,
+                ),
+                Obx(
+                  () => PolicyButton(
+                    text: 'Submit',
+                    onPressed: contestLoading.value ? () {} : submitContest,
+                    loading: contestLoading.value,
+                    width: 80,
+                    height: 35,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+      height: 340,
+    );
+  }
+
+  Future<void> submitContest() async {
+    if (contestSubjectController.text.trim().isEmpty ||
+        contestMessageController.text.trim().isEmpty) {
+      showSnackbarMessage(
+        message: 'Please fill in both subject and message',
+        isSuccess: false,
+      );
+      return;
+    }
+
+    contestLoading.value = true;
+    try {
+      final response = await repo.sendToBroker(_createContestPayload());
+      if (response.messageResponse.status != AppConstants.responseSuccess) {
+        showSnackbarMessage(
+            message: response.messageResponse.message, isSuccess: false);
+      } else {
+        Get.back(); // Close modal
+        contestSubjectController.clear();
+        contestMessageController.clear();
+        showSnackbarMessage(
+            message: 'Contest submitted successfully', isSuccess: true);
+      }
+      contestLoading.value = false;
+    } catch (e) {
+      contestLoading.value = false;
+      showSnackbarMessage(
+          message: AppStrings.genericErrorMessage.tr, isSuccess: false);
+    }
+  }
+
+  Map<String, dynamic> _createContestPayload() {
+    // Create contest payload for endorsement
+    final originalDescription =
+        "Endorsement Request - Policy: ${policy.value?.policyBrokerID}, Start Date: ${startDateCtrl.text}, End Date: ${endDateCtrl.text}, Additional Premium: ${additionalPremium.value}";
+    final contestDescription =
+        "$originalDescription\n\nCONTEST DETAILS:\nSubject: ${contestSubjectController.text.trim()}\nMessage: ${contestMessageController.text.trim()}";
+
+    return {
+      "CompanyID": policy.value?.companyID ?? "",
+      "DivisionID": policy.value?.divisionID ?? "",
+      "DepartmentID": policy.value?.departmentID ?? "",
+      "CaseId": "",
+      "CustomerId": policy.value?.customerID ?? "",
+      "ProductId": policy.value?.riskTypeID ?? "",
+      "SupportDate": DateTime.now().toIso8601String(),
+      "SupportKeywords":
+          "Contest Endorsement, ${policy.value?.businessClassID}, ${policy.value?.riskTypeID}, Sum Insured: ${policy.value?.sumInsured ?? 0}, Premium: ${additionalPremium.value}",
+      "SupportDescription": contestDescription,
+      "SupportScreenShotURL": "",
+      "SupportEnquiryDate": policy.value?.policyStartDate,
+      "SupportEnquiryLapseDate": policy.value?.policyEndDate,
+      "SupportPriority": 64,
+      "SupportApproved": true,
+      "SupportApprovedBy": "Admin",
+      "SupportAssigned": true,
+      "SupportType": "Contest Endorsement",
+      "SupportStatus": "Pending",
+      "ContactName": policy.value?.customerName ?? "",
+      "ContactPhone": "",
+      "ContactEmail": "",
+      "QuoteRequest": true,
+      "RequestDetails": policyItems.map((item) => item.toJson()).toList(),
+    };
   }
 
   String _err(Object e) {

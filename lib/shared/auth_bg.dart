@@ -11,11 +11,15 @@ class AuthBg extends StatelessWidget {
       {super.key,
       required this.title,
       required this.child,
-      this.floatingButton});
+      this.floatingButton,
+      this.titleWidget,
+      this.showBack = true});
 
   final String title;
+  final Widget? titleWidget;
   final Widget child;
   final Widget? floatingButton;
+  final bool showBack;
 
   @override
   Widget build(BuildContext context) {
@@ -44,17 +48,19 @@ class AuthBg extends StatelessWidget {
                           SizedBox(
                             height: 10,
                           ),
-                          BackArrow(),
+                          if (showBack) BackArrow(),
                           SizedBox(
                             height: queryHeight(context) * 0.07,
                           ),
-                          Text(
-                            title,
-                            style: Styles.boldTextStyle(
-                              size: 20,
-                              color: AppColors.white,
-                            ),
-                          ),
+                          // allow screens to provide a custom widget (logo) for the header
+                          titleWidget ??
+                              Text(
+                                title,
+                                style: Styles.boldTextStyle(
+                                  size: 20,
+                                  color: AppColors.white,
+                                ),
+                              ),
                         ],
                       ),
                     ),

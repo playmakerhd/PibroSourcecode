@@ -17,6 +17,8 @@ import 'package:pibro/network/models/platform_user/platform_user.dart';
 import 'package:pibro/network/models/response/customer_policy_claims_response.dart';
 import 'package:pibro/utils/view_utils.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:pibro/core/landing/controller/landing_controller.dart';
+import 'package:pibro/core/support/controller/support_controller.dart';
 
 // Normalizes display values from API/model to a user-friendly string.
 String displayValue(dynamic v) {
@@ -213,10 +215,19 @@ Future<void> saveConfig(GlobalKey<FormState> formKey,
       ).toJson();
 
       encryptData(key: StorageKeys.configData, value: configData.toString());
+      // Clear cached controllers so they will reload company info when the app
+      // navigates to the splash/landing screen after saving a new config.
+      try {
+        Get.delete<LandingController>(force: true);
+      } catch (_) {}
+      try {
+        Get.delete<SupportController>(force: true);
+      } catch (_) {}
+
       if (isProfile) {
         Get.back();
       } else {
-        Get.offAllNamed(AppRoutes.splash);
+        Get.offAllNamed(AppRoutes.splash, arguments: {'forceRefresh': true});
       }
     } catch (e) {
       showSnackbarMessage(

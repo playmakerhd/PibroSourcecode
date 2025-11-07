@@ -26,49 +26,58 @@ class ContactDetails extends StatelessWidget {
                   child: Text(AppStrings.contactUs.tr.toUpperCase(),
                       style: Styles.boldTextStyle()),
                 ),
-                IconTextRow(
-                  image: AppImages.location,
-                  text:
-                      '${controller.companyInfo.value!.companyAddress1}, ${controller.companyInfo.value!.companyAddress2}',
-                ),
-                GestureDetector(
-                  onTap: () =>
-                      launchPhone(controller.companyInfo.value!.companyPhone!),
-                  child: IconTextRow(
-                    image: AppImages.call,
-                    text: controller.companyInfo.value!.companyPhone!,
+                if (controller.companyInfo.value?.companyAddress1 != null &&
+                    controller.companyInfo.value?.companyAddress2 != null)
+                  IconTextRow(
+                    image: AppImages.location,
+                    text:
+                        '${controller.companyInfo.value!.companyAddress1}, ${controller.companyInfo.value!.companyAddress2}',
                   ),
-                ),
-                GestureDetector(
-                  onTap: () =>
-                      launchAnyUrl(controller.companyInfo.value!.companyEmail!),
-                  child: IconTextRow(
-                    image: AppImages.mail,
-                    text: controller.companyInfo.value!.companyEmail!,
+                if (controller.companyInfo.value?.companyPhone != null)
+                  GestureDetector(
+                    onTap: () => launchPhone(
+                        controller.companyInfo.value!.companyPhone!),
+                    child: IconTextRow(
+                      image: AppImages.call,
+                      text: controller.companyInfo.value!.companyPhone!,
+                    ),
                   ),
-                ),
-                IconTextRow(
-                  image: AppImages.website,
-                  text: controller.companyInfo.value!.companyWebAddress!,
-                ),
+                if (controller.companyInfo.value?.companyEmail != null)
+                  GestureDetector(
+                    onTap: () => launchAnyUrl(
+                        controller.companyInfo.value!.companyEmail!),
+                    child: IconTextRow(
+                      image: AppImages.mail,
+                      text: controller.companyInfo.value!.companyEmail!,
+                    ),
+                  ),
+                if (controller.companyInfo.value?.companyWebAddress != null)
+                  IconTextRow(
+                    image: AppImages.website,
+                    text: controller.companyInfo.value!.companyWebAddress!,
+                  ),
                 SizedBox(
                   height: 30,
                 ),
-                Row(
-                  children: controller.companyInfo.value!.socialAccounts!
-                      .where(
-                          (item) => item.socialID!.toLowerCase() != 'whatsapp')
-                      .map(
-                    (account) {
-                      return account.profileUrl != null
-                          ? LinkIcon(
-                              icon: controller.getSocialIcon(account.socialID!),
-                              onTap: () => launchAnyUrl(account.profileUrl!),
-                            )
-                          : SizedBox();
-                    },
-                  ).toList(),
-                ),
+                if (controller.companyInfo.value?.socialAccounts != null)
+                  Row(
+                    children: controller.companyInfo.value!.socialAccounts!
+                        .where((item) =>
+                            item.socialID != null &&
+                            item.socialID!.toLowerCase() != 'whatsapp')
+                        .map(
+                      (account) {
+                        return account.profileUrl != null &&
+                                account.socialID != null
+                            ? LinkIcon(
+                                icon:
+                                    controller.getSocialIcon(account.socialID!),
+                                onTap: () => launchAnyUrl(account.profileUrl!),
+                              )
+                            : SizedBox();
+                      },
+                    ).toList(),
+                  ),
               ],
             ),
     );

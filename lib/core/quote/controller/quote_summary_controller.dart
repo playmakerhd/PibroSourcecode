@@ -1,12 +1,21 @@
 import 'dart:convert';
 
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:pibro/constants/app_colors.dart';
+import 'package:pibro/constants/app_constants.dart';
+import 'package:pibro/constants/app_styles.dart';
 import 'package:pibro/constants/storage_keys.dart';
+import 'package:pibro/core/login/model/login_data.dart';
 import 'package:pibro/core/policy/controller/renew_policy_controller.dart';
+import 'package:pibro/core/policy/widget/policy_button.dart';
 import 'package:pibro/core/quote/controller/quote_payment_controller.dart';
 import 'package:pibro/internalization/app_strings.dart';
+import 'package:pibro/network/api/api_provider.dart';
 import 'package:pibro/network/models/platform_user/platform_user.dart';
+import 'package:pibro/network/repository/pibro_repository.dart';
+import 'package:pibro/shared/custom_input/custom_input.dart';
 import 'package:pibro/utils/app_utils.dart';
 import 'package:pibro/utils/view_utils.dart';
 import 'package:intl/intl.dart';
@@ -37,6 +46,15 @@ class QuoteSummaryController extends GetxController {
   final RxString renewalDateText = ''.obs;
   final RxString sumInsuredText = ''.obs;
   final RxString premiumText = ''.obs;
+
+  // Contest fields
+  RxBool contestLoading = false.obs;
+  final TextEditingController contestSubjectController =
+      TextEditingController();
+  final TextEditingController contestMessageController =
+      TextEditingController();
+  PibroRepository pibroRepository =
+      PibroRepository(appApiProvider: ApiProvider());
 
   Map<String, dynamic> enquiry = const {};
 
@@ -189,5 +207,140 @@ class QuoteSummaryController extends GetxController {
       print('📍 STACK TRACE: $st');
       return '';
     }
+  }
+
+  void showContestModal() {
+    showAppDialog(
+      SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Contest Quote',
+              style: Styles.semiBoldTextStyle(
+                size: 16,
+                color: AppColors.primaryColor,
+              ),
+            ),
+            const SizedBox(height: 15),
+            CustomInput(
+              controller: contestSubjectController,
+              hint: 'Subject',
+              label: 'Subject',
+              height: 45,
+            ),
+            const SizedBox(height: 12),
+            CustomInput(
+              controller: contestMessageController,
+              hint: 'Message',
+              label: 'Message',
+              maxLines: 3,
+              height: 75,
+            ),
+            const SizedBox(height: 15),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                PolicyButton(
+                  text: 'Cancel',
+                  onPressed: () => Get.back(),
+                  width: 80,
+                  height: 35,
+                  bgColor: AppColors.tileColor,
+                ),
+                Obx(
+                  () => PolicyButton(
+                    text: 'Submit',
+                    onPressed: contestLoading.value ? () {} : submitContest,
+                    loading: contestLoading.value,
+                    width: 80,
+                    height: 35,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+      height: 340,
+    );
+  }
+
+  Future<void> submitContest() async {
+    if (contestSubjectController.text.trim().isEmpty ||
+        contestMessageController.text.trim().isEmpty) {
+      showSnackbarMessage(
+        message: 'Please fill in both subject and message',
+        isSuccess: false,
+      );
+      return;
+    }
+
+    contestLoading.value = true;
+    try {
+      final response =
+          await pibroRepository.sendToBroker(_createContestPayload());
+      if (response.messageResponse.status != AppConstants.responseSuccess) {
+        showSnackbarMessage(
+            message: response.messageResponse.message, isSuccess: false);
+      } else {
+        Get.back(); // Close modal
+        contestSubjectController.clear();
+        contestMessageController.clear();
+        showSnackbarMessage(
+            message: 'Contest submitted successfully', isSuccess: true);
+      }
+      contestLoading.value = false;
+    } catch (e) {
+      contestLoading.value = false;
+      showSnackbarMessage(
+          message: AppStrings.genericErrorMessage.tr, isSuccess: false);
+    }
+  }
+
+  Map<String, dynamic> _createContestPayload() {
+    LoginData loginData =
+        LoginData.fromJson(convertToJsonStringQuotes(StorageKeys.loginData));
+    dynamic userId = decryptData(StorageKeys.signupData);
+
+    final sumInsuredValue = double.tryParse(
+            enquiry['sumInsured']?.toString().replaceAll(',', '') ?? '0') ??
+        0.0;
+    final premiumValue = double.tryParse(
+            enquiry['premium']?.toString().replaceAll(',', '') ?? '0') ??
+        0.0;
+
+    // Create enhanced description with contest details
+    final originalDescription =
+        "Quote Request - Business Class: ${enquiry['businessClassName']}, Product: ${enquiry['riskName']}, Start Date: ${enquiry['startDate']}, End Date: ${enquiry['endDate']}, Sum Insured: $sumInsuredValue, Premium: $premiumValue";
+    final contestDescription =
+        "$originalDescription\n\nCONTEST DETAILS:\nSubject: ${contestSubjectController.text.trim()}\nMessage: ${contestMessageController.text.trim()}";
+
+    return {
+      "CompanyID": "",
+      "DivisionID": "",
+      "DepartmentID": "",
+      "CaseId": "",
+      "CustomerId": userId ?? loginData.customerID,
+      "ProductId": enquiry['riskName'] ?? '',
+      "SupportDate": DateTime.now().toIso8601String(),
+      "SupportKeywords":
+          "Contest Quote, ${enquiry['businessClassName']}, ${enquiry['riskName']}, Sum Insured: $sumInsuredValue, Premium: $premiumValue",
+      "SupportDescription": contestDescription,
+      "SupportScreenShotURL": "",
+      "SupportEnquiryDate": enquiry['startDate'],
+      "SupportEnquiryLapseDate": enquiry['endDate'],
+      "SupportPriority": 64,
+      "SupportApproved": true,
+      "SupportApprovedBy": "Admin",
+      "SupportAssigned": true,
+      "SupportType": "Contest Quote",
+      "SupportStatus": "Pending",
+      "ContactName": loginData.customerID ?? "",
+      "ContactPhone": loginData.phone ?? "",
+      "ContactEmail": loginData.email ?? "",
+      "QuoteRequest": true,
+      "RequestDetails": enquiry['items'] ?? [],
+    };
   }
 }

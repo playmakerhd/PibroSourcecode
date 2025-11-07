@@ -39,6 +39,34 @@ class PibroRepository {
   Future<CustomMessageResponse> signUp(AuthRequest body) async =>
       appApiProvider.callSignUpApi(body);
 
+  // ---------- Forgot Password (OTP) Flow ----------
+  Future<CustomMessageResponse> resetCustomerPasswordOtp(String customerId) =>
+      appApiProvider.callResetCustomerPasswordOtp(customerId);
+
+  Future<CustomMessageResponse> resetCustomerEmailPhonePasswordOtp({
+    required String email,
+    required String phone,
+  }) =>
+      appApiProvider.callResetCustomerEmailPhonePasswordOtp(
+          email: email, phone: phone);
+
+  Future<CustomMessageResponse> validateCustomerPasswordOtp({
+    required String customerId,
+    required String otp,
+    required String newPassword,
+  }) =>
+      appApiProvider.callValidateCustomerPasswordOtp(
+          customerId: customerId, otp: otp, newPassword: newPassword);
+
+  Future<CustomMessageResponse> validateCustomerPasswordEmailPhoneOtp({
+    required String email,
+    required String phone,
+    required String otp,
+    required String newPassword,
+  }) =>
+      appApiProvider.callValidateCustomerPasswordEmailPhoneOtp(
+          email: email, phone: phone, otp: otp, newPassword: newPassword);
+
   Future<CustomMessageResponse> changePassword(
           ChangePasswordRequest body) async =>
       appApiProvider.callChangePasswordApi(body);
@@ -196,6 +224,17 @@ class PibroRepository {
       appApiProvider.callViewCustomerTransactionReport(
         transactionNumber: transactionNumber,
         reportType: reportType,
+      );
+
+  Future<CustomMessageResponse> viewCustomerStatementReport({
+    required String customerID,
+    required String periodFrom,
+    required String periodTo,
+  }) async =>
+      appApiProvider.callViewCustomerStatementReport(
+        customerID: customerID,
+        periodFrom: periodFrom,
+        periodTo: periodTo,
       );
 
   Future<CustomMessageResponse> viewInsuranceCertificate({

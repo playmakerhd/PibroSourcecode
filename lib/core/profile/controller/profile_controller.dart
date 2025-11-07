@@ -4,12 +4,10 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:pibro/constants/app_colors.dart';
 import 'package:pibro/constants/app_constants.dart';
-import 'package:pibro/constants/app_images.dart';
 import 'package:pibro/constants/app_styles.dart';
 import 'package:pibro/constants/storage_keys.dart';
 import 'package:pibro/core/config/model/config_model.dart';
 import 'package:pibro/core/profile/widget/notification_item_row.dart';
-import 'package:pibro/core/profile/widget/profile_button.dart';
 import 'package:pibro/internalization/app_strings.dart';
 import 'package:pibro/navigation/routes.dart';
 import 'package:pibro/network/api/api_provider.dart';
@@ -18,9 +16,9 @@ import 'package:pibro/network/repository/pibro_repository.dart';
 import 'package:pibro/shared/custom_button.dart';
 import 'package:pibro/shared/custom_input/custom_input.dart';
 import 'package:pibro/utils/app_utils.dart';
-import 'package:pibro/utils/image_factory.dart';
 import 'package:pibro/utils/validators.dart';
 import 'package:pibro/utils/view_utils.dart';
+import 'package:pibro/shared/widget/success_dialog.dart';
 
 class ProfileController extends GetxController {
   PibroRepository pibroRepository =
@@ -340,36 +338,10 @@ class ProfileController extends GetxController {
   }
 
   void _showSuccessDialog() {
-    showAppDialog(
-      Padding(
-        padding: const EdgeInsets.only(top: 20),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            ImageFactory.getImage(AppImages.passwordSuccess).render(
-              height: 65,
-              width: 65,
-            ),
-            Text(
-              AppStrings.changePasswordSuccess.tr,
-              style: Styles.mediumTextStyle(
-                size: 12,
-                color: AppColors.white,
-              ),
-            ),
-            GestureDetector(
-              onTap: Get.back,
-              child: ProfileButton(
-                text: AppStrings.ok.tr,
-                height: 25,
-                width: 80,
-                textColor: AppColors.activeGreen,
-                bgColor: AppColors.white,
-              ),
-            ),
-          ],
-        ),
-      ),
+    showSuccessDialog(
+      title: AppStrings.changePasswordSuccess.tr,
+      message: '',
+      onPressed: _logout,
     );
   }
 

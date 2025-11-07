@@ -1,3 +1,5 @@
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -8,7 +10,9 @@ import 'package:pibro/constants/app_constants.dart';
 import 'package:pibro/constants/storage_keys.dart';
 import 'package:pibro/core/config/view/service_config_screen.dart';
 import 'package:pibro/core/main_screen/view/main_screen.dart';
+import 'package:pibro/core/services/firebase_messaging_service.dart';
 import 'package:pibro/core/splash/splash_screen.dart';
+import 'package:pibro/firebase_options.dart';
 import 'package:pibro/internalization/app_strings.dart';
 import 'package:pibro/navigation/routes.dart';
 import 'package:pibro/utils/app_utils.dart';
@@ -16,10 +20,31 @@ import 'package:pibro/utils/pibro_logger.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize other services first
   await GetStorage.init();
   PibroLogger.init();
   await initializeDateFormatting('en_US', null);
-  runApp(const    MyApp());
+
+  // Initialize Firebase with error handling
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+
+    // Set up background message handler
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
+    // Initialize Firebase Cloud Messaging
+    await FirebaseMessagingService().initialize();
+
+    PibroLogger.logger.i('Firebase initialized successfully');
+  } catch (e) {
+    PibroLogger.logger.e('Failed to initialize Firebase: $e');
+    // Continue app execution even if Firebase fails
+  }
+
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -64,7 +89,7 @@ class MyApp extends StatelessWidget {
           : GetStorage().read(StorageKeys.profileData) != null
               // : decryptData(StorageKeys.profileData) != null
               ? MainScreen()
-              : SplashScreen(),
+              : const SplashScreen(),
     );
   }
 }

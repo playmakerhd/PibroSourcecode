@@ -47,7 +47,7 @@ class QuotePaymentController extends GetxController {
   String _accessToken = '';
   String? lastPaymentReference;
   String? lastPaymentDate;
-  int? lastPaymentAmount;
+  double? lastPaymentAmount;
 
   // Quote context
   late final Map<String, dynamic> ctx;
@@ -194,7 +194,8 @@ class QuotePaymentController extends GetxController {
 
       lastPaymentReference = data?.reference;
       lastPaymentDate = data?.paidAt ?? DateTime.now().toIso8601String();
-      lastPaymentAmount = (data?.amount ?? 0) ~/ 100;
+      // Convert kobo (integer from provider) to NGN with decimals
+      lastPaymentAmount = (data?.amount ?? 0) / 100.0;
 
       if (status != 'success') {
         paymentLoading.value = false;
@@ -206,7 +207,16 @@ class QuotePaymentController extends GetxController {
       }
 
       receiptReq.transactionDate = lastPaymentDate;
-      receiptReq.amount = lastPaymentAmount;
+      // Prefer quote premium for receipt amount (exclude gateway fees).
+      // Fallback to provider-paid amount if premium is missing or zero.
+      if (premium > 0) {
+        // Preserve two decimals (don't round to integer)
+        receiptReq.amount = double.parse(premium.toStringAsFixed(2));
+      } else {
+        receiptReq.amount = lastPaymentAmount;
+        print(
+            '⚠️ RECEIPT: Premium missing; falling back to provider amount for receipt.');
+      }
       receiptReq.systemDate = DateTime.now().toIso8601String();
 
       await _createReceiptAndContinue();

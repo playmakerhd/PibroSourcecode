@@ -139,7 +139,7 @@ class LoginScreen extends StatelessWidget {
                         ],
                       ),
                       GestureDetector(
-                        onTap: () {},
+                        onTap: () => Get.toNamed(AppRoutes.forgotPassword),
                         child: Text(
                           AppStrings.forgotPassword.tr,
                           style: Styles.regularTextStyle(size: 12),

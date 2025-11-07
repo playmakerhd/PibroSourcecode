@@ -23,7 +23,7 @@ class RenewPolicyConfirmationScreen extends StatelessWidget {
           children: [
             CommonHeader(
               title: AppStrings.policySummary.tr,
-              isTransparent: true,
+              isTransparent: false,
             ),
             Padding(
               padding: EdgeInsets.symmetric(
@@ -89,42 +89,114 @@ class RenewPolicyConfirmationScreen extends StatelessWidget {
                     value: formatAmount(
                         double.parse(controller.policyPremiumAmount)),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 60.0),
-                    child: Obx(
-                      () => PolicyButton(
-                        text: AppStrings.makePayment.tr,
-                        onPressed: controller.policyPremiumAmount == '0' ||
-                                controller.paymentLoading.value
-                            ? () {}
-                            : controller.getPaymentToken,
-                        loading: controller.paymentLoading.value,
-                        height: 50,
-                        width: queryWidth(context) * 0.6,
-                        bgColor: controller.policyPremiumAmount == '0'
-                            ? AppColors.tileColor
-                            : AppColors.primaryColor,
+                  // Show gateway charges and total when a payment is required
+                  if (double.parse(controller.policyPremiumAmount) > 0)
+                    Builder(builder: (context) {
+                      final double premium =
+                          double.parse(controller.policyPremiumAmount);
+                      final double usualCharge = premium * 0.015;
+                      final double extraCharge =
+                          (premium > 2500 ? (usualCharge + 100) : usualCharge);
+                      final double appliedCharge =
+                          (extraCharge > 2000 ? 2000 : extraCharge);
+                      final double totalDue = premium + appliedCharge;
+                      return Column(
+                        children: [
+                          DetailRow(
+                            title: 'Charges (NGN):',
+                            value: formatAmount(appliedCharge),
+                          ),
+                          DetailRow(
+                            title: 'Total Payment Due (NGN):',
+                            value: formatAmount(totalDue),
+                          ),
+                        ],
+                      );
+                    }),
+                  // Show Make Payment and Contest buttons when premium due is not zero
+                  if (controller.policyPremiumAmount != '0') ...[
+                    Padding(
+                      padding: const EdgeInsets.only(top: 60.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          Obx(
+                            () => PolicyButton(
+                              text: AppStrings.makePayment.tr,
+                              onPressed: controller.paymentLoading.value
+                                  ? () {}
+                                  : controller.getPaymentToken,
+                              loading: controller.paymentLoading.value,
+                              height: 50,
+                              width: queryWidth(context) * 0.4,
+                              bgColor: AppColors.primaryColor,
+                            ),
+                          ),
+                          PolicyButton(
+                            text: 'Contest Payment',
+                            onPressed: controller.showContestModal,
+                            height: 50,
+                            width: queryWidth(context) * 0.4,
+                            bgColor: AppColors.orange,
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 20.0, bottom: 60.0),
-                    child: Obx(
-                      () => PolicyButton(
-                        text: AppStrings.submitQuoteForApproval.tr,
-                        onPressed: controller.policyPremiumAmount != '0' ||
-                                controller.submitQuoteLoading.value
-                            ? () {}
-                            : controller.submitQuote,
-                        loading: controller.submitQuoteLoading.value,
-                        height: 50,
-                        width: queryWidth(context) * 0.7,
-                        bgColor: controller.policyPremiumAmount != '0'
-                            ? AppColors.tileColor
-                            : AppColors.primaryColor,
+                    Padding(
+                      padding: const EdgeInsets.only(top: 20.0, bottom: 60.0),
+                      child: GestureDetector(
+                        onTap: () {
+                          // TODO: Wire to API later
+                        },
+                        child: Container(
+                          height: 50,
+                          width: queryWidth(context) * 0.7,
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryColor,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Center(
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.print,
+                                  color: AppColors.white,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Print Premium Demand Note',
+                                  style: TextStyle(
+                                    color: AppColors.white,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
+                  ],
+                  // Show Submit Quote button when premium due is zero
+                  if (controller.policyPremiumAmount == '0')
+                    Padding(
+                      padding: const EdgeInsets.only(top: 60.0, bottom: 60.0),
+                      child: Obx(
+                        () => PolicyButton(
+                          text: AppStrings.submitQuoteForApproval.tr,
+                          onPressed: controller.submitQuoteLoading.value
+                              ? () {}
+                              : controller.submitQuote,
+                          loading: controller.submitQuoteLoading.value,
+                          height: 50,
+                          width: queryWidth(context) * 0.7,
+                          bgColor: AppColors.primaryColor,
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),
