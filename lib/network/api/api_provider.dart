@@ -114,6 +114,37 @@ class ApiProvider extends BaseProvider {
     return CustomMessageResponse(responseData);
   }
 
+  // ---------- Lead Management ----------
+  // {baseUrl}/CreateLeadInformation?token={token}
+  Future<CustomMessageResponse> callCreateLeadApi(AuthRequest body) async {
+    final responseData = await makePostCall(
+      Uri.parse('$_baseApiPath${Endpoints.createLead}?token=$_acessToken'),
+      json.encode(body.toCreateLeadJson()),
+      false,
+    );
+    return CustomMessageResponse(responseData);
+  }
+
+  // {baseUrl}/GetLeadInformationByID/{token}?LeadID={LeadID}
+  Future<dynamic> callGetLeadByID(String leadID) async {
+    final Uri endpoint =
+        Uri.parse('$_baseApiPath${Endpoints.getLeadByID}/$_acessToken')
+            .replace(queryParameters: {
+      'LeadID': leadID,
+    });
+    final responseData = await makeGetCall(endpoint, false);
+    return responseData; // Returns LeadInformation JSON
+  }
+
+  // {baseUrl}/ConvertLeadToCustomer?LeadID={LeadID}&token={token}
+  Future<CustomMessageResponse> callConvertLeadToCustomer(String leadID) async {
+    final Uri endpoint = Uri.parse(
+      '$_baseApiPath${Endpoints.convertLeadToCustomer}?LeadID=$leadID&token=$_acessToken',
+    );
+    final responseData = await makePostCall(endpoint, '', false);
+    return CustomMessageResponse(responseData!);
+  }
+
   Future<CustomMessageResponse> callChangePasswordApi(
       ChangePasswordRequest body) async {
     // PlatformUser data = PlatformUser.fromJson(
@@ -194,6 +225,14 @@ class ApiProvider extends BaseProvider {
     final LoginData data =
         LoginData.fromJson(convertToJsonStringQuotes(StorageKeys.loginData));
 
+    // Check if user is a Lead or Customer
+    if (data.isLead && data.customerID != null) {
+      // Fetch Lead information and convert to Customer format
+      final leadData = await callGetLeadByID(data.customerID!);
+      return ProfileResponse(leadData);
+    }
+
+    // Existing Customer flow
     final Uri endpoint = (data.customerID?.isNotEmpty ?? false)
         // {baseUrl}/GetCustomerInformationByID/{token}?CustomerID=...
         ? Uri.parse('$_baseApiPath${Endpoints.profile}/$_acessToken').replace(
@@ -327,6 +366,45 @@ class ApiProvider extends BaseProvider {
         '$_baseApiPath${Endpoints.getCustomerEnquiryById}/$caseId/$_acessToken';
     final resp = await makeGetCall(Uri.parse(endpoint), false);
     return QuoteByIdResponse(resp!);
+  }
+
+  // ---------- Sales Quotation (New Quote Flow) ----------
+  // {baseUrl}/CreateSalesQuotation/{token}
+  Future<CustomMessageResponse> callCreateSalesQuotation(
+      Map<String, dynamic> body) async {
+    final endpoint =
+        '$_baseApiPath${Endpoints.createSalesQuotation}/$_acessToken';
+    final resp =
+        await makePostCall(Uri.parse(endpoint), jsonEncode(body), false);
+    return CustomMessageResponse(resp);
+  }
+
+  // {baseUrl}/GetSalesQuotationsByID/{token}?QuoteID={QuoteID}
+  Future<dynamic> callGetSalesQuotationByID(String quoteID) async {
+    final Uri endpoint = Uri.parse(
+            '$_baseApiPath${Endpoints.getSalesQuotationByID}/$_acessToken')
+        .replace(queryParameters: {
+      'QuoteID': quoteID,
+    });
+    final resp = await makeGetCall(endpoint, false);
+    return resp; // Returns SalesQuotationResponse JSON
+  }
+
+  // {baseUrl}/GetSalesQuotationsByEntityID/{token}?EntityID={EntityID}&PageNum=1&Size=1000
+  Future<List<dynamic>> callGetSalesQuotationsByEntityID({
+    required String entityID,
+    int pageNum = 1,
+    int size = 1000,
+  }) async {
+    final Uri endpoint = Uri.parse(
+            '$_baseApiPath${Endpoints.getSalesQuotationsByEntityID}/$_acessToken')
+        .replace(queryParameters: {
+      'EntityID': entityID,
+      'PageNum': pageNum.toString(),
+      'Size': size.toString(),
+    });
+    final resp = await makeGetCall(endpoint, false);
+    return resp as List<dynamic>; // Returns array of SalesQuotationResponse
   }
 
   // Create Policy (new policy path after Paystack)
@@ -668,6 +746,17 @@ class ApiProvider extends BaseProvider {
         '?CustomerID=$customerID'
         '&PeriodFrom=$periodFrom'
         '&PeriodTo=$periodTo'
+        '&token=$_acessToken';
+
+    final responseData = await makeGetCall(Uri.parse(endpoint), false);
+    return CustomMessageResponse(responseData!);
+  }
+
+  Future<CustomMessageResponse> callViewPremiumDemandNoteReport({
+    required String quoteID,
+  }) async {
+    final endpoint = '$_baseApiPath${Endpoints.viewPremiumDemandNoteReport}'
+        '?QuoteID=$quoteID'
         '&token=$_acessToken';
 
     final responseData = await makeGetCall(Uri.parse(endpoint), false);

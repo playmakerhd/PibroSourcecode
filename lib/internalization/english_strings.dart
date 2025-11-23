@@ -55,6 +55,8 @@ class EnglishStrings {
       AppStrings.changePassword: 'Change Password',
       AppStrings.logout: 'Log Out',
       AppStrings.name: 'Name',
+      AppStrings.firstName: 'First Name',
+      AppStrings.lastName: 'Last Name',
       AppStrings.dob: 'Date of Birth',
       AppStrings.accountType: 'Account Type',
       AppStrings.individual: 'Individual',

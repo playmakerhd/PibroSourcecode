@@ -51,6 +51,8 @@ class AppStrings extends Translations {
   static const String changePassword = 'changePassword';
   static const String logout = 'logout';
   static const String name = 'name';
+  static const String firstName = 'firstName';
+  static const String lastName = 'lastName';
   static const String dob = 'dob';
   static const String accountType = 'accountType';
   static const String individual = 'individual';

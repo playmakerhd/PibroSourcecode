@@ -52,6 +52,9 @@ class RenewPolicyController extends GetxController {
   RxBool contestLoading = false.obs;
   bool isQuoteFlow = false;
 
+  // Quote number for premium demand note
+  String? quoteNumber;
+
   // Contest fields
   final TextEditingController contestSubjectController =
       TextEditingController();
@@ -215,12 +218,12 @@ class RenewPolicyController extends GetxController {
                 color: AppColors.primaryColor,
               ),
             ),
-            const SizedBox(height: 15),
+            const SizedBox(height: 5),
             CustomInput(
               controller: contestSubjectController,
               hint: 'Subject',
               label: 'Subject',
-              height: 45,
+              height: 35,
               hasFillColor: true,
             ),
             const SizedBox(height: 8),
@@ -231,7 +234,7 @@ class RenewPolicyController extends GetxController {
               maxLines: 3,
               height: 75,
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 5),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -325,7 +328,7 @@ class RenewPolicyController extends GetxController {
       "SupportApproved": true,
       "SupportApprovedBy": "Admin",
       "SupportAssigned": true,
-      "SupportType": "Contest",
+      "SupportType": "Contest Policy Renewal",
       "SupportStatus": "Pending",
       "ContactName": loginData.customerID ?? "",
       "ContactPhone": loginData.phone ?? "",
@@ -390,7 +393,10 @@ class RenewPolicyController extends GetxController {
       // 5) Pull fresh policy so the confirmation shows updated totals
       await _refreshPolicyFromServer();
 
-      // 6) Navigate to confirmation
+      // 6) Create sales quotation for premium demand note
+      await _createSalesQuotationForRenewal();
+
+      // 7) Navigate to confirmation
       Get.toNamed(AppRoutes.renewPolicyConfirmation);
     } catch (e) {
       showSnackbarMessage(
@@ -1382,6 +1388,94 @@ class RenewPolicyController extends GetxController {
     try {
       return jsonDecode(s);
     } catch (_) {
+      return null;
+    }
+  }
+
+  /// Create sales quotation for renewal to enable premium demand note
+  Future<void> _createSalesQuotationForRenewal() async {
+    try {
+      print('🔍 RENEWAL: Creating sales quotation for premium demand note...');
+
+      // Prepare items in the format expected by createSalesQuotation
+      final items = [...policyItems, ...newPolicyItems].map((item) {
+        return {
+          'description': item.itemsDescription ?? '',
+          'ItemsDescription': item.itemsDescription ?? '',
+          'Value': item.sumInsured ?? 0.0,
+          'value': item.sumInsured ?? 0.0,
+          'location': item.itemLocation ?? '',
+          'ItemLocation': item.itemLocation ?? '',
+          'ScreenShotURL': item.policyItems ?? '',
+          'screenShotURL': item.policyItems ?? '',
+        };
+      }).toList();
+
+      final payload = ApiUtils.createSalesQuotation(
+        businessClassID: policy.value?.businessClassID ?? '',
+        riskTypeID: policy.value?.riskTypeID ?? '',
+        startDate: startDateController.text,
+        endDate: endDateController.text,
+        renewalDate: renewalDateController.text,
+        itemsToInsure: items,
+      );
+
+      final createRes = await pibroRepository.createSalesQuotation(payload);
+
+      if (createRes.messageResponse.status == AppConstants.responseSuccess) {
+        quoteNumber = createRes.messageResponse.message;
+        print('✅ RENEWAL: Sales quotation created: $quoteNumber');
+      } else {
+        print(
+            '❌ RENEWAL: Failed to create sales quotation: ${createRes.messageResponse.message}');
+      }
+    } catch (e) {
+      print('❌ RENEWAL: Error creating sales quotation: $e');
+      // Non-fatal: premium demand note just won't be available
+    }
+  }
+
+  /// Fetches premium demand note PDF bytes for the renewal quote.
+  /// Returns null on error.
+  Future<Uint8List?> fetchPremiumDemandNoteBytes() async {
+    try {
+      if (quoteNumber == null || quoteNumber!.isEmpty) {
+        print('❌ RENEWAL_DEMAND_NOTE: No quote number available');
+        showSnackbarMessage(
+          message: 'No quote number available for premium demand note',
+          isSuccess: false,
+        );
+        return null;
+      }
+
+      print('🔍 RENEWAL_DEMAND_NOTE: Fetching for Quote ID: $quoteNumber');
+
+      final resp = await pibroRepository.viewPremiumDemandNoteReport(
+        quoteID: quoteNumber!,
+      );
+
+      final status = resp.messageResponse.status;
+      final msg = resp.messageResponse.message; // Base64 PDF
+
+      if (status.toLowerCase() != 'success' || msg.isEmpty) {
+        print('❌ RENEWAL_DEMAND_NOTE: API returned failure or empty message');
+        return null;
+      }
+
+      // Decode base64 to bytes
+      final cleanedBase64 =
+          msg.startsWith('data:') ? msg.substring(msg.indexOf(',') + 1) : msg;
+      final bytes = base64Decode(cleanedBase64);
+
+      print(
+          '✅ RENEWAL_DEMAND_NOTE: Successfully fetched ${bytes.length} bytes');
+      return Uint8List.fromList(bytes);
+    } catch (e) {
+      print('❌ RENEWAL_DEMAND_NOTE: Error: $e');
+      showSnackbarMessage(
+        message: 'Error loading premium demand note: $e',
+        isSuccess: false,
+      );
       return null;
     }
   }

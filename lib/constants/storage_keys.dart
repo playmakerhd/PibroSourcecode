@@ -10,4 +10,6 @@ class StorageKeys {
   static const String lastEnquiry = 'lastEnquiry';
   static const String preferredInsurer = 'preferredInsurer';
   static const String userEmail = 'userEmail';
+  static const String entityType = 'entityType'; // 'LEAD' or 'CUSTOMER'
+  static const String lastQuote = 'lastQuote'; // Store last created quote data
 }

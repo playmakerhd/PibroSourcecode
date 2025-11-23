@@ -48,6 +48,7 @@ class ProfileController extends GetxController {
   RxBool obscureNewPassword = true.obs;
   RxBool obscureConfirmPassword = true.obs;
   RxBool isPasswordChangeLoading = false.obs;
+  
 
   get profileLoading => null;
 
@@ -96,6 +97,11 @@ class ProfileController extends GetxController {
     // GetStorage().erase();
     Get.deleteAll();
     Get.offAllNamed(AppRoutes.login);
+  }
+
+  // Public method to perform logout (called after config change)
+  void performLogout() {
+    _logout();
   }
 
   Future<void> _changePassword() async {

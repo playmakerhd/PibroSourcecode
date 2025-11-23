@@ -9,6 +9,7 @@ import 'package:pibro/network/api/api_provider.dart';
 import 'package:pibro/network/models/response/quotes_response.dart';
 import 'package:pibro/network/repository/pibro_repository.dart';
 import 'package:pibro/utils/api_utils.dart';
+import 'package:pibro/utils/app_utils.dart';
 import 'package:pibro/utils/view_utils.dart';
 
 class QuoteController extends GetxController {
@@ -21,20 +22,91 @@ class QuoteController extends GetxController {
   Future<void> getQuotes({String? status}) async {
     quoteLoading.value = true;
     try {
-      final response = await pibroRepository.getQuotes();
-      quotes.value = response.quotes.isEmpty
+      // Get entity ID from storage (works for both Lead and Customer)
+      final loginData = decryptData(StorageKeys.loginData);
+      String? entityID;
+
+      if (loginData != null) {
+        final data = jsonDecode(loginData);
+        entityID = data['customerID'] as String?;
+      }
+
+      if (entityID == null || entityID.isEmpty) {
+        showSnackbarMessage(message: 'User not logged in', isSuccess: false);
+        quoteLoading.value = false;
+        return;
+      }
+
+      // Use new Sales Quotation API
+      final response = await pibroRepository.getSalesQuotationsByEntityID(
+        entityID: entityID,
+        pageNum: 1,
+        size: 1000,
+      );
+
+      // Convert Sales Quotation response to QuoteInfo format for backward compatibility
+      quotes.value = response.isEmpty
           ? []
-          : response.quotes
-              .where((quote) =>
-                  quote.supportType == 'Quote' ||
-                  quote.supportType == 'Policy Renewal')
+          : response
+              .map((item) => _convertSalesQuotationToQuoteInfo(item))
               .toList();
+
       quoteLoading.value = false;
     } catch (e) {
       quoteLoading.value = false;
       showSnackbarMessage(
           message: AppStrings.genericErrorMessage.tr, isSuccess: false);
     }
+  }
+
+  // Convert Sales Quotation response to QuoteInfo format
+  QuoteInfo _convertSalesQuotationToQuoteInfo(Map<String, dynamic> salesQuote) {
+    // Extract values with null safety
+    final invoiceNumber = salesQuote['InvoiceNumber'] ?? '';
+    final sumInsured = salesQuote['SumInsured'] ?? 0.0;
+    final premiumDue = salesQuote['PremiumDue'] ?? 0.0;
+    final invoiceDate = salesQuote['InvoiceDate'] ?? '';
+    final riskTypeID = salesQuote['RiskTypeID'] ?? '';
+    final noteStatus = salesQuote['NoteStatus'] ?? 'Pending';
+    final itemsToInsure = salesQuote['ItemsToInsure'] as List? ?? [];
+
+    // Convert items to RequestDetails format
+    final requestDetails = itemsToInsure.map((item) {
+      final sumInsuredValue = item['SumInsured'];
+      final valueDouble =
+          sumInsuredValue is num ? sumInsuredValue.toDouble() : 0.0;
+
+      return RequestDetails(
+        caseID: invoiceNumber,
+        subject: item['ItemsDescription'] ?? '',
+        message: item['ItemsDescription'] ?? '',
+        screenShotURL: item['PolicyItems'] ?? '',
+        caseIDDetail: 0,
+        value: valueDouble,
+      );
+    }).toList();
+
+    return QuoteInfo(
+      caseId: invoiceNumber, // Use InvoiceNumber as caseId (e.g., QN/11)
+      customerId: salesQuote['CustomerID'] ?? '',
+      productId: riskTypeID,
+      supportManager: salesQuote['VendorID'] ?? '',
+      supportAssignedTo: salesQuote['VendorID'] ?? '',
+      supportRequestMethod: salesQuote['BusinessClassID'] ?? '',
+      supportStatus: noteStatus,
+      supportType: 'Quote',
+      supportDate: invoiceDate,
+      supportKeywords:
+          'Quote, ${salesQuote['BusinessClassID'] ?? ''}, $riskTypeID',
+      supportDescription: salesQuote['PremiumDescription'] ?? '',
+      supportScreenShotURL: sumInsured.toString(), // Store sum insured here
+      supportResolution: premiumDue.toString(), // Store premium here
+      supportEnquiryDate: salesQuote['StartDate'] ?? '',
+      supportEnquiryLapseDate: salesQuote['EndDate'] ?? '',
+      requestDetails: requestDetails,
+      quoteRequest: true,
+      supportApproved: salesQuote['QuotationCleared'] ?? false,
+    );
   }
 
   void navigateToQuoteDetails(QuoteInfo data) {
@@ -167,7 +239,7 @@ class QuoteController extends GetxController {
       'premium': premium,
       'sumInsured': sumInsured,
       'riskName': q.productId,
-      'businessClassName': (getQuoteClass(q) ?? q.supportType ?? ''),
+      'businessClassName': getQuoteClass(q),
       // canonical BCID for later create-policy flows
       'businessClassID': businessClassId,
       'startDate': startStr,

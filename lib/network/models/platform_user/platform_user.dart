@@ -67,7 +67,66 @@ class PlatformUser {
   late List<CustomerContact>? customerContacts;
   // late List<CustomerTransaction>? customerTransactions;
 
+  // Helper to check if this user is a Lead
+  bool get isLead => accountStatus?.toUpperCase() == 'LEAD';
+
+  // Get display name based on user type
+  String get displayName {
+    if (isLead) {
+      // For leads, combine first and last name
+      return '${customerFirstName ?? ''} ${customerLastName ?? ''}'.trim();
+    } else {
+      // For customers, use customerName or fallback to full name
+      return customerName ?? customerFullName ?? '';
+    }
+  }
+
   factory PlatformUser.fromJson(dynamic json) {
+    // Check if this is Lead data (has LeadID) and convert to Customer format
+    final bool isLead = json['LeadID'] != null;
+
+    if (isLead) {
+      // Convert Lead data to Customer format
+      return PlatformUser(
+        companyID: json['CompanyID'],
+        divisionID: json["DivisionID"],
+        departmentID: json["DepartmentID"],
+        customerID: json["LeadID"], // Map LeadID to CustomerID
+        customerTypeID: json["LeadTypeID"],
+        accountStatus: 'Lead', // Indicate this is a lead
+        customerSalutation: json["LeadSalutation"],
+        customerName: json["LeadFullName"] ??
+            '${json["LeadFirstName"] ?? ''} ${json["LeadLastName"] ?? ''}'
+                .trim(),
+        customerFirstName: json["LeadFirstName"],
+        customerLastName: json["LeadLastName"],
+        customerFullName: json["LeadFullName"] ??
+            '${json["LeadFirstName"] ?? ''} ${json["LeadLastName"] ?? ''}'
+                .trim(),
+        customerAddress1: json["LeadAddress1"] ?? '',
+        customerAddress2: json["LeadAddress2"],
+        customerAddress3: json["LeadAddress3"],
+        customerCity: json["LeadCity"] ?? '',
+        customerState: json["LeadState"] ?? '',
+        customerZip: json["LeadZip"],
+        customerCountry: json["LeadCountry"] ?? 'Nigeria',
+        customerPhone: json["LeadPhone"] ?? '',
+        customerEmail: json["LeadEmail"] ?? '',
+        customerDateOfBirth: json["LeadDateOfBirth"] ?? '',
+        termsID: null,
+        termsStart: null,
+        taxGroupID: null,
+        priceMatrix: null,
+        priceMatrixCurrent: null,
+        statementCycleCode: null,
+        customerSpecialInstructions: null,
+        customerRegionID: json["LeadRegionID"],
+        customerPassword: json["LeadPassword"],
+        customerContacts: [],
+      );
+    }
+
+    // Regular Customer data
     return PlatformUser(
       companyID: json['CompanyID'],
       divisionID: json["DivisionID"],

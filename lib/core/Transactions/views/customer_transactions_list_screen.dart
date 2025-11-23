@@ -215,6 +215,95 @@ class _DateFilterState extends State<_DateFilter> {
   DateTime? from;
   DateTime? to;
 
+  // Switch between 1, 2, 3, or 4 to try different UI options
+  final int _selectedOption = 3;
+
+  @override
+  Widget build(BuildContext context) {
+    switch (_selectedOption) {
+      case 1:
+        return _Option1GradientCards(
+          from: from,
+          to: to,
+          onFromChanged: (date) {
+            setState(() => from = date);
+            widget.onChanged(from, to);
+          },
+          onToChanged: (date) {
+            setState(() => to = date);
+            widget.onChanged(from, to);
+          },
+        );
+      case 2:
+        return _Option2ModernChips(
+          from: from,
+          to: to,
+          onFromChanged: (date) {
+            setState(() => from = date);
+            widget.onChanged(from, to);
+          },
+          onToChanged: (date) {
+            setState(() => to = date);
+            widget.onChanged(from, to);
+          },
+        );
+      case 3:
+        return _Option3NeumorphicStyle(
+          from: from,
+          to: to,
+          onFromChanged: (date) {
+            setState(() => from = date);
+            widget.onChanged(from, to);
+          },
+          onToChanged: (date) {
+            setState(() => to = date);
+            widget.onChanged(from, to);
+          },
+        );
+      case 4:
+        return _Option4MinimalBorders(
+          from: from,
+          to: to,
+          onFromChanged: (date) {
+            setState(() => from = date);
+            widget.onChanged(from, to);
+          },
+          onToChanged: (date) {
+            setState(() => to = date);
+            widget.onChanged(from, to);
+          },
+        );
+      default:
+        return _Option1GradientCards(
+          from: from,
+          to: to,
+          onFromChanged: (date) {
+            setState(() => from = date);
+            widget.onChanged(from, to);
+          },
+          onToChanged: (date) {
+            setState(() => to = date);
+            widget.onChanged(from, to);
+          },
+        );
+    }
+  }
+}
+
+/// OPTION 1: Gradient Cards with Elevated Shadow
+class _Option1GradientCards extends StatelessWidget {
+  final DateTime? from;
+  final DateTime? to;
+  final Function(DateTime?) onFromChanged;
+  final Function(DateTime?) onToChanged;
+
+  const _Option1GradientCards({
+    required this.from,
+    required this.to,
+    required this.onFromChanged,
+    required this.onToChanged,
+  });
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -223,39 +312,60 @@ class _DateFilterState extends State<_DateFilter> {
       child: Row(
         children: [
           Expanded(
-            child: InkWell(
+            child: _GradientDateCard(
+              label: 'From',
+              date: from,
               onTap: () async {
                 final picked = await showDatePicker(
                   context: context,
                   firstDate: DateTime(2000),
                   lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
                   initialDate: from ?? DateTime.now(),
+                  builder: (context, child) {
+                    return Theme(
+                      data: Theme.of(context).copyWith(
+                        colorScheme: ColorScheme.light(
+                          primary: AppColors.primaryColor,
+                          onPrimary: Colors.white,
+                          surface: Colors.white,
+                          onSurface: AppColors.primaryColor,
+                        ),
+                      ),
+                      child: child!,
+                    );
+                  },
                 );
-                setState(() => from = picked);
-                widget.onChanged(from, to);
+                onFromChanged(picked);
               },
-              child: _DateBox(
-                  label: 'From',
-                  value:
-                      from == null ? '' : formatDate(from!.toIso8601String())),
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 12),
           Expanded(
-            child: InkWell(
+            child: _GradientDateCard(
+              label: 'To',
+              date: to,
               onTap: () async {
                 final picked = await showDatePicker(
                   context: context,
                   firstDate: DateTime(2000),
                   lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
                   initialDate: to ?? DateTime.now(),
+                  builder: (context, child) {
+                    return Theme(
+                      data: Theme.of(context).copyWith(
+                        colorScheme: ColorScheme.light(
+                          primary: AppColors.primaryColor,
+                          onPrimary: Colors.white,
+                          surface: Colors.white,
+                          onSurface: AppColors.primaryColor,
+                        ),
+                      ),
+                      child: child!,
+                    );
+                  },
                 );
-                setState(() => to = picked);
-                widget.onChanged(from, to);
+                onToChanged(picked);
               },
-              child: _DateBox(
-                  label: 'To',
-                  value: to == null ? '' : formatDate(to!.toIso8601String())),
             ),
           ),
         ],
@@ -264,32 +374,592 @@ class _DateFilterState extends State<_DateFilter> {
   }
 }
 
-class _DateBox extends StatelessWidget {
+class _GradientDateCard extends StatelessWidget {
   final String label;
-  final String value;
-  const _DateBox({required this.label, required this.value});
+  final DateTime? date;
+  final VoidCallback onTap;
+
+  const _GradientDateCard({
+    required this.label,
+    required this.date,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return ItemRowContainer(
-      noHeight: true,
-      noHorizontalMargin: true,
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Row(
-          children: [
-            Expanded(
-              child: TitleValueRow(
-                  title: label, value: value.isEmpty ? '-' : value),
-            ),
-            const SizedBox(width: 8),
-            // Calendar icon to indicate tappable date picker
-            Icon(
-              Icons.calendar_today,
-              size: 18,
-              color: AppColors.primaryColor,
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 70,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              AppColors.primaryColor,
+              AppColors.primaryColor.withOpacity(0.8),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primaryColor.withOpacity(0.3),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
             ),
           ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    label,
+                    style: Styles.mediumTextStyle(
+                      size: 12,
+                      color: Colors.white.withOpacity(0.9),
+                    ),
+                  ),
+                  Icon(
+                    Icons.calendar_today_rounded,
+                    size: 16,
+                    color: Colors.white.withOpacity(0.9),
+                  ),
+                ],
+              ),
+              Text(
+                date == null
+                    ? 'Select date'
+                    : formatDate(date!.toIso8601String()),
+                style: Styles.semiBoldTextStyle(
+                  size: 14,
+                  color: Colors.white,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// OPTION 2: Modern Chips Style with Icons
+class _Option2ModernChips extends StatelessWidget {
+  final DateTime? from;
+  final DateTime? to;
+  final Function(DateTime?) onFromChanged;
+  final Function(DateTime?) onToChanged;
+
+  const _Option2ModernChips({
+    required this.from,
+    required this.to,
+    required this.onFromChanged,
+    required this.onToChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.symmetric(
+          horizontal: queryWidth(context) * 0.05, vertical: 10),
+      child: Row(
+        children: [
+          Expanded(
+            child: _ChipDatePicker(
+              label: 'From',
+              date: from,
+              icon: Icons.event_available,
+              onTap: () async {
+                final picked = await showDatePicker(
+                  context: context,
+                  firstDate: DateTime(2000),
+                  lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
+                  initialDate: from ?? DateTime.now(),
+                  builder: (context, child) {
+                    return Theme(
+                      data: Theme.of(context).copyWith(
+                        colorScheme: ColorScheme.light(
+                          primary: AppColors.primaryColor,
+                          onPrimary: Colors.white,
+                          surface: Colors.white,
+                          onSurface: AppColors.primaryColor,
+                        ),
+                      ),
+                      child: child!,
+                    );
+                  },
+                );
+                onFromChanged(picked);
+              },
+            ),
+          ),
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 8),
+            child: Icon(
+              Icons.arrow_forward,
+              color: AppColors.primaryColor,
+              size: 20,
+            ),
+          ),
+          Expanded(
+            child: _ChipDatePicker(
+              label: 'To',
+              date: to,
+              icon: Icons.event_busy,
+              onTap: () async {
+                final picked = await showDatePicker(
+                  context: context,
+                  firstDate: DateTime(2000),
+                  lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
+                  initialDate: to ?? DateTime.now(),
+                  builder: (context, child) {
+                    return Theme(
+                      data: Theme.of(context).copyWith(
+                        colorScheme: ColorScheme.light(
+                          primary: AppColors.primaryColor,
+                          onPrimary: Colors.white,
+                          surface: Colors.white,
+                          onSurface: AppColors.primaryColor,
+                        ),
+                      ),
+                      child: child!,
+                    );
+                  },
+                );
+                onToChanged(picked);
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ChipDatePicker extends StatelessWidget {
+  final String label;
+  final DateTime? date;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _ChipDatePicker({
+    required this.label,
+    required this.date,
+    required this.icon,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 65,
+        decoration: BoxDecoration(
+          color: date != null
+              ? AppColors.primaryColor.withOpacity(0.08)
+              : Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: date != null
+                ? AppColors.primaryColor.withOpacity(0.3)
+                : Colors.grey.shade300,
+            width: 1.5,
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: date != null
+                          ? AppColors.primaryColor
+                          : Colors.grey.shade400,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Icon(
+                      icon,
+                      size: 14,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    label,
+                    style: Styles.mediumTextStyle(
+                      size: 11,
+                      color: AppColors.hintColor,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                date == null ? 'Select' : formatDate(date!.toIso8601String()),
+                style: Styles.semiBoldTextStyle(
+                  size: 13,
+                  color: date != null
+                      ? AppColors.primaryColor
+                      : Colors.grey.shade600,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// OPTION 3: Neumorphic/Soft UI Style
+class _Option3NeumorphicStyle extends StatelessWidget {
+  final DateTime? from;
+  final DateTime? to;
+  final Function(DateTime?) onFromChanged;
+  final Function(DateTime?) onToChanged;
+
+  const _Option3NeumorphicStyle({
+    required this.from,
+    required this.to,
+    required this.onFromChanged,
+    required this.onToChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.symmetric(
+          horizontal: queryWidth(context) * 0.05, vertical: 10),
+      child: Row(
+        children: [
+          Expanded(
+            child: _NeumorphicDateBox(
+              label: 'From',
+              date: from,
+              onTap: () async {
+                final picked = await showDatePicker(
+                  context: context,
+                  firstDate: DateTime(2000),
+                  lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
+                  initialDate: from ?? DateTime.now(),
+                  builder: (context, child) {
+                    return Theme(
+                      data: Theme.of(context).copyWith(
+                        colorScheme: ColorScheme.light(
+                          primary: AppColors.primaryColor,
+                          onPrimary: Colors.white,
+                          surface: Colors.white,
+                          onSurface: AppColors.primaryColor,
+                        ),
+                      ),
+                      child: child!,
+                    );
+                  },
+                );
+                onFromChanged(picked);
+              },
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _NeumorphicDateBox(
+              label: 'To',
+              date: to,
+              onTap: () async {
+                final picked = await showDatePicker(
+                  context: context,
+                  firstDate: DateTime(2000),
+                  lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
+                  initialDate: to ?? DateTime.now(),
+                  builder: (context, child) {
+                    return Theme(
+                      data: Theme.of(context).copyWith(
+                        colorScheme: ColorScheme.light(
+                          primary: AppColors.primaryColor,
+                          onPrimary: Colors.white,
+                          surface: Colors.white,
+                          onSurface: AppColors.primaryColor,
+                        ),
+                      ),
+                      child: child!,
+                    );
+                  },
+                );
+                onToChanged(picked);
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NeumorphicDateBox extends StatelessWidget {
+  final String label;
+  final DateTime? date;
+  final VoidCallback onTap;
+
+  const _NeumorphicDateBox({
+    required this.label,
+    required this.date,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 75,
+        decoration: BoxDecoration(
+          color: Colors.grey.shade50,
+          borderRadius: BorderRadius.circular(15),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.white,
+              offset: const Offset(-4, -4),
+              blurRadius: 8,
+              spreadRadius: 1,
+            ),
+            BoxShadow(
+              color: Colors.grey.shade300,
+              offset: const Offset(4, 4),
+              blurRadius: 8,
+              spreadRadius: 1,
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(14.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    label.toUpperCase(),
+                    style: Styles.mediumTextStyle(
+                      size: 10,
+                      color: AppColors.hintColor,
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: date != null
+                          ? AppColors.primaryColor.withOpacity(0.1)
+                          : Colors.grey.shade200,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.shade400.withOpacity(0.5),
+                          offset: const Offset(2, 2),
+                          blurRadius: 4,
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      Icons.calendar_month,
+                      size: 16,
+                      color: date != null
+                          ? AppColors.primaryColor
+                          : Colors.grey.shade500,
+                    ),
+                  ),
+                ],
+              ),
+              Text(
+                date == null
+                    ? 'Tap to select'
+                    : formatDate(date!.toIso8601String()),
+                style: Styles.semiBoldTextStyle(
+                  size: 13,
+                  color: AppColors.primaryColor,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// OPTION 4: Minimal with Bottom Border Accent
+class _Option4MinimalBorders extends StatelessWidget {
+  final DateTime? from;
+  final DateTime? to;
+  final Function(DateTime?) onFromChanged;
+  final Function(DateTime?) onToChanged;
+
+  const _Option4MinimalBorders({
+    required this.from,
+    required this.to,
+    required this.onFromChanged,
+    required this.onToChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.symmetric(
+          horizontal: queryWidth(context) * 0.05, vertical: 10),
+      child: Row(
+        children: [
+          Expanded(
+            child: _MinimalDateField(
+              label: 'From',
+              date: from,
+              onTap: () async {
+                final picked = await showDatePicker(
+                  context: context,
+                  firstDate: DateTime(2000),
+                  lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
+                  initialDate: from ?? DateTime.now(),
+                  builder: (context, child) {
+                    return Theme(
+                      data: Theme.of(context).copyWith(
+                        colorScheme: ColorScheme.light(
+                          primary: AppColors.primaryColor,
+                          onPrimary: Colors.white,
+                          surface: Colors.white,
+                          onSurface: AppColors.primaryColor,
+                        ),
+                      ),
+                      child: child!,
+                    );
+                  },
+                );
+                onFromChanged(picked);
+              },
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: _MinimalDateField(
+              label: 'To',
+              date: to,
+              onTap: () async {
+                final picked = await showDatePicker(
+                  context: context,
+                  firstDate: DateTime(2000),
+                  lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
+                  initialDate: to ?? DateTime.now(),
+                  builder: (context, child) {
+                    return Theme(
+                      data: Theme.of(context).copyWith(
+                        colorScheme: ColorScheme.light(
+                          primary: AppColors.primaryColor,
+                          onPrimary: Colors.white,
+                          surface: Colors.white,
+                          onSurface: AppColors.primaryColor,
+                        ),
+                      ),
+                      child: child!,
+                    );
+                  },
+                );
+                onToChanged(picked);
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MinimalDateField extends StatelessWidget {
+  final String label;
+  final DateTime? date;
+  final VoidCallback onTap;
+
+  const _MinimalDateField({
+    required this.label,
+    required this.date,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 60,
+        decoration: BoxDecoration(
+          color: Colors.transparent,
+          border: Border(
+            bottom: BorderSide(
+              color:
+                  date != null ? AppColors.primaryColor : AppColors.inputGrey,
+              width: date != null ? 2.5 : 1.5,
+            ),
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    label,
+                    style: Styles.regularTextStyle(
+                      size: 12,
+                      color: date != null
+                          ? AppColors.primaryColor
+                          : AppColors.hintColor,
+                    ),
+                  ),
+                  Icon(
+                    Icons.date_range,
+                    size: 18,
+                    color: date != null
+                        ? AppColors.primaryColor
+                        : AppColors.hintColor,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                date == null
+                    ? 'Select date'
+                    : formatDate(date!.toIso8601String()),
+                style: Styles.semiBoldTextStyle(
+                  size: 15,
+                  color: date != null
+                      ? AppColors.primaryColor
+                      : AppColors.hintColor,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
         ),
       ),
     );

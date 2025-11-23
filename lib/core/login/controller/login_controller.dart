@@ -48,12 +48,20 @@ class LoginController extends GetxController {
           showSnackbarMessage(
               message: response.messageResponse.message, isSuccess: false);
         } else {
+          // Extract entity type from login response message
+          final entityType = response.messageResponse.message
+              .toUpperCase(); // "LEAD" or "CUSTOMER"
+
           LoginData data = LoginData(
             customerID: otherOption.value ? '' : nameController.text,
             email: otherOption.value ? emailController.text : '',
             phone: otherOption.value ? phoneController.text : '',
+            entityType: entityType,
           );
           persistLoginData(data: data, remember: isRemember.value);
+
+          // Store entity type separately
+          GetStorage().write(StorageKeys.entityType, entityType);
 
           // Also persist the email separately for payment flow (same as signup)
           String emailToStore = otherOption.value ? emailController.text : '';

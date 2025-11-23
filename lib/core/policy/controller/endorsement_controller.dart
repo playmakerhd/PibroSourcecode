@@ -5,8 +5,6 @@ import 'package:get/get.dart';
 import 'package:pibro/constants/app_colors.dart';
 import 'package:pibro/constants/app_styles.dart';
 import 'package:pibro/constants/app_constants.dart';
-import 'package:pibro/core/login/model/login_data.dart';
-import 'package:pibro/constants/storage_keys.dart';
 import 'package:pibro/core/policy/views/payment_screen.dart';
 import 'package:pibro/network/models/request/create_receipt_request.dart';
 import 'package:pibro/network/models/response/customer_policy_response.dart';
@@ -117,6 +115,9 @@ class EndorsementController extends GetxController {
   // Additional premium returned by endorse API
   RxDouble additionalPremium = 0.0.obs;
   RxBool sendToBrokerLoading = false.obs;
+
+  // Quote number for premium demand note
+  String? quoteNumber;
 
   // Persist for confirmation
   String? lastPaymentReference;
@@ -543,6 +544,9 @@ class EndorsementController extends GetxController {
       final addPrem = double.tryParse(resp.messageResponse.message) ?? 0.0;
       additionalPremium.value = addPrem;
 
+      // Create sales quotation for premium demand note
+      await _createSalesQuotationForEndorsement(allItems);
+
       // Go to summary
       Get.toNamed('/endorse-summary', arguments: {
         'policy': policy.value,
@@ -699,21 +703,24 @@ class EndorsementController extends GetxController {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            SizedBox(
+              height: 10,
+            ),
             Text(
-              'Contest Endorsement',
+              'Contest Payment',
               style: Styles.semiBoldTextStyle(
                 size: 16,
                 color: AppColors.primaryColor,
               ),
             ),
-            const SizedBox(height: 15),
+            const SizedBox(height: 5),
             CustomInput(
               controller: contestSubjectController,
               hint: 'Subject',
               label: 'Subject',
-              height: 45,
+              height: 35,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             CustomInput(
               controller: contestMessageController,
               hint: 'Message',
@@ -721,7 +728,7 @@ class EndorsementController extends GetxController {
               maxLines: 3,
               height: 75,
             ),
-            const SizedBox(height: 15),
+            const SizedBox(height: 5),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -730,7 +737,7 @@ class EndorsementController extends GetxController {
                   onPressed: () => Get.back(),
                   width: 80,
                   height: 35,
-                  bgColor: AppColors.tileColor,
+                  bgColor: AppColors.primaryColor,
                 ),
                 Obx(
                   () => PolicyButton(
@@ -739,6 +746,7 @@ class EndorsementController extends GetxController {
                     loading: contestLoading.value,
                     width: 80,
                     height: 35,
+                    bgColor: AppColors.primaryColor,
                   ),
                 ),
               ],
@@ -820,5 +828,97 @@ class EndorsementController extends GetxController {
     final s = e.toString();
     final i = s.indexOf('Exception:');
     return i >= 0 ? s.substring(i + 10).trim() : s;
+  }
+
+  /// Create sales quotation for endorsement to enable premium demand note
+  Future<void> _createSalesQuotationForEndorsement(
+      List<ItemToInsure> allItems) async {
+    try {
+      print(
+          '🔍 ENDORSEMENT: Creating sales quotation for premium demand note...');
+
+      // Prepare items in the format expected by createSalesQuotation
+      final items = allItems.map((item) {
+        return {
+          'description': item.itemsDescription ?? '',
+          'ItemsDescription': item.itemsDescription ?? '',
+          'Value': item.sumInsured ?? 0.0,
+          'value': item.sumInsured ?? 0.0,
+          'location': item.itemLocation ?? '',
+          'ItemLocation': item.itemLocation ?? '',
+          'ScreenShotURL': item.policyItems ?? '',
+          'screenShotURL': item.policyItems ?? '',
+        };
+      }).toList();
+
+      final payload = ApiUtils.createSalesQuotation(
+        businessClassID: policy.value?.businessClassID ?? '',
+        riskTypeID: policy.value?.riskTypeID ?? '',
+        startDate: startDate.value?.toIso8601String() ?? '',
+        endDate: endDate.value?.toIso8601String() ?? '',
+        renewalDate:
+            endDate.value?.add(const Duration(days: 1)).toIso8601String() ?? '',
+        itemsToInsure: items,
+      );
+
+      final createRes = await repo.createSalesQuotation(payload);
+
+      if (createRes.messageResponse.status == AppConstants.responseSuccess) {
+        quoteNumber = createRes.messageResponse.message;
+        print('✅ ENDORSEMENT: Sales quotation created: $quoteNumber');
+      } else {
+        print(
+            '❌ ENDORSEMENT: Failed to create sales quotation: ${createRes.messageResponse.message}');
+      }
+    } catch (e) {
+      print('❌ ENDORSEMENT: Error creating sales quotation: $e');
+      // Non-fatal: premium demand note just won't be available
+    }
+  }
+
+  /// Fetches premium demand note PDF bytes for the endorsement quote.
+  /// Returns null on error.
+  Future<Uint8List?> fetchPremiumDemandNoteBytes() async {
+    try {
+      if (quoteNumber == null || quoteNumber!.isEmpty) {
+        print('❌ ENDORSEMENT_DEMAND_NOTE: No quote number available');
+        showSnackbarMessage(
+          message: 'No quote number available for premium demand note',
+          isSuccess: false,
+        );
+        return null;
+      }
+
+      print('🔍 ENDORSEMENT_DEMAND_NOTE: Fetching for Quote ID: $quoteNumber');
+
+      final resp = await repo.viewPremiumDemandNoteReport(
+        quoteID: quoteNumber!,
+      );
+
+      final status = resp.messageResponse.status;
+      final msg = resp.messageResponse.message; // Base64 PDF
+
+      if (status.toLowerCase() != 'success' || msg.isEmpty) {
+        print(
+            '❌ ENDORSEMENT_DEMAND_NOTE: API returned failure or empty message');
+        return null;
+      }
+
+      // Decode base64 to bytes
+      final cleanedBase64 =
+          msg.startsWith('data:') ? msg.substring(msg.indexOf(',') + 1) : msg;
+      final bytes = base64Decode(cleanedBase64);
+
+      print(
+          '✅ ENDORSEMENT_DEMAND_NOTE: Successfully fetched ${bytes.length} bytes');
+      return Uint8List.fromList(bytes);
+    } catch (e) {
+      print('❌ ENDORSEMENT_DEMAND_NOTE: Error: $e');
+      showSnackbarMessage(
+        message: 'Error loading premium demand note: $e',
+        isSuccess: false,
+      );
+      return null;
+    }
   }
 }

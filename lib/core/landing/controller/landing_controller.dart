@@ -40,6 +40,6 @@ class LandingController extends GetxController {
         companyInfo.value!.companyName!.isNotEmpty) {
       return 'WELCOME TO\n${companyInfo.value!.companyName}\nSELF SERVICE';
     }
-    return 'WELCOME TO\nPOWER INSURANCE BROKERAGE FALLBACK \nSELF SERVICE';
+    return 'WELCOME TO\nPOWER INSURANCE BROKERAGE\nSELF SERVICE';
   }
 }

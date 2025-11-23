@@ -35,6 +35,17 @@ class GetQuoteController extends GetxController {
   RxBool submitLoading = false.obs;
   RxBool isPickingFile = false.obs;
 
+  // Helper to parse double values safely
+  double? _parseDouble(dynamic value) {
+    if (value == null) return null;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is String) {
+      return double.tryParse(value.replaceAll(',', ''));
+    }
+    return null;
+  }
+
   Rxn<DateTime> startDate = Rxn<DateTime>();
   final TextEditingController startDateController = TextEditingController();
   Rxn<DateTime> endDate = Rxn<DateTime>();
@@ -219,9 +230,10 @@ class GetQuoteController extends GetxController {
   }
 
   Future<void> _createEnquiryAndNavigate() async {
-    print('🔍 API: Starting _createEnquiryAndNavigate...');
+    print(
+        '🔍 API: Starting _createEnquiryAndNavigate (Sales Quotation flow)...');
     try {
-      // Create enquiry (reuse your ApiUtils.createQuote)
+      // Get draft quote data
       final draft = GetStorage().read(StorageKeys.pendingQuote) as Map? ?? {};
       if (draft.isEmpty) {
         print('❌ API: No draft found');
@@ -229,71 +241,85 @@ class GetQuoteController extends GetxController {
         return;
       }
 
-      print('🔍 API: Creating enquiry with draft data...');
+      print('🔍 API: Creating Sales Quotation with draft data...');
       final v = draft['preferredInsurer'] as Map?;
-      final payload = ApiUtils.createQuote(
-        // product / risk type (ProductId)
-        draft['riskName'] ?? '',
-        // businessClassID (canonical) -> stored into SupportRequestMethod
-        (draft['businessClassID'] ?? '').toString(),
-        // businessClassName (human friendly)
-        (draft['businessClassName'] ?? '').toString(),
-        draft['startDate'] ?? '',
-        draft['endDate'] ?? '',
-        draft['renewalDate'] ?? '',
-        List<Map<String, dynamic>>.from(draft['items'] ?? const []),
+
+      // Create Sales Quotation payload
+      final payload = ApiUtils.createSalesQuotation(
+        businessClassID: (draft['businessClassID'] ?? '').toString(),
+        riskTypeID: (draft['riskTypeID'] ?? draft['riskName'] ?? '').toString(),
+        startDate: draft['startDate'] ?? '',
+        endDate: draft['endDate'] ?? '',
+        renewalDate: draft['renewalDate'] ?? '',
+        itemsToInsure:
+            List<Map<String, dynamic>>.from(draft['items'] ?? const []),
         vendorID: v?['vendorID']?.toString(),
-        vendorName: v?['vendorName']?.toString(),
       );
 
-      print('🔍 API: Sending to broker...');
-      final createRes = await pibroRepository.sendToBroker(payload);
+      print('🔍 API: Calling CreateSalesQuotation...');
+      final createRes = await pibroRepository.createSalesQuotation(payload);
+
       if (createRes.messageResponse.status != AppConstants.responseSuccess) {
         print(
-            '❌ API: sendToBroker failed: ${createRes.messageResponse.message}');
+            '❌ API: CreateSalesQuotation failed: ${createRes.messageResponse.message}');
         showSnackbarMessage(
             message: createRes.messageResponse.message, isSuccess: false);
         return;
       }
 
-      final caseId = createRes.messageResponse.message;
-      print('🔍 API: Got case ID: $caseId, fetching enquiry...');
+      // Extract Quote ID from response (e.g., "QN/11")
+      final quoteID = createRes.messageResponse.message;
+      print('🔍 API: Got Quote ID: $quoteID, fetching quotation details...');
 
-      final byId = await pibroRepository.getCustomerEnquiryById(caseId);
-      final quote = byId.quote;
-      if (quote == null) {
-        print('❌ API: Could not fetch enquiry');
+      // Fetch the created quotation to get SumInsured and PremiumDue
+      final quoteResponse =
+          await pibroRepository.getSalesQuotationByID(quoteID);
+
+      if (quoteResponse == null) {
+        print('❌ API: Could not fetch quotation');
         showSnackbarMessage(
-            message: 'Could not fetch enquiry', isSuccess: false);
+            message: 'Could not fetch quotation details', isSuccess: false);
         return;
       }
 
-      // Fix premium parsing from API response
-      final premiumString = quote.supportResolution ?? '0';
-      final sumInsuredString = quote.supportScreenShotURL ?? '0';
+      // Extract JSON data from ResponseData object
+      Map<String, dynamic>? quoteData;
+      if (quoteResponse is Map) {
+        quoteData = Map<String, dynamic>.from(quoteResponse);
+      } else {
+        // ResponseData object - decode from response.body
+        try {
+          final responseBody = (quoteResponse as dynamic).response?.body;
+          if (responseBody != null) {
+            quoteData = jsonDecode(responseBody) as Map<String, dynamic>;
+          }
+        } catch (e) {
+          print('❌ API: Error decoding response: $e');
+        }
+      }
 
-      print('🔍 ENQUIRY: Raw premium from API: $premiumString');
-      print('🔍 ENQUIRY: Raw sumInsured from API: $sumInsuredString');
+      if (quoteData == null) {
+        print('❌ API: Could not parse quotation data');
+        showSnackbarMessage(
+            message: 'Could not parse quotation details', isSuccess: false);
+        return;
+      }
 
-      final premium = double.tryParse(premiumString.replaceAll(',', '')) ?? 0.0;
-      final sumInsured =
-          double.tryParse(sumInsuredString.replaceAll(',', '')) ?? 0.0;
+      // Extract SumInsured and PremiumDue from response
+      final premium = _parseDouble(quoteData['PremiumDue']) ?? 0.0;
+      final sumInsured = _parseDouble(quoteData['SumInsured']) ?? 0.0;
 
-      print('🔍 ENQUIRY: Parsed premium: $premium');
-      print('🔍 ENQUIRY: Parsed sumInsured: $sumInsured');
+      print('🔍 QUOTATION: Premium Due: $premium');
+      print('🔍 QUOTATION: Sum Insured: $sumInsured');
 
-      final enquiryData = {
-        "caseId": caseId,
-        "premium": premium, // Store as number, not string
-        "sumInsured": sumInsured, // Store as number, not string
+      // Store quotation data for downstream flows
+      final quoteDataToStore = {
+        "quoteID": quoteID, // Changed from caseId to quoteID
+        "premium": premium,
+        "sumInsured": sumInsured,
         "riskName": draft['riskName'],
-        // Ensure we persist the canonical product/risk type id so downstream
-        // payment and create-policy flows can read it even when this is
-        // marked as a fresh_quote.
         "riskTypeID":
             (draft['riskTypeID'] ?? draft['riskName'] ?? '').toString(),
-        // Ensure we include the canonical businessClassID so downstream flows
-        // that read StorageKeys.lastEnquiry (fresh_quote) have the ID available.
         "businessClassID": (draft['businessClassID'] ?? '').toString(),
         "businessClassName": draft['businessClassName'],
         "startDate": draft['startDate'],
@@ -301,20 +327,23 @@ class GetQuoteController extends GetxController {
         "renewalDate": draft['renewalDate'],
         "preferredInsurer": draft['preferredInsurer'],
         "items": draft['items'],
-        "_source": "fresh_quote", // Flag to identify this as fresh quote data
+        "_source":
+            "sales_quotation", // Flag to identify as new Sales Quotation flow
       };
 
-      print('🔍 ENQUIRY: Storing enquiry data: $enquiryData');
-      GetStorage().write(StorageKeys.lastEnquiry, enquiryData);
+      print('🔍 QUOTATION: Storing quote data: $quoteDataToStore');
+      GetStorage().write(StorageKeys.lastQuote, quoteDataToStore);
+      // Also store in lastEnquiry for backward compatibility with existing flows
+      GetStorage().write(StorageKeys.lastEnquiry, quoteDataToStore);
 
-      // Branch
+      // Navigate based on premium
       if (premium <= 0) {
         Get.offNamed(AppRoutes.quoteConfirmation);
       } else {
         Get.offNamed(AppRoutes.quoteSummary);
       }
     } catch (e, st) {
-      print('❌ ENQUIRY: Error in _createEnquiryAndNavigate: $e');
+      print('❌ QUOTATION: Error in _createEnquiryAndNavigate: $e');
       print('📍 STACK TRACE: $st');
       showSnackbarMessage(
           message: AppStrings.genericErrorMessage.tr, isSuccess: false);
@@ -574,7 +603,7 @@ class GetQuoteController extends GetxController {
               hint: '',
               validator: (value) =>
                   Validators.requiredValidator(value, AppStrings.value.tr),
-                  inputType: TextInputType.number,
+              inputType: TextInputType.number,
             ),
             CustomInput(
               controller: locationController,

@@ -21,7 +21,7 @@ class LandingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final LandingController controller = Get.put(LandingController());
+    final LandingController controller = Get.find<LandingController>();
     final SupportController supportController = Get.put(SupportController());
     return Scaffold(
       key: scaffoldKey,
@@ -123,16 +123,21 @@ class LandingScreen extends StatelessWidget {
                             alignment: Alignment.centerLeft,
                             child: Padding(
                               padding: const EdgeInsets.only(left: 15),
-                              child: Text(
-                                controller.getWelcomeText(),
-                                style: Styles.boldTextStyle(
-                                  size: 20,
-                                  color: AppColors.white,
+                              child: Obx(
+                                () => Text(
+                                  controller.getWelcomeText(),
+                                  style: Styles.boldTextStyle(
+                                    size: 20,
+                                    color: AppColors.white,
+                                  ),
                                 ),
                               ),
                             ),
                           ),
                         ],
+                      ),
+                      SizedBox(
+                        height: queryHeight(context) * 0.02,
                       ),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.end,

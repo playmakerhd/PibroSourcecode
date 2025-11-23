@@ -26,6 +26,7 @@ class QuoteListScreen extends StatelessWidget {
         children: [
           CommonHeader(
             title: AppStrings.quotes.tr,
+            hasBackIcon: true,
           ),
           QuoteList(),
         ],

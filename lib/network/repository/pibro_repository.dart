@@ -39,6 +39,16 @@ class PibroRepository {
   Future<CustomMessageResponse> signUp(AuthRequest body) async =>
       appApiProvider.callSignUpApi(body);
 
+  // ---------- Lead Management ----------
+  Future<CustomMessageResponse> createLead(AuthRequest body) async =>
+      appApiProvider.callCreateLeadApi(body);
+
+  Future<dynamic> getLeadByID(String leadID) async =>
+      appApiProvider.callGetLeadByID(leadID);
+
+  Future<CustomMessageResponse> convertLeadToCustomer(String leadID) async =>
+      appApiProvider.callConvertLeadToCustomer(leadID);
+
   // ---------- Forgot Password (OTP) Flow ----------
   Future<CustomMessageResponse> resetCustomerPasswordOtp(String customerId) =>
       appApiProvider.callResetCustomerPasswordOtp(customerId);
@@ -92,6 +102,25 @@ class PibroRepository {
   Future<VendorResponse> getVendors() => appApiProvider.callGetVendors();
   Future<QuoteByIdResponse> getCustomerEnquiryById(String id) =>
       appApiProvider.callGetCustomerEnquiryById(id);
+
+  // ---------- Sales Quotation (New Quote Flow) ----------
+  Future<CustomMessageResponse> createSalesQuotation(
+          Map<String, dynamic> body) =>
+      appApiProvider.callCreateSalesQuotation(body);
+
+  Future<dynamic> getSalesQuotationByID(String quoteID) =>
+      appApiProvider.callGetSalesQuotationByID(quoteID);
+
+  Future<List<dynamic>> getSalesQuotationsByEntityID({
+    required String entityID,
+    int pageNum = 1,
+    int size = 1000,
+  }) =>
+      appApiProvider.callGetSalesQuotationsByEntityID(
+        entityID: entityID,
+        pageNum: pageNum,
+        size: size,
+      );
 
   // Create new policy & book/post (quote flow)
   Future<CustomMessageResponse> createInsurancePolicyClient(
@@ -235,6 +264,13 @@ class PibroRepository {
         customerID: customerID,
         periodFrom: periodFrom,
         periodTo: periodTo,
+      );
+
+  Future<CustomMessageResponse> viewPremiumDemandNoteReport({
+    required String quoteID,
+  }) async =>
+      appApiProvider.callViewPremiumDemandNoteReport(
+        quoteID: quoteID,
       );
 
   Future<CustomMessageResponse> viewInsuranceCertificate({

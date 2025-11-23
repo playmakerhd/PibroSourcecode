@@ -10,8 +10,10 @@ import 'package:pibro/core/policy/widget/policy_button.dart';
 import 'package:pibro/navigation/routes.dart';
 import 'package:pibro/shared/common_header.dart';
 import 'package:pibro/shared/widget/large_line.dart';
+import 'package:pibro/shared/widget/premium_demand_note_sheet.dart';
 import 'package:intl/intl.dart';
 import 'package:pibro/utils/app_utils.dart';
+import 'package:pibro/utils/view_utils.dart';
 
 class QuoteSummaryScreen extends StatelessWidget {
   // Helper to format date strings to 'MMM dd, yyyy'
@@ -158,7 +160,7 @@ class QuoteSummaryScreen extends StatelessWidget {
                                       },
                                       width: MediaQuery.of(context).size.width *
                                           0.4,
-                                          height: 44,
+                                      height: 44,
                                       bgColor: AppColors.primaryColor,
                                       loading: qp.paymentLoading.value,
                                     )),
@@ -172,10 +174,23 @@ class QuoteSummaryScreen extends StatelessWidget {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 10),
                           GestureDetector(
                             onTap: () {
-                              // TODO: Wire to API later
+                              final quoteID = qsc.enquiry['quoteID'] as String?;
+                              if (quoteID != null && quoteID.isNotEmpty) {
+                                showPremiumDemandNoteSheet(
+                                  context: context,
+                                  fetchPdfBytes:
+                                      qsc.fetchPremiumDemandNoteBytes,
+                                  quoteID: quoteID,
+                                );
+                              } else {
+                                showSnackbarMessage(
+                                  message: 'No quote ID available',
+                                  isSuccess: false,
+                                );
+                              }
                             },
                             child: Container(
                               height: 44,
@@ -207,11 +222,10 @@ class QuoteSummaryScreen extends StatelessWidget {
                               ),
                             ),
                           ),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 30),
                           PolicyButton(
                             text: 'Cancel',
-                            onPressed: () =>
-                                Get.offNamed(AppRoutes.quoteList),
+                            onPressed: () => Get.offNamed(AppRoutes.quoteList),
                             width: 120,
                             bgColor: AppColors.greyColor,
                           ),

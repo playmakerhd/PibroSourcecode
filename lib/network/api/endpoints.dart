@@ -12,6 +12,11 @@ class Endpoints {
   static const String validateCustomerPasswordEmailPhoneOtp =
       '/ValidateCustomerPasswordEmailPhoneOTP';
 
+  // Lead Management
+  static const String createLead = '/CreateLeadInformation';
+  static const String getLeadByID = '/GetLeadInformationByID';
+  static const String convertLeadToCustomer = '/ConvertLeadToCustomer';
+
   // Profile
   static const String profile = '/GetCustomerInformationByID';
   static const String profileByEmail = '/GetCustomerInformationByEmailPhone';
@@ -53,6 +58,12 @@ class Endpoints {
   static const String submitClaim = '/SubmitClaim';
   static const String quotes = '/GetCustomerEnquiriesByCustomerID';
 
+  // Quote Management (New Flow)
+  static const String createSalesQuotation = '/CreateSalesQuotation';
+  static const String getSalesQuotationByID = '/GetSalesQuotationsByID';
+  static const String getSalesQuotationsByEntityID =
+      '/GetSalesQuotationsByEntityID';
+
   // Transactions
   // Transactions
   static const String getClientNotesByCustomer =
@@ -63,6 +74,8 @@ class Endpoints {
       '/ViewCustomerTransactionReport';
   static const String viewCustomerStatementReport =
       '/ViewCustomerStatementReport';
+  static const String viewPremiumDemandNoteReport =
+      '/ViewPremiumDemandNoteReport';
 
   // Vendors / Enquiries
   static const String getVendors = '/GetVendorInformation';

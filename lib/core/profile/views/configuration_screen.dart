@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:pibro/constants/app_colors.dart';
+import 'package:pibro/constants/app_styles.dart';
 import 'package:pibro/core/profile/controller/profile_controller.dart';
 import 'package:pibro/core/profile/widget/profile_button.dart';
 import 'package:pibro/internalization/app_strings.dart';
@@ -53,41 +55,88 @@ class ConfigurationScreen extends StatelessWidget {
                     SizedBox(
                       height: queryHeight(context) * 0.05,
                     ),
-                    // Align(
-                    //   alignment: Alignment.centerRight,
-                    //   child: Container(
-                    //     height: 50,
-                    //     width: 160,
-                    //     margin: EdgeInsets.only(top: 10, bottom: 60),
-                    //     decoration: BoxDecoration(
-                    //       color: AppColors.primaryColor,
-                    //       borderRadius:
-                    //           BorderRadius.circular(AppConstants.appRadius),
-                    //     ),
-                    //     child: Row(
-                    //       mainAxisAlignment: MainAxisAlignment.center,
-                    //       children: [
-                    //         ImageFactory.getImage(AppImages.scan)
-                    //             .render(width: 15),
-                    //         SizedBox(
-                    //           width: 10,
-                    //         ),
-                    //         Text(
-                    //           AppStrings.scanQR.tr,
-                    //           style: Styles.semiBoldTextStyle(
-                    //               color: AppColors.white),
-                    //         )
-                    //       ],
-                    //     ),
-                    //   ),
-                    // ),
+                    // QR Scanner Button
                     GestureDetector(
-                      onTap: () => saveConfig(
-                        controller.configFormKey,
-                        url: controller.serviceURLController.text.trim(),
-                        token: controller.tokenController.text.trim(),
-                        isProfile: true,
+                      onTap: () async {
+                        await showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true,
+                          backgroundColor: Colors.transparent,
+                          builder: (_) => _QRScannerBottomSheet(
+                            onScanned: (code) async {
+                              // Expected format: "url|token"
+                              final parts = code.split('|');
+                              if (parts.length == 2) {
+                                controller.serviceURLController.text = parts[0];
+                                controller.tokenController.text = parts[1];
+                                showSnackbarMessage(
+                                  message: 'QR code scanned successfully!',
+                                  isSuccess: true,
+                                );
+                                // Automatically save after scanning
+                                await Future.delayed(
+                                    const Duration(milliseconds: 300));
+                                await saveConfig(
+                                  controller.configFormKey,
+                                  url: controller.serviceURLController.text
+                                      .trim(),
+                                  token: controller.tokenController.text.trim(),
+                                  isProfile: true,
+                                );
+                                // Logout user after config change
+                                await Future.delayed(
+                                    const Duration(milliseconds: 500));
+                                controller.performLogout();
+                              } else {
+                                showSnackbarMessage(
+                                  message:
+                                      'Invalid QR code format. Expected: URL|Token',
+                                  isSuccess: false,
+                                );
+                              }
+                            },
+                          ),
+                        );
+                      },
+                      child: Container(
+                        height: 50,
+                        margin: const EdgeInsets.only(bottom: 20),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryColor,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.qr_code_scanner,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              AppStrings.scanQR.tr,
+                              style: Styles.semiBoldTextStyle(
+                                color: AppColors.white,
+                                size: 15,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
+                    ),
+                    GestureDetector(
+                      onTap: () async {
+                        await saveConfig(
+                          controller.configFormKey,
+                          url: controller.serviceURLController.text.trim(),
+                          token: controller.tokenController.text.trim(),
+                          isProfile: true,
+                        );
+                        // Logout user after config change
+                        await Future.delayed(const Duration(milliseconds: 500));
+                        controller.performLogout();
+                      },
                       child: ProfileButton(
                         text: AppStrings.save.tr,
                       ),
@@ -98,6 +147,199 @@ class ConfigurationScreen extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// QR Scanner Bottom Sheet Widget
+class _QRScannerBottomSheet extends StatelessWidget {
+  final void Function(String) onScanned;
+
+  const _QRScannerBottomSheet({required this.onScanned});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: queryHeight(context) * 0.7,
+      padding: const EdgeInsets.all(20.0),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Drag handle
+          Container(
+            width: 40,
+            height: 4,
+            margin: const EdgeInsets.only(bottom: 20),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade300,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          Text(
+            "Scan QR Code",
+            style: Styles.semiBoldTextStyle(
+              size: 18,
+              color: AppColors.primaryColor,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            "Position the QR code within the frame",
+            style: Styles.regularTextStyle(
+              size: 13,
+              color: AppColors.hintColor,
+            ),
+          ),
+          const SizedBox(height: 20),
+          // Scanner area
+          Expanded(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: Stack(
+                children: [
+                  MobileScanner(
+                    onDetect: (BarcodeCapture capture) {
+                      final List<Barcode> barcodes = capture.barcodes;
+                      if (barcodes.isNotEmpty &&
+                          barcodes.first.rawValue != null) {
+                        final code = barcodes.first.rawValue!;
+                        print("Scanned value: $code");
+                        onScanned(code);
+                        Navigator.of(context).pop();
+                      }
+                    },
+                  ),
+                  // Scanning frame overlay
+                  Center(
+                    child: Container(
+                      width: 250,
+                      height: 250,
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: AppColors.primaryColor,
+                          width: 3,
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Stack(
+                        children: [
+                          // Corner decorations
+                          Positioned(
+                            top: 0,
+                            left: 0,
+                            child: Container(
+                              width: 30,
+                              height: 30,
+                              decoration: BoxDecoration(
+                                border: Border(
+                                  top: BorderSide(
+                                    color: AppColors.green,
+                                    width: 4,
+                                  ),
+                                  left: BorderSide(
+                                    color: AppColors.green,
+                                    width: 4,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            top: 0,
+                            right: 0,
+                            child: Container(
+                              width: 30,
+                              height: 30,
+                              decoration: BoxDecoration(
+                                border: Border(
+                                  top: BorderSide(
+                                    color: AppColors.green,
+                                    width: 4,
+                                  ),
+                                  right: BorderSide(
+                                    color: AppColors.green,
+                                    width: 4,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            bottom: 0,
+                            left: 0,
+                            child: Container(
+                              width: 30,
+                              height: 30,
+                              decoration: BoxDecoration(
+                                border: Border(
+                                  bottom: BorderSide(
+                                    color: AppColors.green,
+                                    width: 4,
+                                  ),
+                                  left: BorderSide(
+                                    color: AppColors.green,
+                                    width: 4,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            bottom: 0,
+                            right: 0,
+                            child: Container(
+                              width: 30,
+                              height: 30,
+                              decoration: BoxDecoration(
+                                border: Border(
+                                  bottom: BorderSide(
+                                    color: AppColors.green,
+                                    width: 4,
+                                  ),
+                                  right: BorderSide(
+                                    color: AppColors.green,
+                                    width: 4,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          // Cancel button
+          GestureDetector(
+            onTap: () => Navigator.of(context).pop(),
+            child: Container(
+              width: double.infinity,
+              height: 50,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade200,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Center(
+                child: Text(
+                  "Cancel",
+                  style: Styles.semiBoldTextStyle(
+                    size: 15,
+                    color: AppColors.primaryColor,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

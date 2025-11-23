@@ -16,6 +16,7 @@ import 'package:pibro/network/models/request/create_receipt_request.dart';
 import 'package:pibro/network/models/request/renew_policy_requesst.dart';
 import 'package:pibro/network/models/request/update_enquiry_status_request.dart';
 import 'package:pibro/network/repository/pibro_repository.dart';
+import 'package:pibro/utils/app_utils.dart';
 import 'package:pibro/utils/view_utils.dart';
 import 'package:pibro/utils/qlog.dart';
 import 'package:intl/intl.dart';
@@ -219,6 +220,9 @@ class QuotePaymentController extends GetxController {
       }
       receiptReq.systemDate = DateTime.now().toIso8601String();
 
+      // CRITICAL: Convert Lead to Customer BEFORE receipt creation
+      await _convertLeadToCustomerIfNeeded();
+
       await _createReceiptAndContinue();
     } catch (e, st) {
       paymentLoading.value = false;
@@ -333,12 +337,167 @@ class QuotePaymentController extends GetxController {
         return;
       }
 
+      // Lead conversion already done before receipt creation
       await _createBookPostPolicyThenDebit();
     } catch (e, st) {
       paymentLoading.value = false;
       QLog.e('RECEIPT', e, st);
       showSnackbarMessage(message: _extractServerMessage(e), isSuccess: false);
     }
+  }
+
+  Future<void> _convertLeadToCustomerIfNeeded() async {
+    try {
+      // Check if current user is a Lead
+      final loginData = _readLoginDataMap();
+      final storedEntityType = GetStorage().read(StorageKeys.entityType);
+
+      final entityType = (loginData['entityType'] ?? storedEntityType)
+          ?.toString()
+          .toUpperCase();
+
+      QLog.d('CONVERT_LEAD', 'Checking entity type', {
+        'entityType': entityType,
+        'loginDataPreview': loginData.isEmpty
+            ? 'EMPTY'
+            : {
+                'customerID': loginData['customerID'],
+                'entityType': loginData['entityType'],
+              },
+      });
+
+      if (entityType != 'LEAD') {
+        QLog.d('CONVERT_LEAD', 'User is not a Lead, skipping conversion');
+        return;
+      }
+
+      // Extract Lead ID from loginData
+      final leadID = (loginData['customerID'] ?? '').toString().trim();
+
+      if (leadID.isEmpty) {
+        QLog.d('CONVERT_LEAD', 'Lead ID not found in loginData');
+        return;
+      }
+
+      QLog.d('CONVERT_LEAD', 'Converting Lead to Customer', {'leadID': leadID});
+
+      // Call ConvertLeadToCustomer API
+      final response = await repo.convertLeadToCustomer(leadID);
+
+      QLog.d('CONVERT_LEAD', 'Conversion response', {
+        'status': response.messageResponse.status,
+        'message': response.messageResponse.message,
+      });
+
+      if (response.messageResponse.status != AppConstants.responseSuccess) {
+        // Log error but don't block - policy creation will use Lead ID
+        QLog.e(
+            'CONVERT_LEAD',
+            Exception(
+                'Failed to convert Lead to Customer: ${response.messageResponse.message}'),
+            StackTrace.current);
+        return;
+      }
+
+      // Extract new Customer ID from response (e.g., "CUS/84902")
+      final newCustomerID = response.messageResponse.message;
+
+      QLog.d('CONVERT_LEAD', 'Lead converted successfully', {
+        'oldLeadID': leadID,
+        'newCustomerID': newCustomerID,
+      });
+
+      // Update loginData with new Customer ID and entity type
+      final updatedLoginData = Map<String, dynamic>.from(loginData);
+
+      updatedLoginData['customerID'] = newCustomerID;
+      updatedLoginData['entityType'] = 'CUSTOMER';
+
+      // Save updated login data (keep it encrypted for downstream consumers)
+      encryptData(
+        key: StorageKeys.loginData,
+        value: updatedLoginData.toString(),
+      );
+      await GetStorage().write(StorageKeys.entityType, 'CUSTOMER');
+
+      QLog.d('CONVERT_LEAD', 'Updated storage with Customer data');
+
+      // Refresh profile to get full Customer data
+      try {
+        final profileResponse = await repo.getProfile();
+        await GetStorage()
+            .write(StorageKeys.profileData, profileResponse.user.toJson());
+        QLog.d('CONVERT_LEAD', 'Profile refreshed with Customer data');
+      } catch (e, st) {
+        QLog.e('CONVERT_LEAD', e, st);
+        // Don't block on profile refresh failure
+      }
+    } catch (e, st) {
+      QLog.e('CONVERT_LEAD', e, st);
+      // Don't block payment flow on conversion failure
+      // Policy creation will proceed with Lead ID if conversion fails
+    }
+  }
+
+  Map<String, dynamic> _readLoginDataMap() {
+    // Prefer the encrypted payload path and fall back to whatever is available.
+    try {
+      final decrypted = convertToJsonStringQuotes(StorageKeys.loginData);
+      if (decrypted.isNotEmpty) {
+        return Map<String, dynamic>.from(decrypted);
+      }
+    } catch (_) {}
+
+    final raw = GetStorage().read(StorageKeys.loginData);
+    return _coerceLoginPayload(raw);
+  }
+
+  Map<String, dynamic> _coerceLoginPayload(dynamic raw) {
+    if (raw == null) return {};
+    if (raw is Map<String, dynamic>) return Map<String, dynamic>.from(raw);
+    if (raw is Map) {
+      final normalized = <String, dynamic>{};
+      raw.forEach((key, value) {
+        normalized[key.toString()] = value;
+      });
+      return normalized;
+    }
+
+    final text = raw.toString().trim();
+    if (text.isEmpty) return {};
+
+    final decoded = _tryDecodeLoginText(text);
+    if (decoded != null) return decoded;
+
+    final legacyDecoded = _tryDecodeLoginText(_repairLegacyMapString(text));
+    return legacyDecoded ?? {};
+  }
+
+  Map<String, dynamic>? _tryDecodeLoginText(String source) {
+    try {
+      final decoded = jsonDecode(source);
+      if (decoded is Map) {
+        final normalized = <String, dynamic>{};
+        decoded.forEach((key, value) {
+          normalized[key.toString()] = value;
+        });
+        return normalized;
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  String _repairLegacyMapString(String source) {
+    var repaired = source;
+    repaired = repaired.replaceAll('{', '{"');
+    repaired = repaired.replaceAll(': ', '": "');
+    repaired = repaired.replaceAll(', ', '", "');
+    repaired = repaired.replaceAll('}', '"}');
+    repaired = repaired.replaceAll('"{"', '{"');
+    repaired = repaired.replaceAll('"}"', '"}');
+    repaired = repaired.replaceAll('"[{', '[{');
+    repaired = repaired.replaceAll('}]"', '}]');
+    return repaired;
   }
 
   Future<void> _createBookPostPolicyThenDebit() async {

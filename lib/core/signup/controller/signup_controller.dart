@@ -17,6 +17,8 @@ class SignupController extends GetxController {
   PibroRepository pibroRepository =
       PibroRepository(appApiProvider: ApiProvider());
   final TextEditingController nameController = TextEditingController();
+  final TextEditingController firstNameController = TextEditingController();
+  final TextEditingController lastNameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
@@ -27,7 +29,7 @@ class SignupController extends GetxController {
   RxBool obscurePassword = true.obs;
   RxBool loading = false.obs;
   Rx<DateTime?> selectedDateOfBirth = Rx<DateTime?>(null);
-  RxString selectedAccountType = 'individual'.obs;
+  RxString selectedAccountType = 'Individual'.obs;
 
   void updateObscure() {
     obscurePassword.value = !obscurePassword.value;
@@ -70,29 +72,51 @@ class SignupController extends GetxController {
     if (signupFormKey.currentState!.validate()) {
       loading.value = true;
       try {
-        final response = await pibroRepository.signUp(
+        // Determine username based on account type
+        final String username;
+        final String? firstName;
+        final String? lastName;
+
+        if (selectedAccountType.value == 'Individual') {
+          username = '${firstNameController.text}${lastNameController.text}'
+              .toUpperCase();
+          firstName = firstNameController.text;
+          lastName = lastNameController.text;
+        } else {
+          username = nameController.text;
+          firstName = null;
+          lastName = null;
+        }
+
+        // Create Lead instead of Customer (new flow)
+        final response = await pibroRepository.createLead(
           AuthRequest(
-            username: nameController.text,
+            username: username,
             password: passwordController.text,
             email: emailController.text,
             phoneNumber: phoneController.text,
             dateOfBirth: selectedDateOfBirth.value?.toIso8601String(),
+            firstName: firstName,
+            lastName: lastName,
+            accountType: selectedAccountType.value,
           ),
         );
+
         if (response.messageResponse.status != AppConstants.responseSuccess) {
           showSnackbarMessage(
               message: response.messageResponse.message, isSuccess: false);
         } else {
-          // Store the customer ID from the response
-          final customerID = response.messageResponse.message;
-          persistSignupID(customerID);
+          // Extract Lead ID from response (e.g., "LEAD/14")
+          final leadID = response.messageResponse.message;
+          persistSignupID(leadID);
 
+          // Store login data with entity type as LEAD
           persistLoginData(
             data: LoginData(
-              customerID:
-                  customerID, // Use the response customer ID, not the text input
+              customerID: leadID,
               email: emailController.text,
               phone: phoneController.text,
+              entityType: 'LEAD',
             ),
             remember: false,
           );
@@ -100,17 +124,26 @@ class SignupController extends GetxController {
           // Also persist the email separately for payment flow
           GetStorage().write(StorageKeys.userEmail, emailController.text);
 
-          // Store profile data with customer ID for receipt creation
+          // Store profile data with Lead ID
+          final displayName = selectedAccountType.value == 'Individual'
+              ? '${firstNameController.text} ${lastNameController.text}'
+              : nameController.text;
+
           GetStorage().write(StorageKeys.profileData, {
-            'CustomerID': customerID,
+            'CustomerID': leadID,
             'CustomerEmail': emailController.text,
             'CustomerPhone': phoneController.text,
-            'CustomerName': nameController.text,
+            'CustomerName': displayName,
+            'CustomerFirstName': firstName ?? nameController.text,
+            'CustomerLastName': lastName ?? '',
           });
 
-          // Show success snackbar with customer ID
+          // Store entity type
+          GetStorage().write(StorageKeys.entityType, 'LEAD');
+
+          // Show success snackbar with Lead ID
           showSnackbarMessage(
-            message: 'Signup successful! Your Customer ID is: $customerID',
+            message: 'Signup successful! Your ID is: $leadID',
             isSuccess: true,
           );
 

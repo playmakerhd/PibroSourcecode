@@ -78,11 +78,8 @@ class HomeScreen extends StatelessWidget {
                                               AppStrings.welcomeUser.trParams({
                                                 'user': controller.user.value !=
                                                         null
-                                                    ? controller
-                                                        .user
-                                                        .value!
-                                                        .customerName!
-                                                        .capitalize!
+                                                    ? controller.user.value!
+                                                        .displayName.capitalize!
                                                     : ''
                                               }),
                                               style: Styles.boldTextStyle(

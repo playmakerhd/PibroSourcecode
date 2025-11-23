@@ -13,7 +13,6 @@ import 'package:pibro/network/models/response/quotes_response.dart';
 import 'package:pibro/utils/app_utils.dart';
 
 class ApiUtils {
-  
   static Map<String, dynamic> receiptPayload(CreateReceiptRequest requestData) {
     print('🧾 RECEIPT_PAYLOAD: Starting receipt payload creation');
     print(
@@ -140,7 +139,10 @@ class ApiUtils {
       'LockTS': null,
       'TaxGroupID': null,
       'TaxAmount': null,
-      'CustomerName': user.customerFullName ?? user.customerName,
+      'CustomerName': user.isLead
+          ? '${user.customerFirstName ?? ''} ${user.customerLastName ?? ''}'
+              .trim()
+          : (user.customerName ?? user.customerFullName ?? ''),
       'BranchCode': null,
       'customerReceiptsDetail': [
         {
@@ -338,10 +340,9 @@ class ApiUtils {
 
     return full;
   }
- 
+
   /// CreateInsuranceClientNoteEndorsement payload
   static Map<String, dynamic> endorsementNotePayload({
-   
     required PolicyData policy,
     required DateTime startDate,
     required DateTime endDate,
@@ -351,7 +352,6 @@ class ApiUtils {
     required String receiptId,
   }) {
     return {
-      
       "NoteTypeID": "DBN",
       "PolicyBrokerID": policy.policyBrokerID,
       "CustomerID": policy.customerID ?? "",
@@ -523,6 +523,65 @@ class ApiUtils {
       "QuoteRequest": true,
       "RequestDetails": itemsToInsure,
     };
+  }
+
+  // Create Sales Quotation payload (new quote flow)
+  static Map<String, dynamic> createSalesQuotation({
+    required String businessClassID,
+    required String riskTypeID,
+    required String startDate,
+    required String endDate,
+    required String renewalDate,
+    required List<Map<String, dynamic>> itemsToInsure,
+    String? vendorID,
+  }) {
+    LoginData loginData =
+        LoginData.fromJson(convertToJsonStringQuotes(StorageKeys.loginData));
+    dynamic userId = decryptData(StorageKeys.signupData);
+    final entityID = userId ?? loginData.customerID;
+
+    // Transform items to Sales Quotation format
+    final transformedItems = itemsToInsure.map((item) {
+      final detailMemo1 = item['RegNo'] ?? item['EngineNo'] ?? '';
+      final detailMemo2 = item['ChasisId'] ?? '';
+      final detailMemo3 = item['VehicleMake'] ?? '';
+
+      return {
+        "ItemsDescription":
+            item['description'] ?? item['ItemsDescription'] ?? '',
+        "SumInsured": _parseSumInsured(item['Value'] ?? item['value'] ?? '0'),
+        "ItemLocation": item['location'] ?? item['ItemLocation'] ?? '',
+        "DetailMemo1": detailMemo1,
+        "DetailMemo2": detailMemo2,
+        "DetailMemo3": detailMemo3,
+        "PolicyItems": item['ScreenShotURL'] ?? item['screenShotURL'] ?? '',
+      };
+    }).toList();
+
+    return {
+      "CustomerID": entityID,
+      "VendorID": vendorID ?? "ADIC",
+      "BusinessClassID": businessClassID,
+      "RiskTypeID": riskTypeID,
+      "PremiumDescription": "PREMIUM DEMAND NOTE FOR",
+      "InvoiceDate": DateTime.now().toIso8601String(),
+      "StartDate": startDate,
+      "EndDate": endDate,
+      "Renewaldate": renewalDate,
+      "ItemsToInsure": transformedItems,
+      "Insurers": [],
+    };
+  }
+
+  static double _parseSumInsured(dynamic value) {
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is String) {
+      // Remove commas and currency symbols
+      final cleaned = value.replaceAll(RegExp(r'[^\d.]'), '');
+      return double.tryParse(cleaned) ?? 0.0;
+    }
+    return 0.0;
   }
 
   static Map<String, dynamic> sendClaimToBroker(

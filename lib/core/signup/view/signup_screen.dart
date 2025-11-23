@@ -120,20 +120,44 @@ class SignupScreen extends StatelessWidget {
                     inputType: TextInputType.emailAddress,
                   ),
 
-                  // Name - dynamic hint based on account type
+                  // Name fields - dynamic based on account type
                   Obx(() {
                     final t = controller.selectedAccountType.value;
+
+                    // For Individual accounts, show First Name and Last Name separately
+                    if (t == 'Individual') {
+                      return Column(
+                        children: [
+                          CustomInput(
+                            hint: AppStrings.firstName.tr,
+                            controller: controller.firstNameController,
+                            validator: (value) => Validators.requiredValidator(
+                              value,
+                              AppStrings.firstName.tr,
+                            ),
+                          ),
+                          CustomInput(
+                            hint: AppStrings.lastName.tr,
+                            controller: controller.lastNameController,
+                            validator: (value) => Validators.requiredValidator(
+                              value,
+                              AppStrings.lastName.tr,
+                            ),
+                          ),
+                        ],
+                      );
+                    }
+
+                    // For Company and Joint Account, show single name field
                     final nameHint = t == 'Company'
                         ? AppStrings.companyName.tr
-                        : t == 'Joint Account'
-                            ? AppStrings.accountName.tr
-                            : AppStrings.name.tr;
+                        : AppStrings.accountName.tr;
                     return CustomInput(
                       hint: nameHint,
                       controller: controller.nameController,
                       validator: (value) => Validators.requiredValidator(
                         value,
-                        AppStrings.username.tr,
+                        nameHint,
                       ),
                     );
                   }),

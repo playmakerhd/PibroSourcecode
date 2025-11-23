@@ -5,6 +5,7 @@ import 'package:pibro/core/policy/controller/endorsement_controller.dart';
 import 'package:pibro/core/policy/widget/policy_button.dart';
 import 'package:pibro/core/policy/widget/detail_row.dart';
 import 'package:pibro/shared/common_header.dart';
+import 'package:pibro/shared/widget/premium_demand_note_sheet.dart';
 import 'package:pibro/utils/app_utils.dart';
 import 'package:pibro/utils/view_utils.dart';
 import 'package:pibro/constants/app_images.dart';
@@ -271,7 +272,21 @@ class EndorsementSummaryScreen extends StatelessWidget {
                                 const SizedBox(height: 20),
                                 GestureDetector(
                                   onTap: () {
-                                    // TODO: Wire to API later
+                                    final quoteID = c.quoteNumber;
+                                    if (quoteID != null && quoteID.isNotEmpty) {
+                                      showPremiumDemandNoteSheet(
+                                        context: context,
+                                        fetchPdfBytes:
+                                            c.fetchPremiumDemandNoteBytes,
+                                        quoteID: quoteID,
+                                      );
+                                    } else {
+                                      showSnackbarMessage(
+                                        message:
+                                            'No quote number available for premium demand note',
+                                        isSuccess: false,
+                                      );
+                                    }
                                   },
                                   child: Container(
                                     height: 50,

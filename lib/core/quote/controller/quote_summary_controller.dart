@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -215,21 +216,22 @@ class QuoteSummaryController extends GetxController {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            SizedBox(height: 10),
             Text(
-              'Contest Quote',
+              'Contest Payment',
               style: Styles.semiBoldTextStyle(
                 size: 16,
                 color: AppColors.primaryColor,
               ),
             ),
-            const SizedBox(height: 15),
+            const SizedBox(height: 5),
             CustomInput(
               controller: contestSubjectController,
               hint: 'Subject',
               label: 'Subject',
-              height: 45,
+              height: 35,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             CustomInput(
               controller: contestMessageController,
               hint: 'Message',
@@ -237,7 +239,7 @@ class QuoteSummaryController extends GetxController {
               maxLines: 3,
               height: 75,
             ),
-            const SizedBox(height: 15),
+            const SizedBox(height: 5),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -246,7 +248,7 @@ class QuoteSummaryController extends GetxController {
                   onPressed: () => Get.back(),
                   width: 80,
                   height: 35,
-                  bgColor: AppColors.tileColor,
+                  bgColor: AppColors.primaryColor,
                 ),
                 Obx(
                   () => PolicyButton(
@@ -255,6 +257,7 @@ class QuoteSummaryController extends GetxController {
                     loading: contestLoading.value,
                     width: 80,
                     height: 35,
+                    bgColor: AppColors.primaryColor,
                   ),
                 ),
               ],
@@ -342,5 +345,53 @@ class QuoteSummaryController extends GetxController {
       "QuoteRequest": true,
       "RequestDetails": enquiry['items'] ?? [],
     };
+  }
+
+  /// Fetches premium demand note PDF bytes for the current quote.
+  /// Returns null on error.
+  Future<Uint8List?> fetchPremiumDemandNoteBytes() async {
+    try {
+      // Get quoteID from stored enquiry data
+      final quoteID = enquiry['quoteID'] as String?;
+
+      if (quoteID == null || quoteID.isEmpty) {
+        print('❌ PREMIUM_DEMAND_NOTE: No quote ID found in enquiry data');
+        showSnackbarMessage(
+          message: 'No quote ID available',
+          isSuccess: false,
+        );
+        return null;
+      }
+
+      print('🔍 PREMIUM_DEMAND_NOTE: Fetching for Quote ID: $quoteID');
+
+      final resp = await pibroRepository.viewPremiumDemandNoteReport(
+        quoteID: quoteID,
+      );
+
+      final status = resp.messageResponse.status;
+      final msg = resp.messageResponse.message; // Base64 PDF
+
+      if (status.toLowerCase() != 'success' || msg.isEmpty) {
+        print('❌ PREMIUM_DEMAND_NOTE: API returned failure or empty message');
+        return null;
+      }
+
+      // Decode base64 to bytes
+      final cleanedBase64 =
+          msg.startsWith('data:') ? msg.substring(msg.indexOf(',') + 1) : msg;
+      final bytes = base64Decode(cleanedBase64);
+
+      print(
+          '✅ PREMIUM_DEMAND_NOTE: Successfully fetched ${bytes.length} bytes');
+      return Uint8List.fromList(bytes);
+    } catch (e) {
+      print('❌ PREMIUM_DEMAND_NOTE: Error: $e');
+      showSnackbarMessage(
+        message: 'Error loading premium demand note: $e',
+        isSuccess: false,
+      );
+      return null;
+    }
   }
 }
