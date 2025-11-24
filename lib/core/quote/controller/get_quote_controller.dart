@@ -450,7 +450,10 @@ class GetQuoteController extends GetxController {
 
   _closeSheet() {
     clearInputData();
-    Get.back();
+    // Use Navigator.pop instead of Get.back() to avoid snackbar controller conflict
+    if (Get.context != null) {
+      Navigator.pop(Get.context!);
+    }
   }
 
   void populateInputFields(ItemData data) {

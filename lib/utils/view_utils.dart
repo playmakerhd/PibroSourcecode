@@ -14,19 +14,51 @@ double queryWidth(BuildContext? context) {
 
 bool _isSnackbarShowing = false;
 
+/// Safe navigation back that handles snackbar controller issues
+void safeBack({dynamic result}) {
+  try {
+    // Close any snackbars safely before navigating back
+    if (Get.isSnackbarOpen) {
+      Get.closeAllSnackbars();
+    }
+  } catch (e) {
+    // Ignore snackbar closing errors
+  }
+
+  // Now safely navigate back
+  try {
+    if (Get.context != null && Navigator.of(Get.context!).canPop()) {
+      Navigator.of(Get.context!).pop(result);
+    } else {
+      Get.back(result: result);
+    }
+  } catch (e) {
+    // Fallback to basic navigation
+    if (Get.context != null) {
+      Navigator.of(Get.context!).maybePop(result);
+    }
+  }
+}
+
 void showSnackbarMessage({
   required String message,
   bool isSuccess = true,
   bool isWarning = false,
 }) {
-  if (_isSnackbarShowing || Get.isSnackbarOpen) {
+  if (_isSnackbarShowing) {
     // Prevent showing another snackbar while one is active
     return;
   }
 
   _isSnackbarShowing = true; // Lock
 
-  final snackbar = GetSnackBar(
+  Get.snackbar(
+    isWarning
+        ? 'Info'
+        : isSuccess
+            ? 'Success'
+            : 'Error',
+    message,
     titleText: Text(
       isWarning
           ? 'Info'
@@ -48,12 +80,13 @@ void showSnackbarMessage({
     margin: const EdgeInsets.fromLTRB(10, 0, 10, 5),
     padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
     borderRadius: AppConstants.snackBarRadius,
+    snackPosition: SnackPosition.BOTTOM,
+    isDismissible: true,
+    dismissDirection: DismissDirection.horizontal,
   );
 
-  Get.showSnackbar(snackbar);
-
   // Release lock after duration + a small buffer (to account for animation)
-  Future.delayed(const Duration(seconds: 3), () {
+  Future.delayed(const Duration(milliseconds: 3500), () {
     _isSnackbarShowing = false;
   });
 }
