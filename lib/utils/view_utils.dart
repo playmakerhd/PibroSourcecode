@@ -45,6 +45,15 @@ void showSnackbarMessage({
   bool isSuccess = true,
   bool isWarning = false,
 }) {
+  // Close any existing snackbar safely before showing a new one
+  if (Get.isSnackbarOpen) {
+    try {
+      Get.closeAllSnackbars();
+    } catch (e) {
+      // Ignore errors from closing non-existent snackbars
+    }
+  }
+
   if (_isSnackbarShowing) {
     // Prevent showing another snackbar while one is active
     return;

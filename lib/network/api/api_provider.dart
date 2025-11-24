@@ -403,7 +403,21 @@ class ApiProvider extends BaseProvider {
       'PageNum': pageNum.toString(),
       'Size': size.toString(),
     });
+    print('🌐 API_CALL: callGetSalesQuotationsByEntityID');
+    print('   URL: $endpoint');
+    print('   EntityID: $entityID, PageNum: $pageNum, Size: $size');
+
     final resp = await makeGetCall(endpoint, false);
+
+    print('📦 API_RESPONSE: Received response');
+    print('   Response type: ${resp.runtimeType}');
+    if (resp != null) {
+      final list = resp as List<dynamic>;
+      print('   List length: ${list.length}');
+    } else {
+      print('   Response is null!');
+    }
+
     return resp as List<dynamic>; // Returns array of SalesQuotationResponse
   }
 

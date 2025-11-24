@@ -675,7 +675,15 @@ class ApiUtils {
 }
 
 String getQuoteClass(QuoteInfo quote) {
-  return quote.supportKeywords!.split(', ')[1];
+  try {
+    if (quote.supportKeywords == null || quote.supportKeywords!.isEmpty) {
+      return 'N/A';
+    }
+    final parts = quote.supportKeywords!.split(', ');
+    return parts.length > 1 ? parts[1] : (parts.isNotEmpty ? parts[0] : 'N/A');
+  } catch (e) {
+    return 'N/A';
+  }
 }
 
 List<String> getQuoteItemsData(RequestDetails details) {
@@ -704,8 +712,13 @@ List<String> getQuoteDates(QuoteInfo quote) {
 }
 
 double getQuoteSum(QuoteInfo quote) {
-  return quote.requestDetails!.isEmpty
-      ? 0.0
-      : quote.requestDetails!
-          .fold(0.0, (sum, item) => sum + (item.value ?? 0.0));
+  try {
+    if (quote.requestDetails == null || quote.requestDetails!.isEmpty) {
+      return 0.0;
+    }
+    return quote.requestDetails!
+        .fold(0.0, (sum, item) => sum + (item.value ?? 0.0));
+  } catch (e) {
+    return 0.0;
+  }
 }

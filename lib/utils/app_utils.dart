@@ -119,7 +119,12 @@ Map<String, dynamic> convertToJsonStringQuotes(String key) {
 }
 
 String formatDate(String date) {
-  return DateFormat('MMM d, y').format(DateTime.parse(date));
+  try {
+    if (date.isEmpty) return 'N/A';
+    return DateFormat('MMM d, y').format(DateTime.parse(date));
+  } catch (e) {
+    return 'N/A';
+  }
 }
 
 String formatClaimDate(String date) {

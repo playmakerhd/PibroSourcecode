@@ -44,7 +44,7 @@ class QuoteDetailsWidget extends StatelessWidget {
         children: [
           ItemRow(
             title: AppStrings.quoteId.tr,
-            value: data.caseId!,
+            value: data.caseId ?? 'N/A',
           ),
           ItemRow(
             title: AppStrings.insuranceClass.tr,
@@ -52,7 +52,7 @@ class QuoteDetailsWidget extends StatelessWidget {
           ),
           ItemRow(
             title: AppStrings.product.tr,
-            value: data.productId!,
+            value: data.productId ?? 'Unknown',
           ),
           ItemRow(
             title: AppStrings.startDate.tr,
@@ -90,7 +90,7 @@ class QuoteDetailsWidget extends StatelessWidget {
             title: AppStrings.itemInsured.tr,
             value: AppStrings.view.tr,
             onTap: () => Get.to(
-              () => QuoteItemsScreen(itemsInsured: data.requestDetails!),
+              () => QuoteItemsScreen(itemsInsured: data.requestDetails ?? []),
             ),
           ),
           // ItemRow(

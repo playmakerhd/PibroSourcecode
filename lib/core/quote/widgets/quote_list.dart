@@ -32,13 +32,23 @@ class QuoteList extends StatelessWidget {
                       final QuoteInfo quote = controller.quotes[index];
                       // Determine status color: Completed -> green, Pending -> orange (yellow), otherwise default orange
                       final String statusText =
-                          (quote.supportStatus ?? '').toString();
+                          (quote.supportStatus ?? 'Pending').toString();
                       Color statusColor = Colors.orange;
                       if (statusText.toLowerCase() == 'completed') {
                         statusColor = AppColors.activeGreen;
                       } else if (statusText.toLowerCase() == 'pending') {
-                        statusColor =
-                            Colors.orange;
+                        statusColor = Colors.orange;
+                      }
+
+                      // Safe date formatting with fallback
+                      String formattedDate = 'N/A';
+                      try {
+                        if (quote.supportDate != null &&
+                            quote.supportDate!.isNotEmpty) {
+                          formattedDate = formatDate(quote.supportDate!);
+                        }
+                      } catch (e) {
+                        formattedDate = quote.supportDate ?? 'N/A';
                       }
 
                       return GestureDetector(
@@ -46,10 +56,11 @@ class QuoteList extends StatelessWidget {
                         child: ItemRowContainer(
                           isLarge: true,
                           child: ItemRowContainerColumn(
-                            id: quote.caseId!,
-                            amount: 'N${formatAmount(getQuoteSum(quote)).toString()}',
-                            dates: formatDate(quote.supportDate!),
-                            type: quote.productId!,
+                            id: quote.caseId ?? 'N/A',
+                            amount:
+                                'N${formatAmount(getQuoteSum(quote)).toString()}',
+                            dates: formattedDate,
+                            type: quote.productId ?? 'Unknown',
                             // status text and color
                             status: statusText,
                             color: statusColor,
