@@ -101,10 +101,11 @@ class QuoteController extends GetxController {
     // Direct vendor information from API response
     String vendorId = (q.vendorID ?? '').trim();
     String vendorName = vendorId; // Use vendorID as name if name not available
+    final storage = GetStorage();
 
     // Fallback to storage if vendorId is empty
     if (vendorId.isEmpty) {
-      final raw = GetStorage().read(StorageKeys.preferredInsurer);
+      final raw = storage.read(StorageKeys.preferredInsurer);
       if (raw is Map && (raw['vendorID']?.toString().isNotEmpty ?? false)) {
         vendorId = raw['vendorID'].toString();
         vendorName = (raw['vendorName'] ?? vendorId).toString();
@@ -171,11 +172,12 @@ class QuoteController extends GetxController {
       'preferredInsurer': preferredInsurer,
       'items': items,
       'riskTypeID': riskTypeID,
+      'quoteID': q.invoiceNumber ?? '',
     };
 
     // Persist & navigate - but only if this is NOT from a fresh quote submission
     // Check if we have fresh quote data from get_quote_controller first
-    final existingEnquiry = GetStorage().read(StorageKeys.lastEnquiry) as Map?;
+    final existingEnquiry = storage.read(StorageKeys.lastEnquiry) as Map?;
     final hasFreshQuoteData =
         existingEnquiry != null && existingEnquiry['_source'] == 'fresh_quote';
 
@@ -193,10 +195,17 @@ class QuoteController extends GetxController {
         print(
             "   Item $i: ${item['itemsDescription']} - Has document: ${item.containsKey('screenShotURL')}");
       }
-      GetStorage().write(StorageKeys.lastEnquiry, ctx);
+      storage.write(StorageKeys.lastEnquiry, ctx);
     } else {
       print(
           "🚫 Skipping storage write - fresh quote data present with valid riskTypeID");
+      if (ctx['quoteID'].toString().isNotEmpty) {
+        final patched = Map<String, dynamic>.from(existingEnquiry);
+        patched['quoteID'] = ctx['quoteID'];
+        storage.write(StorageKeys.lastEnquiry, patched);
+        print(
+            '📝 Injected quoteID into existing enquiry for premium demand note');
+      }
     }
     Get.toNamed(AppRoutes.quoteSummary);
   }

@@ -73,6 +73,10 @@ class QuoteSummaryController extends GetxController {
   void _hydrateFromStorage() {
     final e = GetStorage().read(StorageKeys.lastEnquiry) as Map? ?? {};
     enquiry = Map<String, dynamic>.from(e);
+    final resolvedQuoteId = _resolveQuoteId();
+    if (resolvedQuoteId != null) {
+      enquiry['quoteID'] = resolvedQuoteId;
+    }
 
     insuranceClass.value = '${e['businessClassName'] ?? ''}';
     product.value = '${e['riskName'] ?? ''}';
@@ -382,7 +386,7 @@ class QuoteSummaryController extends GetxController {
   Future<Uint8List?> fetchPremiumDemandNoteBytes() async {
     try {
       // Get quoteID from stored enquiry data
-      final quoteID = enquiry['quoteID'] as String?;
+      final quoteID = _resolveQuoteId();
 
       if (quoteID == null || quoteID.isEmpty) {
         print('❌ PREMIUM_DEMAND_NOTE: No quote ID found in enquiry data');
@@ -423,5 +427,12 @@ class QuoteSummaryController extends GetxController {
       );
       return null;
     }
+  }
+
+  String? _resolveQuoteId() {
+    final raw = enquiry['quoteID'] ?? enquiry['caseId'] ?? enquiry['CaseId'];
+    if (raw == null) return null;
+    final value = raw.toString().trim();
+    return value.isEmpty ? null : value;
   }
 }
