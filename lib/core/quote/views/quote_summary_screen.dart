@@ -167,7 +167,7 @@ class QuoteSummaryScreen extends StatelessWidget {
                               ),
                               PolicyButton(
                                 text: 'Contest Payment',
-                                onPressed: qsc.showContestModal,
+                                onPressed: () => qsc.showContestModal(context),
                                 width: MediaQuery.of(context).size.width * 0.4,
                                 height: 44,
                                 bgColor: AppColors.orange,

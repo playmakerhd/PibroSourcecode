@@ -261,7 +261,8 @@ class EndorsementSummaryScreen extends StatelessWidget {
                                     Expanded(
                                       child: PolicyButton(
                                         text: 'Contest Payment',
-                                        onPressed: c.showContestModal,
+                                        onPressed: () =>
+                                            c.showContestModal(context),
                                         height: 44,
                                         width: queryWidth(context) * 0.40,
                                         bgColor: AppColors.orange,

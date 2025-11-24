@@ -46,10 +46,10 @@ class AuthRequest {
         (username.split(' ').length > 1 ? username.split(' ').last : '');
     map['LeadEmail'] = email;
     map['LeadPhone'] = phoneNumber;
-    map['LeadAddress1'] = 'sample string 9';
-    map['LeadCity'] = 'sample string 12';
-    map['LeadState'] = 'LAGOS';
-    map['LeadCountry'] = 'NIGERIA';
+    map['LeadAddress1'] = '';
+    map['LeadCity'] = '';
+    map['LeadState'] = '';
+    map['LeadCountry'] = 'Nigeria';
     map['LeadDateOfBirth'] = dateOfBirth ?? DateTime.now().toIso8601String();
     map['LeadFullName'] = '';
     map['LeadLogin'] = username;

@@ -3,19 +3,18 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pibro/internalization/app_strings.dart';
-import 'package:pibro/network/models/response/quotes_response.dart';
+import 'package:pibro/network/models/response/sales_quotation_response.dart';
 import 'package:pibro/shared/common_header.dart';
 import 'package:pibro/shared/empty_data.dart';
 import 'package:pibro/shared/item_row_container.dart';
 import 'package:pibro/shared/title_value_row.dart';
-import 'package:pibro/utils/api_utils.dart';
 import 'package:pibro/utils/app_utils.dart';
 import 'package:printing/printing.dart';
 
 class QuoteItemsScreen extends StatelessWidget {
   const QuoteItemsScreen({super.key, required this.itemsInsured});
 
-  final List<RequestDetails> itemsInsured;
+  final List<QuotationItem> itemsInsured;
 
   @override
   Widget build(BuildContext context) {
@@ -31,12 +30,12 @@ class QuoteItemsScreen extends StatelessWidget {
                 : ListView.builder(
                     itemCount: itemsInsured.length,
                     itemBuilder: (BuildContext context, int index) {
-                      RequestDetails item = itemsInsured[index];
+                      QuotationItem item = itemsInsured[index];
                       return Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 10.0),
                         child: ItemRowContainer(
-                          isPolicy: item.screenShotURL != null,
-                          isPolicyRenew: item.screenShotURL == null,
+                          isPolicy: item.policyItems != null,
+                          isPolicyRenew: item.policyItems == null,
                           child: Padding(
                             padding:
                                 const EdgeInsets.symmetric(horizontal: 5.0),
@@ -45,36 +44,26 @@ class QuoteItemsScreen extends StatelessWidget {
                               children: [
                                 TitleValueRow(
                                   title: '${AppStrings.description.tr}:',
-                                  value: getQuoteItemsData(item)[2],
+                                  value: item.itemsDescription ?? 'N/A',
                                 ),
                                 TitleValueRow(
                                   title: '${AppStrings.location.tr}:',
-                                  value: getQuoteItemsData(item)[1],
+                                  value: item.itemLocation ?? 'N/A',
                                 ),
                                 TitleValueRow(
                                   title: '${AppStrings.value.tr}(NGN):',
-                                  value: (() {
-                                    final raw = getQuoteItemsData(item)[0];
-                                    // Strip non-numeric characters except dot and minus
-                                    final cleaned = raw.replaceAll(
-                                        RegExp(r'[^0-9\.\-]'), '');
-                                    final parsed =
-                                        double.tryParse(cleaned) ?? 0.0;
-                                    return formatAmount(parsed);
-                                  })(),
+                                  value: formatAmount(item.sumInsured ?? 0.0),
                                 ),
                                 // Always show something in the image area for consistent layout
-                                if (item.screenShotURL != null &&
-                                    item.screenShotURL!.trim().isNotEmpty)
+                                if (item.policyItems != null &&
+                                    item.policyItems!.trim().isNotEmpty)
                                   Builder(
                                     builder: (context) {
                                       try {
-                                        final b64 =
-                                            item.screenShotURL!.contains(',')
-                                                ? item.screenShotURL!
-                                                    .split(',')
-                                                    .last
-                                                : item.screenShotURL!;
+                                        final b64 = item.policyItems!
+                                                .contains(',')
+                                            ? item.policyItems!.split(',').last
+                                            : item.policyItems!;
 
                                         // Validate base64 first
                                         final bytes = base64Decode(b64);

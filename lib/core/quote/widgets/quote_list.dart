@@ -3,11 +3,10 @@ import 'package:get/get.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:pibro/constants/app_colors.dart';
 import 'package:pibro/core/quote/controller/quote_controller.dart';
-import 'package:pibro/network/models/response/quotes_response.dart';
+import 'package:pibro/network/models/response/sales_quotation_response.dart';
 import 'package:pibro/shared/empty_data.dart';
 import 'package:pibro/shared/item_row_container.dart';
 import 'package:pibro/shared/widget/item_row_container_column.dart';
-import 'package:pibro/utils/api_utils.dart';
 import 'package:pibro/utils/app_utils.dart';
 
 class QuoteList extends StatelessWidget {
@@ -29,39 +28,43 @@ class QuoteList extends StatelessWidget {
                     itemCount: controller.quotes.length,
                     padding: EdgeInsets.only(top: 30, bottom: 20),
                     itemBuilder: (BuildContext context, int index) {
-                      final QuoteInfo quote = controller.quotes[index];
-                      // Determine status color: Completed -> green, Pending -> orange (yellow), otherwise default orange
+                      final SalesQuotationResponse quote =
+                          controller.quotes[index];
+                      // Determine status color based on NoteStatus
                       final String statusText =
-                          (quote.supportStatus ?? 'Pending').toString();
+                          (quote.noteStatus ?? 'Pending').toString();
                       Color statusColor = Colors.orange;
                       if (statusText.toLowerCase() == 'completed') {
                         statusColor = AppColors.activeGreen;
-                      } else if (statusText.toLowerCase() == 'pending') {
+                      } else if (statusText.toLowerCase() == 'pending' ||
+                          statusText.toLowerCase() == 'leadquote') {
                         statusColor = Colors.orange;
                       }
 
-                      // Safe date formatting with fallback
+                      // Format invoice date from API
                       String formattedDate = 'N/A';
                       try {
-                        if (quote.supportDate != null &&
-                            quote.supportDate!.isNotEmpty) {
-                          formattedDate = formatDate(quote.supportDate!);
+                        if (quote.invoiceDate != null &&
+                            quote.invoiceDate!.isNotEmpty) {
+                          formattedDate = formatDate(quote.invoiceDate!);
                         }
                       } catch (e) {
-                        formattedDate = quote.supportDate ?? 'N/A';
+                        formattedDate = quote.invoiceDate ?? 'N/A';
                       }
+
+                      // Calculate total sum insured from items
+                      double totalSumInsured = quote.sumInsured ?? 0.0;
 
                       return GestureDetector(
                         onTap: () => controller.navigateToQuoteDetails(quote),
                         child: ItemRowContainer(
                           isLarge: true,
                           child: ItemRowContainerColumn(
-                            id: quote.caseId ?? 'N/A',
+                            id: quote.invoiceNumber ?? 'N/A',
                             amount:
-                                'N${formatAmount(getQuoteSum(quote)).toString()}',
+                                'N${formatAmount(totalSumInsured).toString()}',
                             dates: formattedDate,
-                            type: quote.productId ?? 'Unknown',
-                            // status text and color
+                            type: quote.riskTypeID ?? 'Unknown',
                             status: statusText,
                             color: statusColor,
                           ),

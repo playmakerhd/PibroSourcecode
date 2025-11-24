@@ -14,11 +14,10 @@ class QuoteDetailsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final QuoteController controller = Get.put(QuoteController());
-    final bool isCompleted =
-        ((controller.selectedQuote.value?.supportStatus ?? '')
-                .toString()
-                .toLowerCase() ==
-            'completed');
+    final bool isCompleted = ((controller.selectedQuote.value?.noteStatus ?? '')
+            .toString()
+            .toLowerCase() ==
+        'completed');
     return Scaffold(
       backgroundColor: AppColors.tileColor,
       floatingActionButton: isCompleted

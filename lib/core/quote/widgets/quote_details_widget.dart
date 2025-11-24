@@ -3,18 +3,16 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:pibro/core/quote/views/quote_items_screen.dart';
 import 'package:pibro/internalization/app_strings.dart';
-import 'package:pibro/network/models/response/quotes_response.dart';
-import 'package:pibro/network/models/response/quote_info_extensions.dart';
+import 'package:pibro/network/models/response/sales_quotation_response.dart';
 import 'package:pibro/shared/item_row.dart';
 import 'package:pibro/constants/app_colors.dart';
-import 'package:pibro/utils/api_utils.dart';
 import 'package:pibro/utils/app_utils.dart';
 import 'package:pibro/utils/view_utils.dart';
 
 class QuoteDetailsWidget extends StatelessWidget {
   const QuoteDetailsWidget({super.key, required this.data});
 
-  final QuoteInfo data;
+  final SalesQuotationResponse data;
 
   String _prettyDate(String s) {
     if (s.isEmpty) return '';
@@ -44,39 +42,48 @@ class QuoteDetailsWidget extends StatelessWidget {
         children: [
           ItemRow(
             title: AppStrings.quoteId.tr,
-            value: data.caseId ?? 'N/A',
+            value: data.invoiceNumber ?? 'N/A',
           ),
           ItemRow(
             title: AppStrings.insuranceClass.tr,
-            value: getQuoteClass(data),
+            value: data.businessClassID ?? 'N/A',
           ),
           ItemRow(
             title: AppStrings.product.tr,
-            value: data.productId ?? 'Unknown',
+            value: data.riskTypeID ?? 'Unknown',
           ),
           ItemRow(
             title: AppStrings.startDate.tr,
-            value: _prettyDate(data.startDateRaw),
+            value: _prettyDate(data.startDate ?? ''),
           ),
           ItemRow(
             title: AppStrings.endDate.tr,
-            value: _prettyDate(data.endDateRaw),
+            value: _prettyDate(data.endDate ?? ''),
           ),
           ItemRow(
             title: AppStrings.renewalDate.tr,
-            value: _prettyDate(data.renewalDateRaw),
+            value: _prettyDate(data.renewaldate ?? ''),
           ),
           ItemRow(
             title: AppStrings.sumInsured.tr,
-            value: formatAmount(getQuoteSum(data)),
+            value: formatAmount(data.sumInsured ?? 0.0),
+          ),
+          ItemRow(
+            title: 'Premium Due',
+            value: formatAmount(data.premiumDue ?? 0.0),
+          ),
+          ItemRow(
+            title: 'Vendor/Insurer',
+            value: data.vendorID ?? 'N/A',
           ),
           // Status with color: Completed -> green, Pending -> orange
           Builder(builder: (ctx) {
-            final String statusText = (data.supportStatus ?? '').toString();
+            final String statusText = (data.noteStatus ?? '').toString();
             Color statusColor = Colors.orange;
             if (statusText.toLowerCase() == 'completed') {
               statusColor = AppColors.activeGreen;
-            } else if (statusText.toLowerCase() == 'pending') {
+            } else if (statusText.toLowerCase() == 'pending' ||
+                statusText.toLowerCase() == 'leadquote') {
               statusColor = Colors.orange;
             }
 
@@ -90,7 +97,7 @@ class QuoteDetailsWidget extends StatelessWidget {
             title: AppStrings.itemInsured.tr,
             value: AppStrings.view.tr,
             onTap: () => Get.to(
-              () => QuoteItemsScreen(itemsInsured: data.requestDetails ?? []),
+              () => QuoteItemsScreen(itemsInsured: data.itemsToInsure ?? []),
             ),
           ),
           // ItemRow(

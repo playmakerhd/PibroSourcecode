@@ -2,12 +2,11 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:get/get.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pibro/constants/app_colors.dart';
 import 'package:printing/printing.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:pibro/utils/app_utils.dart';
+import 'package:pibro/utils/view_utils.dart';
 
 /// Reusable bottom sheet widget to display Premium Demand Note PDF
 /// with preview, save, and share options.
@@ -28,13 +27,10 @@ void showPremiumDemandNoteSheet({
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (context) => Container(
-      height: MediaQuery.of(context).size.height * 0.9,
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+    isDismissible: true,
+    enableDrag: true,
+    builder: (context) => SizedBox(
+      height: MediaQuery.of(context).size.height * 0.85,
       child: _PremiumDemandNoteBottomSheet(
         fetchPdfBytes: fetchPdfBytes,
         quoteID: quoteID,
@@ -130,75 +126,55 @@ class _PremiumDemandNoteBottomSheetState
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // Header with close button
         Padding(
           padding: const EdgeInsets.all(16.0),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Premium Demand Note',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.primaryColor,
-                ),
-              ),
-              IconButton(
-                onPressed: () => Navigator.of(context).pop(),
-                icon: const Icon(Icons.close),
-                color: AppColors.primaryColor,
-              ),
-            ],
-          ),
-        ),
-        // Action buttons
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: isLoading || hasError || _pdfBytes == null
-                      ? null
-                      : () async {
-                          await _saveWithFilePicker();
-                        },
-                  icon: _saveLoading
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.save),
-                  label: Text(_saveLoading ? 'Saving...' : 'Save'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryColor,
-                    foregroundColor: Colors.white,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: isLoading || hasError || _pdfBytes == null
-                      ? null
-                      : () async {
-                          await _sharePdf();
-                        },
-                  icon: _shareLoading
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.share),
-                  label: Text(_shareLoading ? 'Preparing...' : 'Share'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryColor,
-                    foregroundColor: Colors.white,
-                  ),
+              Flexible(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    ElevatedButton.icon(
+                      onPressed: isLoading || hasError || _pdfBytes == null
+                          ? null
+                          : () async {
+                              await _saveWithFilePicker();
+                            },
+                      icon: _saveLoading
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.save),
+                      label: Text(_saveLoading ? 'Saving...' : 'Save'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryColor,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton.icon(
+                      onPressed: isLoading || hasError || _pdfBytes == null
+                          ? null
+                          : () async {
+                              await _sharePdf();
+                            },
+                      icon: _shareLoading
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.share),
+                      label: Text(_shareLoading ? 'Preparing...' : 'Share'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryColor,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -332,32 +308,23 @@ class _PremiumDemandNoteBottomSheetState
 
       if (outputFile != null) {
         // File was saved successfully by FilePicker
-        Get.snackbar(
-          'Success',
-          'Premium demand note saved to:\n$outputFile',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
+        showSnackbarMessage(
+          message: 'Premium demand note saved to:\n$outputFile',
+          isSuccess: true,
         );
         Navigator.of(context).pop();
       } else {
         // User cancelled
-        Get.snackbar(
-          'Cancelled',
-          'Save cancelled',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.orange,
-          colorText: Colors.white,
+        showSnackbarMessage(
+          message: 'Save cancelled',
+          isWarning: true,
         );
       }
     } catch (e) {
       print('Error saving premium demand note with file picker: $e');
-      Get.snackbar(
-        'Error',
-        'Error saving premium demand note: $e',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+      showSnackbarMessage(
+        message: 'Error saving premium demand note: $e',
+        isSuccess: false,
       );
     } finally {
       setState(() {
@@ -380,19 +347,21 @@ class _PremiumDemandNoteBottomSheetState
       final fileName =
           'premium_demand_note_${widget.quoteID.replaceAll('/', '_')}_${DateTime.now().millisecondsSinceEpoch}.pdf';
       final tempFile = File('${tempDir.path}/$fileName');
-      await tempFile.writeAsBytes(_pdfBytes!);
+
+      try {
+        await tempFile.parent.create(recursive: true);
+      } catch (_) {}
+
+      await tempFile.writeAsBytes(_pdfBytes!, flush: true);
 
       // Use share_plus to open system share sheet
       await Share.shareXFiles([XFile(tempFile.path)],
           text: 'Premium Demand Note - ${widget.quoteID}');
     } catch (e) {
       print('Error sharing premium demand note: $e');
-      Get.snackbar(
-        'Error',
-        'Error sharing premium demand note: $e',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+      showSnackbarMessage(
+        message: 'Error sharing premium demand note: $e',
+        isSuccess: false,
       );
     } finally {
       setState(() {

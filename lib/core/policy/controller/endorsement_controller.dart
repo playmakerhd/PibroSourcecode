@@ -697,64 +697,91 @@ class EndorsementController extends GetxController {
     }
   }
 
-  void showContestModal() {
-    showAppDialog(
-      SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SizedBox(
-              height: 10,
-            ),
-            Text(
-              'Contest Payment',
-              style: Styles.semiBoldTextStyle(
-                size: 16,
-                color: AppColors.primaryColor,
+  void showContestModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) {
+        final bottomInset = MediaQuery.of(sheetContext).viewInsets.bottom;
+        return Padding(
+          padding: EdgeInsets.only(bottom: bottomInset),
+          child: SafeArea(
+            top: false,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 42,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: AppColors.greyColor.withOpacity(0.4),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Center(
+                    child: Text(
+                      'Contest Payment',
+                      style: Styles.semiBoldTextStyle(
+                        size: 16,
+                        color: AppColors.primaryColor,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  CustomInput(
+                    controller: contestSubjectController,
+                    hint: 'Subject',
+                    label: 'Subject',
+                    height: 35,
+                  ),
+                  const SizedBox(height: 12),
+                  CustomInput(
+                    controller: contestMessageController,
+                    hint: 'Message',
+                    label: 'Message',
+                    maxLines: 3,
+                    height: 75,
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      PolicyButton(
+                        text: 'Cancel',
+                        onPressed: () => Get.back(),
+                        width: 80,
+                        height: 35,
+                        bgColor: AppColors.primaryColor,
+                      ),
+                      Obx(
+                        () => PolicyButton(
+                          text: 'Submit',
+                          onPressed:
+                              contestLoading.value ? () {} : submitContest,
+                          loading: contestLoading.value,
+                          width: 80,
+                          height: 35,
+                          bgColor: AppColors.primaryColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 5),
-            CustomInput(
-              controller: contestSubjectController,
-              hint: 'Subject',
-              label: 'Subject',
-              height: 35,
-            ),
-            const SizedBox(height: 8),
-            CustomInput(
-              controller: contestMessageController,
-              hint: 'Message',
-              label: 'Message',
-              maxLines: 3,
-              height: 75,
-            ),
-            const SizedBox(height: 5),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                PolicyButton(
-                  text: 'Cancel',
-                  onPressed: () => Get.back(),
-                  width: 80,
-                  height: 35,
-                  bgColor: AppColors.primaryColor,
-                ),
-                Obx(
-                  () => PolicyButton(
-                    text: 'Submit',
-                    onPressed: contestLoading.value ? () {} : submitContest,
-                    loading: contestLoading.value,
-                    width: 80,
-                    height: 35,
-                    bgColor: AppColors.primaryColor,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-      height: 340,
+          ),
+        );
+      },
     );
   }
 
@@ -859,6 +886,8 @@ class EndorsementController extends GetxController {
         renewalDate:
             endDate.value?.add(const Duration(days: 1)).toIso8601String() ?? '',
         itemsToInsure: items,
+        premiumDescription:
+            'Quotation on policy endorsement on ${policy.value?.policyBrokerID ?? ''}',
       );
 
       final createRes = await repo.createSalesQuotation(payload);

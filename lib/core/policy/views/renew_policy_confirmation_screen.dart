@@ -135,7 +135,8 @@ class RenewPolicyConfirmationScreen extends StatelessWidget {
                           ),
                           PolicyButton(
                             text: 'Contest Payment',
-                            onPressed: controller.showContestModal,
+                            onPressed: () =>
+                                controller.showContestModal(context),
                             height: 50,
                             width: queryWidth(context) * 0.4,
                             bgColor: AppColors.orange,

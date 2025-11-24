@@ -485,7 +485,8 @@ class ApiUtils {
   }) {
     LoginData loginData =
         LoginData.fromJson(convertToJsonStringQuotes(StorageKeys.loginData));
-    dynamic userId = decryptData(StorageKeys.signupData);
+    final entityID =
+        resolveEntityID(loginCustomerID: loginData.customerID) ?? '';
 
     final formattedStartDate = formatDate(startDate);
     final formattedEndDate = formatDate(endDate);
@@ -495,7 +496,7 @@ class ApiUtils {
       "DivisionID": "",
       "DepartmentID": "",
       "CaseId": "",
-      "CustomerId": userId ?? loginData.customerID,
+      "CustomerId": entityID,
       "ProductId": product,
       "SupportDate": DateTime.now().toIso8601String(),
       // Human readable keywords (use name) but persist canonical ID in SupportRequestMethod
@@ -534,11 +535,12 @@ class ApiUtils {
     required String renewalDate,
     required List<Map<String, dynamic>> itemsToInsure,
     String? vendorID,
+    String? premiumDescription,
   }) {
     LoginData loginData =
         LoginData.fromJson(convertToJsonStringQuotes(StorageKeys.loginData));
-    dynamic userId = decryptData(StorageKeys.signupData);
-    final entityID = userId ?? loginData.customerID;
+    final entityID =
+        resolveEntityID(loginCustomerID: loginData.customerID) ?? '';
 
     // Transform items to Sales Quotation format
     final transformedItems = itemsToInsure.map((item) {
@@ -563,7 +565,9 @@ class ApiUtils {
       "VendorID": vendorID ?? "ADIC",
       "BusinessClassID": businessClassID,
       "RiskTypeID": riskTypeID,
-      "PremiumDescription": "PREMIUM DEMAND NOTE FOR",
+      "PremiumDescription": premiumDescription?.isNotEmpty == true
+          ? premiumDescription
+          : "PREMIUM DEMAND NOTE FOR",
       "InvoiceDate": DateTime.now().toIso8601String(),
       "StartDate": startDate,
       "EndDate": endDate,
@@ -633,7 +637,8 @@ class ApiUtils {
   static Map<String, dynamic> sendPolicyToBroker(PolicyData policyData) {
     LoginData loginData =
         LoginData.fromJson(convertToJsonStringQuotes(StorageKeys.loginData));
-    dynamic userId = decryptData(StorageKeys.signupData);
+    final entityID =
+        resolveEntityID(loginCustomerID: loginData.customerID) ?? '';
     final itemList =
         policyData.itemsToInsure!.map((item) => item.toJson()).toList();
     return {
@@ -641,7 +646,7 @@ class ApiUtils {
       "DivisionID": policyData.divisionID,
       "DepartmentID": policyData.departmentID,
       "CaseId": "",
-      "CustomerId": userId ?? loginData.customerID,
+      "CustomerId": entityID,
       "ProductId": policyData.riskTypeID,
       "SupportDate": DateTime.now().toIso8601String(),
       "SupportKeywords":

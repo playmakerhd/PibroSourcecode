@@ -67,6 +67,24 @@ void persistSignupID(String id) {
   encryptData(key: StorageKeys.signupData, value: id);
 }
 
+/// Returns the best available entity identifier (CustomerID/LeadID).
+/// Prefers the current login data (which reflects Lead→Customer promotion)
+/// and falls back to the originally stored signup ID when login data is empty.
+String? resolveEntityID({String? loginCustomerID}) {
+  final loginId = loginCustomerID?.trim();
+  if (loginId != null && loginId.isNotEmpty) {
+    return loginId;
+  }
+
+  final storedSignup = decryptData(StorageKeys.signupData);
+  if (storedSignup == null) {
+    return null;
+  }
+
+  final signupId = storedSignup.toString().trim();
+  return signupId.isEmpty ? null : signupId;
+}
+
 void encryptData({required String key, String value = ''}) {
   final encryptKey = encrypt.Key.fromUtf8(key);
   final iv = encrypt.IV.fromUtf8('HgNRbGHbDS3Pibro');

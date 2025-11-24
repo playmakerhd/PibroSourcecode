@@ -6,7 +6,7 @@ import 'package:pibro/constants/storage_keys.dart';
 import 'package:pibro/internalization/app_strings.dart';
 import 'package:pibro/navigation/routes.dart';
 import 'package:pibro/network/api/api_provider.dart';
-import 'package:pibro/network/models/response/quotes_response.dart';
+import 'package:pibro/network/models/response/sales_quotation_response.dart';
 import 'package:pibro/network/repository/pibro_repository.dart';
 import 'package:pibro/utils/api_utils.dart';
 import 'package:pibro/utils/app_utils.dart';
@@ -16,8 +16,8 @@ class QuoteController extends GetxController {
   PibroRepository pibroRepository =
       PibroRepository(appApiProvider: ApiProvider());
   RxBool quoteLoading = false.obs;
-  RxList<QuoteInfo> quotes = RxList<QuoteInfo>([]);
-  Rxn<QuoteInfo> selectedQuote = Rxn<QuoteInfo>();
+  RxList<SalesQuotationResponse> quotes = RxList<SalesQuotationResponse>([]);
+  Rxn<SalesQuotationResponse> selectedQuote = Rxn<SalesQuotationResponse>();
 
   Future<void> getQuotes({String? status}) async {
     quoteLoading.value = true;
@@ -27,126 +27,82 @@ class QuoteController extends GetxController {
       String? entityID;
 
       if (loginData != null) {
-        final data = jsonDecode(loginData);
-        entityID = data['customerID'] as String?;
+        if (loginData is Map) {
+          // Try different case variations of customerID
+          entityID = loginData['customerID'] as String? ??
+              loginData['CustomerID'] as String? ??
+              loginData['customerId'] as String?;
+          print(
+              '📋 LoginData (Map): customerID=$entityID, entityType=${loginData['entityType']}');
+        } else if (loginData is String) {
+          print('📋 LoginData is String, attempting to parse...');
+          try {
+            final data = jsonDecode(loginData);
+            if (data is Map) {
+              entityID = data['customerID'] as String? ??
+                  data['CustomerID'] as String? ??
+                  data['customerId'] as String?;
+            }
+          } catch (e) {
+            print('⚠️ Failed to parse loginData string: $e');
+            // Fallback: handle Map-style string e.g. {customerID: lead/22, ...}
+            entityID = _extractEntityIdFromRawString(loginData);
+            if (entityID != null) {
+              print('🔁 Extracted entityID using fallback parser: $entityID');
+            }
+          }
+        }
       }
 
       if (entityID == null || entityID.isEmpty) {
-        showSnackbarMessage(message: 'User not logged in', isSuccess: false);
         quoteLoading.value = false;
+        print('⚠️ No entity ID found - user may not be logged in');
         return;
       }
 
-      // Use new Sales Quotation API
+      print('✅ Using entityID: $entityID');
+
+      // Use Sales Quotation API - directly parse to SalesQuotationResponse
       final response = await pibroRepository.getSalesQuotationsByEntityID(
         entityID: entityID,
         pageNum: 1,
         size: 1000,
       );
 
-      // Convert Sales Quotation response to QuoteInfo format for backward compatibility
+      // Map API response directly to SalesQuotationResponse model
       quotes.value = response.isEmpty
           ? []
           : response
-              .map((item) => _convertSalesQuotationToQuoteInfo(item))
+              .map((item) => SalesQuotationResponse.fromJson(item))
               .toList();
 
       quoteLoading.value = false;
     } catch (e) {
       quoteLoading.value = false;
-      showSnackbarMessage(
-          message: AppStrings.genericErrorMessage.tr, isSuccess: false);
+      print('❌ Error fetching quotes: $e');
+      // Don't show snackbar during initialization to avoid controller errors
+      // Error will be visible via empty state in UI
     }
   }
 
-  // Convert Sales Quotation response to QuoteInfo format
-  QuoteInfo _convertSalesQuotationToQuoteInfo(Map<String, dynamic> salesQuote) {
-    // Extract values with null safety
-    final invoiceNumber = salesQuote['InvoiceNumber'] ?? '';
-    final sumInsured = salesQuote['SumInsured'] ?? 0.0;
-    final premiumDue = salesQuote['PremiumDue'] ?? 0.0;
-    final invoiceDate = salesQuote['InvoiceDate'] ?? '';
-    final riskTypeID = salesQuote['RiskTypeID'] ?? '';
-    final noteStatus = salesQuote['NoteStatus'] ?? 'Pending';
-    final itemsToInsure = salesQuote['ItemsToInsure'] as List? ?? [];
-
-    // Convert items to RequestDetails format
-    final requestDetails = itemsToInsure.map((item) {
-      final sumInsuredValue = item['SumInsured'];
-      final valueDouble =
-          sumInsuredValue is num ? sumInsuredValue.toDouble() : 0.0;
-
-      return RequestDetails(
-        caseID: invoiceNumber,
-        subject: item['ItemsDescription'] ?? '',
-        message: item['ItemsDescription'] ?? '',
-        screenShotURL: item['PolicyItems'] ?? '',
-        caseIDDetail: 0,
-        value: valueDouble,
-      );
-    }).toList();
-
-    return QuoteInfo(
-      caseId: invoiceNumber, // Use InvoiceNumber as caseId (e.g., QN/11)
-      customerId: salesQuote['CustomerID'] ?? '',
-      productId: riskTypeID,
-      supportManager: salesQuote['VendorID'] ?? '',
-      supportAssignedTo: salesQuote['VendorID'] ?? '',
-      supportRequestMethod: salesQuote['BusinessClassID'] ?? '',
-      supportStatus: noteStatus,
-      supportType: 'Quote',
-      supportDate: invoiceDate,
-      supportKeywords:
-          'Quote, ${salesQuote['BusinessClassID'] ?? ''}, $riskTypeID',
-      supportDescription: salesQuote['PremiumDescription'] ?? '',
-      supportScreenShotURL: sumInsured.toString(), // Store sum insured here
-      supportResolution: premiumDue.toString(), // Store premium here
-      supportEnquiryDate: salesQuote['StartDate'] ?? '',
-      supportEnquiryLapseDate: salesQuote['EndDate'] ?? '',
-      requestDetails: requestDetails,
-      quoteRequest: true,
-      supportApproved: salesQuote['QuotationCleared'] ?? false,
-    );
-  }
-
-  void navigateToQuoteDetails(QuoteInfo data) {
+  void navigateToQuoteDetails(SalesQuotationResponse data) {
     selectedQuote.value = data;
     Get.toNamed(AppRoutes.quoteDetail);
   }
 
   /// Build the summary/payment context from the selected quote and navigate.
-  void navigateToQuoteSummaryForPayment({QuoteInfo? quote}) {
+  void navigateToQuoteSummaryForPayment({SalesQuotationResponse? quote}) {
     final q = quote ?? selectedQuote.value;
     if (q == null) {
       showSnackbarMessage(message: 'Select a quote first', isWarning: true);
       return;
     }
 
-    // --- vendor from structured fields (preferred) ---
-    String vendorId = (q.supportAssignedTo ?? '').toString().trim();
-    String vendorName = (q.supportManager ?? '').toString().trim();
+    // Direct vendor information from API response
+    String vendorId = (q.vendorID ?? '').trim();
+    String vendorName = vendorId; // Use vendorID as name if name not available
 
-    // --- fallback: parse VendorID/Manager from SupportDescription ---
-    final desc = (q.supportDescription ?? '').toString();
-    if (vendorId.isEmpty && desc.isNotEmpty) {
-      final m = RegExp(r'VendorID\s*[:\-]?\s*([^,\n]+)', caseSensitive: false)
-          .firstMatch(desc);
-      if (m != null) vendorId = (m.group(1) ?? '').trim();
-    }
-    if (vendorName.isEmpty && desc.isNotEmpty) {
-      final m =
-          RegExp(r'Vendor(Name)?\s*[:\-]?\s*([^,\n]+)', caseSensitive: false)
-              .firstMatch(desc);
-      if (m != null) {
-        // group(2) contains the actual name when using the (Name)? capture
-        vendorName =
-            (m.groupCount >= 2 ? (m.group(2) ?? '') : (m.group(1) ?? ''))
-                .trim();
-      }
-    }
-    if (vendorName.isEmpty && vendorId.isNotEmpty) vendorName = vendorId;
-
-    // --- optional fallback: previously picked preferredInsurer from storage ---
+    // Fallback to storage if vendorId is empty
     if (vendorId.isEmpty) {
       final raw = GetStorage().read(StorageKeys.preferredInsurer);
       if (raw is Map && (raw['vendorID']?.toString().isNotEmpty ?? false)) {
@@ -168,86 +124,53 @@ class QuoteController extends GetxController {
       'vendorName': vendorName,
     };
 
-    // --- items: prefer fields from RequestDetails.message for Description & Location ---
+    // Build items list directly from ItemsToInsure
     final items = <Map<String, dynamic>>[];
-    final details = q.requestDetails ?? const <RequestDetails>[];
-    for (final it in details) {
-      final msg = (it.message ?? '').toString();
+    final itemsToInsure = q.itemsToInsure ?? [];
+    for (final item in itemsToInsure) {
+      final itemMap = {
+        'itemsDescription': item.itemsDescription ?? 'Item',
+        'sumInsured': item.sumInsured ?? 0.0,
+      };
 
-      // Description: try explicit fields then Message parsing then subject fallback
-      String descTxt = (it.subject ?? '').toString();
-      final md = RegExp(r'Description\s*[:\-\s]*([^,]+)', caseSensitive: false)
-          .firstMatch(msg);
-      if (md != null) descTxt = (md.group(1) ?? '').trim();
-      if (descTxt.isEmpty) {
-        descTxt = (it.subject ?? it.message ?? 'Item').toString();
+      if (item.itemLocation?.isNotEmpty ?? false) {
+        itemMap['itemLocation'] = item.itemLocation!;
       }
 
-      // Location: parse from Message if present
-      String loc = '';
-      final ml = RegExp(r'Location\s*[:\-\s]*([^,]+)', caseSensitive: false)
-          .firstMatch(msg);
-      if (ml != null) loc = (ml.group(1) ?? '').trim();
-
-      final val =
-          double.tryParse('${it.value ?? 0}'.toString().replaceAll(',', '')) ??
-              0.0;
-
-      final itemMap = {
-        'itemsDescription': descTxt,
-        'sumInsured': val,
-      };
-      if (loc.isNotEmpty) itemMap['itemLocation'] = loc;
-
-      // *** CRITICAL: Include document/attachment data from screenShotURL ***
-      if (it.screenShotURL?.isNotEmpty ?? false) {
-        itemMap['screenShotURL'] = it.screenShotURL!;
+      // Include document/attachment data if present
+      if (item.policyItems?.isNotEmpty ?? false) {
+        itemMap['screenShotURL'] = item.policyItems!;
         print(
-            '📎 Including document for item: $descTxt -> ${it.screenShotURL!.length} chars');
+            '📎 Including document for item: ${item.itemsDescription} -> ${item.policyItems!.length} chars');
       }
 
       items.add(itemMap);
     }
 
-    // Dates: fall back safely if API didn’t set them
-    final dates = getQuoteDates(q); // [start, end, renewal] as strings
-    String startStr = dates.isNotEmpty ? dates[0] : '';
-    String endStr = dates.length > 1 ? dates[1] : '';
-    String renewalStr = dates.length > 2 ? dates[2] : '';
+    // Direct date extraction from API response
+    String startStr = q.startDate ?? '';
+    String endStr = q.endDate ?? '';
+    String renewalStr = q.renewaldate ?? '';
 
-    // Build context (keep previous fields) — prefer numeric types where possible
-    final premium =
-        double.tryParse((q.supportResolution ?? '').replaceAll(',', '')) ?? 0.0;
-    final sumInsured =
-        double.tryParse((q.supportScreenShotURL ?? '').replaceAll(',', '')) ??
-            0.0;
-
-    // Primary source of truth for BusinessClassID is SupportRequestMethod
-    String businessClassId = (q.supportRequestMethod ?? '').toString().trim();
-    if (businessClassId.isEmpty) {
-      businessClassId = (q.productId ?? '').toString().trim();
-    }
-    if (businessClassId.isEmpty && (q.supportDescription ?? '').isNotEmpty) {
-      final m =
-          RegExp(r'BusinessClassID\s*[:\-]?\s*([^,\n]+)', caseSensitive: false)
-              .firstMatch(q.supportDescription!);
-      if (m != null) businessClassId = (m.group(1) ?? '').trim();
-    }
+    // Direct values from API response
+    final premium = q.premiumDue ?? 0.0;
+    final sumInsured = q.sumInsured ?? 0.0;
+    final businessClassId = q.businessClassID ?? '';
+    final riskTypeID = q.riskTypeID ?? '';
 
     final ctx = {
-      'caseId': q.caseId,
+      'caseId': q.invoiceNumber,
       'premium': premium,
       'sumInsured': sumInsured,
-      'riskName': q.productId,
-      'businessClassName': getQuoteClass(q),
-      // canonical BCID for later create-policy flows
+      'riskName': riskTypeID,
+      'businessClassName': businessClassId,
       'businessClassID': businessClassId,
       'startDate': startStr,
       'endDate': endStr,
       'renewalDate': renewalStr,
       'preferredInsurer': preferredInsurer,
       'items': items,
-      'riskTypeID': q.productId?.toString(),
+      'riskTypeID': riskTypeID,
     };
 
     // Persist & navigate - but only if this is NOT from a fresh quote submission
@@ -308,6 +231,15 @@ class QuoteController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    getQuotes();
+    // Defer the API call slightly to ensure navigation context is ready
+    Future.delayed(Duration(milliseconds: 100), () {
+      getQuotes();
+    });
+  }
+
+  String? _extractEntityIdFromRawString(String raw) {
+    final match = RegExp(r'customerID\s*:\s*([^,}]+)', caseSensitive: false)
+        .firstMatch(raw);
+    return match?.group(1)?.trim();
   }
 }

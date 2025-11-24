@@ -410,15 +410,30 @@ class ApiProvider extends BaseProvider {
     final resp = await makeGetCall(endpoint, false);
 
     print('📦 API_RESPONSE: Received response');
-    print('   Response type: ${resp.runtimeType}');
-    if (resp != null) {
-      final list = resp as List<dynamic>;
-      print('   List length: ${list.length}');
-    } else {
+    if (resp == null) {
       print('   Response is null!');
+      return [];
     }
 
-    return resp as List<dynamic>; // Returns array of SalesQuotationResponse
+    try {
+      final bodyBytes = resp.response?.bodyBytes;
+      if (bodyBytes == null) {
+        print('   Response body is empty');
+        return [];
+      }
+
+      final decoded = json.decode(utf8.decode(bodyBytes));
+      if (decoded is List) {
+        print('   List length: ${decoded.length}');
+        return decoded;
+      } else {
+        print('   Unexpected response shape: ${decoded.runtimeType}');
+        return [];
+      }
+    } catch (e) {
+      print('   Failed to decode response: $e');
+      return [];
+    }
   }
 
   // Create Policy (new policy path after Paystack)
