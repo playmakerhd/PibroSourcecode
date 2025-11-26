@@ -41,20 +41,44 @@ class QuoteSummaryScreen extends StatelessWidget {
     return dateStr;
   }
 
+  double _parsePremium(dynamic premium) {
+    if (premium == null) return 0.0;
+    if (premium is num) return premium.toDouble();
+    final sanitized = premium.toString().replaceAll(',', '').trim();
+    return double.tryParse(sanitized) ?? 0.0;
+  }
+
+  double _calculateAppliedCharge(double premium) {
+    if (premium <= 0) return 0.0;
+    final usualCharge = premium * 0.015;
+    final extraCharge = premium > 2500 ? usualCharge + 100 : usualCharge;
+    return extraCharge > 2000 ? 2000 : extraCharge;
+  }
+
   const QuoteSummaryScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final c = Get.put(QuoteSummaryController());
+    final summaryController = Get.put(QuoteSummaryController());
 
     // Try to get data from arguments first, then fallback to storage
     final e = Get.arguments as Map? ?? {};
     final store = GetStorage();
     final enquiry = (store.read(StorageKeys.lastEnquiry) as Map?) ?? {};
-    final customerid = c.extractCustomerId();
+    final customerId = summaryController.extractCustomerId();
 
     // Use arguments if available, otherwise use stored enquiry data
     final data = e.isNotEmpty ? e : enquiry;
+    final premiumValue = _parsePremium(data['premium']);
+    final appliedCharge =
+        premiumValue > 0 ? _calculateAppliedCharge(premiumValue) : 0.0;
+    final totalDue = premiumValue > 0 ? premiumValue + appliedCharge : 0.0;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final quotePaymentController = premiumValue > 0
+        ? (Get.isRegistered<QuotePaymentController>()
+            ? Get.find<QuotePaymentController>()
+            : Get.put(QuotePaymentController()))
+        : null;
 
     return Scaffold(
       backgroundColor: AppColors.white,
@@ -68,10 +92,7 @@ class QuoteSummaryScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 2),
               child: ListView(
                 children: [
-                  DetailRow(title: 'Customer ID:', value: customerid),
-                  // DetailRow(
-                  //     title: 'Customer Name:',
-                  //     value: '${data['customerName'] ?? 'N/A'}'),
+                  DetailRow(title: 'Customer ID:', value: customerId),
                   DetailRow(
                       title: 'Insurance Class:',
                       value: '${data['businessClassName'] ?? 'N/A'}'),
@@ -92,155 +113,112 @@ class QuoteSummaryScreen extends StatelessWidget {
                       value: formatAmount(data['sumInsured'])),
                   DetailRow(
                       title: 'Premium Due(NGN):',
-                      value: formatAmount(data['premium'])),
-                  // If payment will be made, show Paystack charges and total due
-                  Builder(builder: (context) {
-                    double premiumVal = 0.0;
-                    try {
-                      premiumVal = double.parse('${data['premium'] ?? 0}');
-                    } catch (_) {
-                      try {
-                        premiumVal = (data['premium'] as num).toDouble();
-                      } catch (_) {
-                        premiumVal = 0.0;
-                      }
-                    }
-                    if (premiumVal <= 0) return const SizedBox.shrink();
-                    final double usualCharge = premiumVal * 0.015;
-                    final double extraCharge =
-                        (premiumVal > 2500 ? (usualCharge + 100) : usualCharge);
-                    final double appliedCharge =
-                        (extraCharge > 2000 ? 2000 : extraCharge);
-                    final double totalDue = premiumVal + appliedCharge;
-                    return Column(
-                      children: [
-                        DetailRow(
-                            title: 'Charges (NGN):',
-                            value: formatAmount(appliedCharge)),
-                        DetailRow(
-                            title: 'Total Payment Due (NGN):',
-                            value: formatAmount(totalDue)),
-                      ],
-                    );
-                  }),
+                      value: formatAmount(premiumValue)),
+                  if (premiumValue > 0) ...[
+                    DetailRow(
+                        title: 'Charges (NGN):',
+                        value: formatAmount(appliedCharge)),
+                    DetailRow(
+                        title: 'Total Payment Due (NGN):',
+                        value: formatAmount(totalDue)),
+                  ],
                   const SizedBox(height: 28),
-                  // Show Make Payment and Contest buttons when premium due is not zero
-                  Builder(builder: (context) {
-                    double premiumVal = 0.0;
-                    try {
-                      premiumVal = double.parse('${data['premium'] ?? 0}');
-                    } catch (_) {
-                      try {
-                        premiumVal = (data['premium'] as num).toDouble();
-                      } catch (_) {
-                        premiumVal = 0.0;
-                      }
-                    }
-
-                    final qsc = Get.put(QuoteSummaryController());
-
-                    if (premiumVal > 0) {
-                      // Show payment buttons
-                      return Column(
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              GetBuilder<QuotePaymentController>(
-                                init: Get.isRegistered<QuotePaymentController>()
-                                    ? Get.find<QuotePaymentController>()
-                                    : Get.put(QuotePaymentController()),
-                                builder: (qp) => Obx(() => PolicyButton(
-                                      text: 'Make Payment',
-                                      onPressed: () {
-                                        if (!qp.paymentLoading.value) {
-                                          qp.paymentLoading.value = true;
-                                          qp.beginPayment();
-                                        }
-                                      },
-                                      width: MediaQuery.of(context).size.width *
-                                          0.4,
-                                      height: 44,
-                                      bgColor: AppColors.primaryColor,
-                                      loading: qp.paymentLoading.value,
-                                    )),
-                              ),
-                              PolicyButton(
-                                text: 'Contest Payment',
-                                onPressed: () => qsc.showContestModal(context),
-                                width: MediaQuery.of(context).size.width * 0.4,
+                  if (premiumValue > 0 && quotePaymentController != null)
+                    Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            Obx(() {
+                              final isLoading =
+                                  quotePaymentController.paymentLoading.value;
+                              return PolicyButton(
+                                text: 'Make Payment',
+                                onPressed: isLoading
+                                    ? () {}
+                                    : () =>
+                                        quotePaymentController.beginPayment(),
+                                width: screenWidth * 0.4,
                                 height: 44,
-                                bgColor: AppColors.orange,
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          GestureDetector(
-                            onTap: () {
-                              final quoteID = qsc.enquiry['quoteID'] as String?;
-                              if (quoteID != null && quoteID.isNotEmpty) {
-                                showPremiumDemandNoteSheet(
-                                  context: context,
-                                  fetchPdfBytes:
-                                      qsc.fetchPremiumDemandNoteBytes,
-                                  quoteID: quoteID,
-                                );
-                              } else {
-                                showSnackbarMessage(
-                                  message: 'No quote ID available',
-                                  isSuccess: false,
-                                );
-                              }
-                            },
-                            child: Container(
+                                bgColor: AppColors.primaryColor,
+                                loading: isLoading,
+                              );
+                            }),
+                            PolicyButton(
+                              text: 'Contest Payment',
+                              onPressed: () =>
+                                  summaryController.showContestModal(context),
+                              width: screenWidth * 0.4,
                               height: 44,
-                              width: MediaQuery.of(context).size.width * 0.7,
-                              decoration: BoxDecoration(
-                                color: AppColors.primaryColor,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Center(
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.print,
+                              bgColor: AppColors.orange,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        GestureDetector(
+                          onTap: () {
+                            final quoteId =
+                                summaryController.enquiry['quoteID'] as String?;
+                            if (quoteId != null && quoteId.isNotEmpty) {
+                              showPremiumDemandNoteSheet(
+                                context: context,
+                                fetchPdfBytes: summaryController
+                                    .fetchPremiumDemandNoteBytes,
+                                quoteID: quoteId,
+                              );
+                            } else {
+                              showSnackbarMessage(
+                                message: 'No quote ID available',
+                                isSuccess: false,
+                              );
+                            }
+                          },
+                          child: Container(
+                            height: 44,
+                            width: screenWidth * 0.7,
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryColor,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Center(
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.print,
+                                    color: AppColors.white,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Print Premium Demand Note',
+                                    style: TextStyle(
                                       color: AppColors.white,
-                                      size: 20,
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
                                     ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      'Print Premium Demand Note',
-                                      style: TextStyle(
-                                        color: AppColors.white,
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
-                          const SizedBox(height: 30),
-                          PolicyButton(
-                            text: 'Cancel',
-                            onPressed: () => Get.offNamed(AppRoutes.quoteList),
-                            width: 120,
-                            bgColor: AppColors.greyColor,
-                          ),
-                        ],
-                      );
-                    } else {
-                      // Show only cancel button when no payment needed
-                      return PolicyButton(
-                        text: 'Cancel',
-                        onPressed: () => Get.offAllNamed(AppRoutes.quoteList),
-                        width: 120,
-                        bgColor: AppColors.greyColor,
-                      );
-                    }
-                  }),
+                        ),
+                        const SizedBox(height: 30),
+                        PolicyButton(
+                          text: 'Cancel',
+                          onPressed: () => Get.offNamed(AppRoutes.quoteList),
+                          width: 120,
+                          bgColor: AppColors.greyColor,
+                        ),
+                      ],
+                    )
+                  else
+                    PolicyButton(
+                      text: 'Cancel',
+                      onPressed: () => Get.offAllNamed(AppRoutes.quoteList),
+                      width: 120,
+                      bgColor: AppColors.greyColor,
+                    ),
                   const SizedBox(height: 20),
                 ],
               ),

@@ -78,14 +78,11 @@ class QuoteDetailsWidget extends StatelessWidget {
           ),
           // Status with color: Completed -> green, Pending -> orange
           Builder(builder: (ctx) {
-            final String statusText = (data.noteStatus ?? '').toString();
-            Color statusColor = Colors.orange;
-            if (statusText.toLowerCase() == 'completed') {
-              statusColor = AppColors.activeGreen;
-            } else if (statusText.toLowerCase() == 'pending' ||
-                statusText.toLowerCase() == 'leadquote') {
-              statusColor = Colors.orange;
-            }
+            final sessionValue = (data.session ?? '').trim().toUpperCase();
+            final bool isCompleted = sessionValue == 'CLOSED';
+            final statusText = isCompleted ? 'Completed' : 'Pending';
+            final statusColor =
+                isCompleted ? AppColors.activeGreen : Colors.orange;
 
             return ItemRow(
               title: AppStrings.status.tr,

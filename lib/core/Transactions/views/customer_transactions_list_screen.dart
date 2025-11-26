@@ -5,7 +5,6 @@ import 'package:pibro/constants/app_colors.dart';
 import 'package:pibro/core/Transactions/controller/customer_transactions_controller.dart';
 import 'package:pibro/shared/common_header.dart';
 import 'package:pibro/shared/item_row_container.dart';
-import 'package:pibro/shared/title_value_row.dart';
 import 'package:pibro/utils/app_utils.dart';
 import 'package:pibro/utils/view_utils.dart';
 import 'package:pibro/constants/app_styles.dart';

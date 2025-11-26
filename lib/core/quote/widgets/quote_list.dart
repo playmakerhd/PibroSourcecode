@@ -30,16 +30,13 @@ class QuoteList extends StatelessWidget {
                     itemBuilder: (BuildContext context, int index) {
                       final SalesQuotationResponse quote =
                           controller.quotes[index];
-                      // Determine status color based on NoteStatus
+                      final sessionValue =
+                          (quote.session ?? '').trim().toUpperCase();
+                      final bool isCompleted = sessionValue == 'CLOSED';
                       final String statusText =
-                          (quote.noteStatus ?? 'Pending').toString();
-                      Color statusColor = Colors.orange;
-                      if (statusText.toLowerCase() == 'completed') {
-                        statusColor = AppColors.activeGreen;
-                      } else if (statusText.toLowerCase() == 'pending' ||
-                          statusText.toLowerCase() == 'leadquote') {
-                        statusColor = Colors.orange;
-                      }
+                          isCompleted ? 'Completed' : 'Pending';
+                      final Color statusColor =
+                          isCompleted ? AppColors.activeGreen : Colors.orange;
 
                       // Format invoice date from API
                       String formattedDate = 'N/A';

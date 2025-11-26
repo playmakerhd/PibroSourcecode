@@ -60,6 +60,7 @@ class Endpoints {
 
   // Quote Management (New Flow)
   static const String createSalesQuotation = '/CreateSalesQuotation';
+  static const String updateSalesQuotation = '/UpdateSalesQuotation';
   static const String getSalesQuotationByID = '/GetSalesQuotationsByID';
   static const String getSalesQuotationsByEntityID =
       '/GetSalesQuotationsByEntityID';

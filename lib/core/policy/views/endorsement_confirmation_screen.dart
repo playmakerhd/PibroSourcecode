@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pibro/constants/app_colors.dart';
-import 'package:pibro/core/home/controller/home_controller.dart';
 import 'package:pibro/core/policy/widget/policy_button.dart';
 import 'package:pibro/core/policy/widget/detail_row.dart';
 import 'package:pibro/constants/app_styles.dart';

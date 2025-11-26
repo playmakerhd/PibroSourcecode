@@ -108,6 +108,10 @@ class PibroRepository {
           Map<String, dynamic> body) =>
       appApiProvider.callCreateSalesQuotation(body);
 
+  Future<CustomMessageResponse> updateSalesQuotation(
+          Map<String, dynamic> body) =>
+      appApiProvider.callUpdateSalesQuotation(body);
+
   Future<dynamic> getSalesQuotationByID(String quoteID) =>
       appApiProvider.callGetSalesQuotationByID(quoteID);
 

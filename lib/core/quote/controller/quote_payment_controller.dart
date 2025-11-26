@@ -16,6 +16,7 @@ import 'package:pibro/network/models/request/create_receipt_request.dart';
 import 'package:pibro/network/models/request/renew_policy_requesst.dart';
 import 'package:pibro/network/models/request/update_enquiry_status_request.dart';
 import 'package:pibro/network/repository/pibro_repository.dart';
+import 'package:pibro/network/models/response/sales_quotation_response.dart';
 import 'package:pibro/utils/app_utils.dart';
 import 'package:pibro/utils/view_utils.dart';
 import 'package:pibro/utils/qlog.dart';
@@ -730,6 +731,8 @@ class QuotePaymentController extends GetxController {
             message: postCn.messageResponse.message, isSuccess: false);
         return;
       }
+
+      await _closeSalesQuotationIfPossible();
       // 🔄 NEW: Update enquiry status AFTER Debit Note has been posted
       try {
         // Try to get CaseID from the current quote context first
@@ -1024,6 +1027,119 @@ class QuotePaymentController extends GetxController {
       print('📍 STACK TRACE: $st');
       return '';
     }
+  }
+
+  Future<void> _closeSalesQuotationIfPossible() async {
+    final quoteId = _extractQuoteId();
+    if (quoteId.isEmpty) {
+      QLog.d('QUOTE_STATUS', 'Skipping UpdateSalesQuotation — quoteId missing');
+      return;
+    }
+
+    try {
+      QLog.d(
+          'QUOTE_STATUS', 'Fetching quote for closure', {'quoteId': quoteId});
+      final raw = await repo.getSalesQuotationByID(quoteId);
+      final quoteJson = _coerceQuoteJson(raw);
+      if (quoteJson == null) {
+        QLog.d('QUOTE_STATUS', 'Unable to parse SalesQuotation payload',
+            {'quoteId': quoteId});
+        return;
+      }
+
+      final quote = SalesQuotationResponse.fromJson(quoteJson);
+      final alreadyClosed =
+          (quote.session ?? '').trim().toUpperCase() == 'CLOSED';
+      if (alreadyClosed) {
+        QLog.d('QUOTE_STATUS', 'Quote already closed', {'quoteId': quoteId});
+        return;
+      }
+
+      quote.session = 'CLOSED';
+      final update = await repo.updateSalesQuotation(quote.toJson());
+      QLog.d('QUOTE_STATUS', 'UpdateSalesQuotation response', {
+        'status': update.messageResponse.status,
+        'message': update.messageResponse.message,
+      });
+
+      if (update.messageResponse.status != AppConstants.responseSuccess) {
+        QLog.d('QUOTE_STATUS', 'Failed to update Sales Quotation',
+            {'quoteId': quoteId});
+        return;
+      }
+
+      ctx['session'] = 'CLOSED';
+      try {
+        final storage = GetStorage();
+        final raw = storage.read(StorageKeys.lastEnquiry);
+        if (raw is Map) {
+          final patched = Map<String, dynamic>.from(raw);
+          patched['session'] = 'CLOSED';
+          storage.write(StorageKeys.lastEnquiry, patched);
+        } else if (raw is String && raw.isNotEmpty) {
+          final decoded = Map<String, dynamic>.from(jsonDecode(raw));
+          decoded['session'] = 'CLOSED';
+          storage.write(StorageKeys.lastEnquiry, decoded);
+        }
+      } catch (_) {}
+    } catch (e, st) {
+      QLog.e('QUOTE_STATUS', e, st);
+    }
+  }
+
+  Map<String, dynamic>? _coerceQuoteJson(dynamic raw) {
+    if (raw is Map<String, dynamic>) return Map<String, dynamic>.from(raw);
+    if (raw is Map) {
+      return raw.map((key, value) => MapEntry(key.toString(), value));
+    }
+    try {
+      final body = (raw as dynamic).response?.body;
+      if (body is String && body.isNotEmpty) {
+        final decoded = jsonDecode(body);
+        if (decoded is Map) {
+          return decoded.map((key, value) => MapEntry(key.toString(), value));
+        }
+      } else if (body != null && body is List<int>) {
+        final decoded = jsonDecode(utf8.decode(body));
+        if (decoded is Map) {
+          return decoded.map((key, value) => MapEntry(key.toString(), value));
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  String _extractQuoteId() {
+    final candidates = <String?>[
+      ctx['quoteID']?.toString(),
+      ctx['quoteId']?.toString(),
+      ctx['invoiceNumber']?.toString(),
+      ctx['InvoiceNumber']?.toString(),
+      ctx['caseId']?.toString(),
+    ];
+
+    for (final candidate in candidates) {
+      if (candidate != null && candidate.trim().isNotEmpty) {
+        return candidate.trim();
+      }
+    }
+
+    try {
+      final storage = GetStorage();
+      final raw = storage.read(StorageKeys.lastEnquiry);
+      Map<String, dynamic>? decoded;
+      if (raw is Map) {
+        decoded = Map<String, dynamic>.from(raw);
+      } else if (raw is String && raw.isNotEmpty) {
+        decoded = Map<String, dynamic>.from(jsonDecode(raw));
+      }
+      final fallback = decoded?['quoteID'] ?? decoded?['caseId'];
+      if (fallback != null && fallback.toString().trim().isNotEmpty) {
+        return fallback.toString().trim();
+      }
+    } catch (_) {}
+
+    return '';
   }
 
   String _extractServerMessage(Object e, {String? fallback}) {

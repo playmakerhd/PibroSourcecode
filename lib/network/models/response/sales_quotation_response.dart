@@ -24,6 +24,7 @@ class SalesQuotationResponse {
     this.premiumFormular,
     this.premiumDue,
     this.noteStatus,
+    this.session,
     this.generateBy,
     this.approvedBy,
     this.currencyID,
@@ -61,6 +62,7 @@ class SalesQuotationResponse {
   String? premiumFormular;
   double? premiumDue;
   String? noteStatus;
+  String? session;
   String? generateBy;
   String? approvedBy;
   String? currencyID;
@@ -99,6 +101,7 @@ class SalesQuotationResponse {
       premiumFormular: json['PremiumFomular'],
       premiumDue: _parseDouble(json['PremiumDue']),
       noteStatus: json['NoteStatus'],
+      session: json['Session'],
       generateBy: json['GenerateBy'],
       approvedBy: json['ApprovedBy'],
       currencyID: json['CurrencyID'],
@@ -149,6 +152,7 @@ class SalesQuotationResponse {
       'PremiumFomular': premiumFormular,
       'PremiumDue': premiumDue,
       'NoteStatus': noteStatus,
+      'Session': session,
       'GenerateBy': generateBy,
       'ApprovedBy': approvedBy,
       'CurrencyID': currencyID,

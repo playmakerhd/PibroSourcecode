@@ -74,8 +74,6 @@ class _UsernameForm extends GetView<ForgotPasswordController> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // const _FieldLabel('Username'),
-        // const SizedBox(height: 2),
         AppTextField(
           controller: controller.usernameCtrl,
           hint: 'Enter your username',
@@ -91,16 +89,12 @@ class _EmailPhoneForm extends GetView<ForgotPasswordController> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // const _FieldLabel('Email'),
-        // const SizedBox(height: 1),
         AppTextField(
           controller: controller.emailCtrl,
           hint: 'Enter your Email',
           keyboardType: TextInputType.emailAddress,
         ),
         const SizedBox(height: 11),
-        // const _FieldLabel('Phone'),
-        // const SizedBox(height: 1),
         AppTextField(
           controller: controller.phoneCtrl,
           hint: 'Enter your Phone',
@@ -141,23 +135,6 @@ class _Subtitle extends StatelessWidget {
         color: Color(0xFF0E3B66),
       ),
       textAlign: TextAlign.center,
-    );
-  }
-}
-
-class _FieldLabel extends StatelessWidget {
-  final String text;
-  const _FieldLabel(this.text);
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: const TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.w600,
-        color: Color(0xFF0E3B66),
-      ),
     );
   }
 }

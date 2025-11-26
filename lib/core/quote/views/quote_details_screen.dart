@@ -14,10 +14,9 @@ class QuoteDetailsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final QuoteController controller = Get.put(QuoteController());
-    final bool isCompleted = ((controller.selectedQuote.value?.noteStatus ?? '')
-            .toString()
-            .toLowerCase() ==
-        'completed');
+    final sessionValue =
+        (controller.selectedQuote.value?.session ?? '').trim().toUpperCase();
+    final bool isCompleted = sessionValue == 'CLOSED';
     return Scaffold(
       backgroundColor: AppColors.tileColor,
       floatingActionButton: isCompleted
@@ -28,7 +27,6 @@ class QuoteDetailsScreen extends StatelessWidget {
               text: AppStrings.makePayment.tr,
               bgColor: AppColors.primaryColor,
               onPressed: () {
-                QuoteDetailsWidget(data: controller.selectedQuote.value!);
                 controller.navigateToQuoteSummaryForPayment();
               },
             ),

@@ -379,6 +379,16 @@ class ApiProvider extends BaseProvider {
     return CustomMessageResponse(resp);
   }
 
+  // {baseUrl}/UpdateSalesQuotation/{token}
+  Future<CustomMessageResponse> callUpdateSalesQuotation(
+      Map<String, dynamic> body) async {
+    final endpoint =
+        '$_baseApiPath${Endpoints.updateSalesQuotation}/$_acessToken';
+    final resp =
+        await makePostCall(Uri.parse(endpoint), jsonEncode(body), false);
+    return CustomMessageResponse(resp);
+  }
+
   // {baseUrl}/GetSalesQuotationsByID/{token}?QuoteID={QuoteID}
   Future<dynamic> callGetSalesQuotationByID(String quoteID) async {
     final Uri endpoint = Uri.parse(
