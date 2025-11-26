@@ -226,7 +226,12 @@ class ApiProvider extends BaseProvider {
         LoginData.fromJson(convertToJsonStringQuotes(StorageKeys.loginData));
 
     // Check if user is a Lead or Customer
-    if (data.isLead && data.customerID != null) {
+    // Only call lead-by-ID when we actually have a non-empty CustomerID.
+    // For email/phone logins the stored LoginData may mark entityType as
+    // 'LEAD' but have an empty customerID — in that case we must not call
+    // the LeadByID endpoint (it expects a valid ID). Fall through to the
+    // email/phone variant which will hydrate using email & phone.
+    if (data.isLead && (data.customerID?.isNotEmpty ?? false)) {
       // Fetch Lead information and convert to Customer format
       final leadData = await callGetLeadByID(data.customerID!);
       return ProfileResponse(leadData);
@@ -244,6 +249,22 @@ class ApiProvider extends BaseProvider {
         : Uri.parse(
             '$_baseApiPath${Endpoints.profileByEmail}/${data.email}/${data.phone}/$_acessToken',
           );
+
+    final responseData = await makeGetCall(endpoint, false);
+    return ProfileResponse(responseData!);
+  }
+
+  Future<ProfileResponse> callGetProfileByEmailPhone({
+    required String email,
+    required String phone,
+  }) async {
+    // {baseUrl}/GetCustomerInformationByEmailPhone/{token}?CustomerEmail=...&CustomerPhone=...
+    final Uri endpoint = Uri.parse(
+      '$_baseApiPath${Endpoints.profileByEmail}/$_acessToken',
+    ).replace(queryParameters: {
+      'CustomerEmail': email,
+      'CustomerPhone': phone,
+    });
 
     final responseData = await makeGetCall(endpoint, false);
     return ProfileResponse(responseData!);

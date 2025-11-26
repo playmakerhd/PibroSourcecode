@@ -39,6 +39,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:screenshot/screenshot.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:pibro/utils/sales_quotation_utils.dart';
 
 class RenewPolicyController extends GetxController {
   PibroRepository pibroRepository =
@@ -1148,6 +1149,10 @@ class RenewPolicyController extends GetxController {
             message: response.messageResponse.message, isSuccess: false);
         paymentLoading.value = false;
       } else {
+        await closeSalesQuotationIfPossible(
+          repo: pibroRepository,
+          quoteNumber: quoteNumber,
+        );
         // ✅ Navigate here, once, after debit note is posted
         final String nStart = startDate.value!.toIso8601String();
         final String nEnd = endDate.value!.toIso8601String();

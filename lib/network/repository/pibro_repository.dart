@@ -83,6 +83,12 @@ class PibroRepository {
 
   Future<ProfileResponse> getProfile() async => appApiProvider.callGetProfile();
 
+  Future<ProfileResponse> getProfileByEmailPhone({
+    required String email,
+    required String phone,
+  }) async =>
+      appApiProvider.callGetProfileByEmailPhone(email: email, phone: phone);
+
   Future<CustomerPolicyResponse> getCustomerPolicies() async =>
       appApiProvider.callGetCustomerPolicies();
 

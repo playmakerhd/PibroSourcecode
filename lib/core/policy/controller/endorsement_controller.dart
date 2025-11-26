@@ -26,6 +26,7 @@ import 'package:printing/printing.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:pibro/utils/sales_quotation_utils.dart';
 
 class EndorsementController extends GetxController {
   final PibroRepository repo = PibroRepository(appApiProvider: ApiProvider());
@@ -680,6 +681,11 @@ class EndorsementController extends GetxController {
         paymentLoading.value = false;
         return;
       }
+
+      await closeSalesQuotationIfPossible(
+        repo: repo,
+        quoteNumber: quoteNumber,
+      );
 
       // Done → confirmation
       Get.offNamed('/endorse-confirmation', arguments: {

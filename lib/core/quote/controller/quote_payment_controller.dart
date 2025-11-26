@@ -16,10 +16,10 @@ import 'package:pibro/network/models/request/create_receipt_request.dart';
 import 'package:pibro/network/models/request/renew_policy_requesst.dart';
 import 'package:pibro/network/models/request/update_enquiry_status_request.dart';
 import 'package:pibro/network/repository/pibro_repository.dart';
-import 'package:pibro/network/models/response/sales_quotation_response.dart';
 import 'package:pibro/utils/app_utils.dart';
 import 'package:pibro/utils/view_utils.dart';
 import 'package:pibro/utils/qlog.dart';
+import 'package:pibro/utils/sales_quotation_utils.dart';
 import 'package:intl/intl.dart';
 
 class QuotePaymentController extends GetxController {
@@ -1031,82 +1031,28 @@ class QuotePaymentController extends GetxController {
 
   Future<void> _closeSalesQuotationIfPossible() async {
     final quoteId = _extractQuoteId();
-    if (quoteId.isEmpty) {
-      QLog.d('QUOTE_STATUS', 'Skipping UpdateSalesQuotation — quoteId missing');
-      return;
-    }
+    final closed = await closeSalesQuotationIfPossible(
+      repo: repo,
+      quoteNumber: quoteId,
+      logFn: (message) => QLog.d('QUOTE_STATUS', message),
+    );
 
+    if (!closed) return;
+
+    ctx['session'] = 'CLOSED';
     try {
-      QLog.d(
-          'QUOTE_STATUS', 'Fetching quote for closure', {'quoteId': quoteId});
-      final raw = await repo.getSalesQuotationByID(quoteId);
-      final quoteJson = _coerceQuoteJson(raw);
-      if (quoteJson == null) {
-        QLog.d('QUOTE_STATUS', 'Unable to parse SalesQuotation payload',
-            {'quoteId': quoteId});
-        return;
-      }
-
-      final quote = SalesQuotationResponse.fromJson(quoteJson);
-      final alreadyClosed =
-          (quote.session ?? '').trim().toUpperCase() == 'CLOSED';
-      if (alreadyClosed) {
-        QLog.d('QUOTE_STATUS', 'Quote already closed', {'quoteId': quoteId});
-        return;
-      }
-
-      quote.session = 'CLOSED';
-      final update = await repo.updateSalesQuotation(quote.toJson());
-      QLog.d('QUOTE_STATUS', 'UpdateSalesQuotation response', {
-        'status': update.messageResponse.status,
-        'message': update.messageResponse.message,
-      });
-
-      if (update.messageResponse.status != AppConstants.responseSuccess) {
-        QLog.d('QUOTE_STATUS', 'Failed to update Sales Quotation',
-            {'quoteId': quoteId});
-        return;
-      }
-
-      ctx['session'] = 'CLOSED';
-      try {
-        final storage = GetStorage();
-        final raw = storage.read(StorageKeys.lastEnquiry);
-        if (raw is Map) {
-          final patched = Map<String, dynamic>.from(raw);
-          patched['session'] = 'CLOSED';
-          storage.write(StorageKeys.lastEnquiry, patched);
-        } else if (raw is String && raw.isNotEmpty) {
-          final decoded = Map<String, dynamic>.from(jsonDecode(raw));
-          decoded['session'] = 'CLOSED';
-          storage.write(StorageKeys.lastEnquiry, decoded);
-        }
-      } catch (_) {}
-    } catch (e, st) {
-      QLog.e('QUOTE_STATUS', e, st);
-    }
-  }
-
-  Map<String, dynamic>? _coerceQuoteJson(dynamic raw) {
-    if (raw is Map<String, dynamic>) return Map<String, dynamic>.from(raw);
-    if (raw is Map) {
-      return raw.map((key, value) => MapEntry(key.toString(), value));
-    }
-    try {
-      final body = (raw as dynamic).response?.body;
-      if (body is String && body.isNotEmpty) {
-        final decoded = jsonDecode(body);
-        if (decoded is Map) {
-          return decoded.map((key, value) => MapEntry(key.toString(), value));
-        }
-      } else if (body != null && body is List<int>) {
-        final decoded = jsonDecode(utf8.decode(body));
-        if (decoded is Map) {
-          return decoded.map((key, value) => MapEntry(key.toString(), value));
-        }
+      final storage = GetStorage();
+      final raw = storage.read(StorageKeys.lastEnquiry);
+      if (raw is Map) {
+        final patched = Map<String, dynamic>.from(raw);
+        patched['session'] = 'CLOSED';
+        storage.write(StorageKeys.lastEnquiry, patched);
+      } else if (raw is String && raw.isNotEmpty) {
+        final decoded = Map<String, dynamic>.from(jsonDecode(raw));
+        decoded['session'] = 'CLOSED';
+        storage.write(StorageKeys.lastEnquiry, decoded);
       }
     } catch (_) {}
-    return null;
   }
 
   String _extractQuoteId() {

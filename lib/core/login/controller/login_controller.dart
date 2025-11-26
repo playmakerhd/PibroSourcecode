@@ -24,7 +24,7 @@ class LoginController extends GetxController {
 
   RxBool obscurePassword = true.obs;
   RxBool isRemember = false.obs;
-  RxBool otherOption = false.obs;
+  RxBool otherOption = true.obs;
   RxBool loading = false.obs;
 
   void updateObscure() {
@@ -52,13 +52,55 @@ class LoginController extends GetxController {
           final entityType = response.messageResponse.message
               .toUpperCase(); // "LEAD" or "CUSTOMER"
 
-          LoginData data = LoginData(
-            customerID: otherOption.value ? '' : nameController.text,
-            email: otherOption.value ? emailController.text : '',
-            phone: otherOption.value ? phoneController.text : '',
-            entityType: entityType,
-          );
-          persistLoginData(data: data, remember: isRemember.value);
+          // For email/phone login, fetch profile to get CustomerID
+          if (otherOption.value) {
+            try {
+              final prof = await pibroRepository.getProfileByEmailPhone(
+                email: emailController.text,
+                phone: phoneController.text,
+              );
+
+              if (prof.user.customerID != null &&
+                  prof.user.customerID!.isNotEmpty) {
+                // Persist profile data
+                persistProfileData(prof.user);
+
+                // Create login data with the retrieved CustomerID
+                LoginData data = LoginData(
+                  customerID: prof.user.customerID,
+                  email: emailController.text,
+                  phone: phoneController.text,
+                  entityType: entityType,
+                );
+                persistLoginData(data: data, remember: isRemember.value);
+
+                // Mirror email
+                final e = (prof.user.customerEmail ?? '').trim();
+                if (e.isNotEmpty) {
+                  GetStorage().write(StorageKeys.userEmail, e);
+                }
+              }
+            } catch (e) {
+              print('⚠️ Error fetching profile by email/phone: $e');
+              // Continue with empty customerID if profile fetch fails
+              LoginData data = LoginData(
+                customerID: '',
+                email: emailController.text,
+                phone: phoneController.text,
+                entityType: entityType,
+              );
+              persistLoginData(data: data, remember: isRemember.value);
+            }
+          } else {
+            // Username login - use username as customerID
+            LoginData data = LoginData(
+              customerID: nameController.text,
+              email: '',
+              phone: '',
+              entityType: entityType,
+            );
+            persistLoginData(data: data, remember: isRemember.value);
+          }
 
           // Store entity type separately
           GetStorage().write(StorageKeys.entityType, entityType);
@@ -74,21 +116,7 @@ class LoginController extends GetxController {
             final cameFromQuote =
                 GetStorage().read(StorageKeys.quoteFlowFlag) == true;
             if (cameFromQuote) {
-              // 🔹 Hydrate profile immediately so Paystack has a real email
-              final prof = await pibroRepository.getProfile();
-              if (prof.user.customerID != null &&
-                  prof.user.customerID!.isNotEmpty) {
-                // persistProfileData should write StorageKeys.profileData
-                persistProfileData(prof.user);
-
-                // also mirror email (defensive)
-                final e = (prof.user.customerEmail ?? '').trim();
-                if (e.isNotEmpty) {
-                  GetStorage().write(StorageKeys.userEmail, e);
-                }
-              }
-
-              // Continue the quote flow only after profile is ready
+              // Continue the quote flow after auth
               await Get.find<GetQuoteController>().resumeAfterAuth();
               return; // don't navigate to main
             }
@@ -115,12 +143,30 @@ class LoginController extends GetxController {
 
   @override
   void onInit() {
-    LoginData data =
-        LoginData.fromJson(convertToJsonStringQuotes(StorageKeys.loginData));
-    nameController.text = GetStorage().read(StorageKeys.rememberMe) != null
-        ? data.customerID!
-        : '';
-    isRemember.value = GetStorage().read(StorageKeys.rememberMe) != null;
+    final bool remembered = GetStorage().read(StorageKeys.rememberMe) != null;
+    isRemember.value = remembered;
+
+    if (remembered) {
+      final storedData = convertToJsonStringQuotes(StorageKeys.loginData);
+      if (storedData.isNotEmpty) {
+        final savedData = LoginData.fromJson(storedData);
+        final savedEmail = (savedData.email ?? '').trim();
+        final savedPhone = (savedData.phone ?? '').trim();
+        final savedCustomerID = (savedData.customerID ?? '').trim();
+
+        if (savedEmail.isNotEmpty || savedPhone.isNotEmpty) {
+          otherOption.value = true;
+          emailController.text = savedEmail;
+          phoneController.text = savedPhone;
+        } else if (savedCustomerID.isNotEmpty) {
+          otherOption.value = false;
+          nameController.text = savedCustomerID;
+        }
+      }
+    } else {
+      otherOption.value = true;
+    }
+
     // nameController.text = '00001A';
     // passwordController.text = '1111';
     // emailController.text = 'mycustomer@email.com';
