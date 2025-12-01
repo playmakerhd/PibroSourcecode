@@ -682,6 +682,16 @@ class EndorsementController extends GetxController {
         return;
       }
 
+      // Post the endorsement client note
+      final invoiceNumber = noteResp.messageResponse.message;
+      final postNoteResp = await repo.postClientNoteEndorsement(invoiceNumber);
+      if (postNoteResp.messageResponse.status != AppConstants.responseSuccess) {
+        showSnackbarMessage(
+            message: postNoteResp.messageResponse.message, isSuccess: false);
+        paymentLoading.value = false;
+        return;
+      }
+
       await closeSalesQuotationIfPossible(
         repo: repo,
         quoteNumber: quoteNumber,

@@ -137,10 +137,75 @@ class ServiceConfigScreen extends StatelessWidget {
 }
 
 /// QR Scanner Bottom Sheet Widget
-class _QRScannerBottomSheet extends StatelessWidget {
+class _QRScannerBottomSheet extends StatefulWidget {
   final void Function(String) onScanned;
 
   const _QRScannerBottomSheet({required this.onScanned});
+
+  @override
+  State<_QRScannerBottomSheet> createState() => _QRScannerBottomSheetState();
+}
+
+class _QRScannerBottomSheetState extends State<_QRScannerBottomSheet> {
+  late final MobileScannerController _controller;
+  bool _scanned = false;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = MobileScannerController(
+      facing: CameraFacing.back,
+      torchEnabled: false,
+    );
+    // Try to start the camera and surface any errors
+    try {
+      _controller.start();
+    } catch (e) {
+      _errorMessage = 'Camera initialization error: $e';
+    }
+  }
+
+  @override
+  void dispose() {
+    _stopScanner();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _stopScanner() async {
+    try {
+      await _controller.stop();
+    } catch (e) {
+      // ignore stop errors but log
+      // ignore: avoid_print
+      print('Error stopping scanner: $e');
+    }
+  }
+
+  void _handleDetected(BarcodeCapture capture) async {
+    if (_scanned) return;
+    final List<Barcode> barcodes = capture.barcodes;
+    if (barcodes.isEmpty) return;
+    final first = barcodes.first;
+    if (first.rawValue == null) return;
+    _scanned = true;
+    final code = first.rawValue!;
+    // stop scanner immediately to prevent duplicates
+    await _stopScanner();
+    try {
+      widget.onScanned(code);
+    } catch (e) {
+      // ignore callback errors but log
+      // ignore: avoid_print
+      print('Error in onScanned callback: $e');
+    }
+    if (mounted) Navigator.of(context).pop();
+  }
+
+  // Permission handling: MobileScanner version in this project
+  // doesn't expose onPermissionSet / MobileScannerPermission type.
+  // We attempt to start the camera and show errors via _errorMessage.
 
   @override
   Widget build(BuildContext context) {
@@ -187,15 +252,16 @@ class _QRScannerBottomSheet extends StatelessWidget {
               child: Stack(
                 children: [
                   MobileScanner(
-                    onDetect: (BarcodeCapture capture) {
-                      final List<Barcode> barcodes = capture.barcodes;
-                      if (barcodes.isNotEmpty &&
-                          barcodes.first.rawValue != null) {
-                        final code = barcodes.first.rawValue!;
-                        print("Scanned value: $code");
-                        onScanned(code);
-                        Navigator.of(context).pop();
-                      }
+                    controller: _controller,
+                    onDetect: _handleDetected,
+                    errorBuilder: (context, error, child) {
+                      // Display error inside scanner area
+                      return Center(
+                        child: Text(
+                          'Scanner error: ${error.toString()}',
+                          style: Styles.regularTextStyle(color: Colors.red),
+                        ),
+                      );
                     },
                   ),
                   // Scanning frame overlay
@@ -297,6 +363,21 @@ class _QRScannerBottomSheet extends StatelessWidget {
                       ),
                     ),
                   ),
+                  if (_errorMessage != null)
+                    Positioned(
+                      left: 16,
+                      right: 16,
+                      bottom: 120,
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        color: Colors.red.withOpacity(0.1),
+                        child: Text(
+                          _errorMessage!,
+                          style: Styles.regularTextStyle(color: Colors.red),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -304,7 +385,10 @@ class _QRScannerBottomSheet extends StatelessWidget {
           const SizedBox(height: 20),
           // Cancel button
           GestureDetector(
-            onTap: () => Navigator.of(context).pop(),
+            onTap: () async {
+              await _stopScanner();
+              if (mounted) Navigator.of(context).pop();
+            },
             child: Container(
               width: double.infinity,
               height: 50,

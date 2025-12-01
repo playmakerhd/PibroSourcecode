@@ -170,6 +170,10 @@ class PibroRepository {
           Map<String, dynamic> body) async =>
       appApiProvider.callCreateClientNoteEndorsement(body);
 
+  Future<CustomMessageResponse> postClientNoteEndorsement(
+          String invoiceNumber) async =>
+      appApiProvider.callPostClientNoteEndorsement(invoiceNumber);
+
   Future<CustomMessageResponse> getPremiumAmount(
           GetPremiumAmountRequest data) async =>
       appApiProvider.callGetPremiumAmount(data);
