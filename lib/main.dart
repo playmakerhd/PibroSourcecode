@@ -65,6 +65,9 @@ class MyApp extends StatelessWidget {
       fallbackLocale: AppConstants.engLocale,
       translations: AppStrings(),
       debugShowCheckedModeBanner: false,
+      // Disable automatic snackbar closing on navigation to prevent LateInitializationError
+      popGesture: true,
+      defaultTransition: Transition.cupertino,
       builder: (context, child) {
         final mediaQueryData = MediaQuery.of(context);
         return MediaQuery(

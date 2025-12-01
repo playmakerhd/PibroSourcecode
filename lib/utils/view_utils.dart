@@ -15,28 +15,45 @@ double queryWidth(BuildContext? context) {
 bool _isSnackbarShowing = false;
 
 /// Safe navigation back that handles snackbar controller issues
+/// This is a workaround for GetX LateInitializationError in snackbar_controller
 void safeBack({dynamic result}) {
+  // Use Navigator.pop directly to avoid GetX snackbar controller issues
   try {
-    // Close any snackbars safely before navigating back
+    if (Get.context != null && Navigator.of(Get.context!).canPop()) {
+      Navigator.of(Get.context!).pop(result);
+      return;
+    }
+  } catch (e) {
+    // Fallback if context-based navigation fails
+  }
+
+  // Fallback: try Get.back but catch any snackbar-related errors
+  try {
+    // Manually check and close snackbars before navigation
+    if (Get.isSnackbarOpen) {
+      try {
+        Get.closeAllSnackbars();
+      } catch (_) {
+        // Ignore snackbar closing errors
+      }
+    }
+    Get.back(result: result, closeOverlays: false);
+  } catch (e) {
+    // Last resort fallback
+    if (Get.context != null) {
+      Navigator.of(Get.context!).maybePop(result);
+    }
+  }
+}
+
+/// Safe close all snackbars - catches LateInitializationError
+void safeCloseAllSnackbars() {
+  try {
     if (Get.isSnackbarOpen) {
       Get.closeAllSnackbars();
     }
   } catch (e) {
-    // Ignore snackbar closing errors
-  }
-
-  // Now safely navigate back
-  try {
-    if (Get.context != null && Navigator.of(Get.context!).canPop()) {
-      Navigator.of(Get.context!).pop(result);
-    } else {
-      Get.back(result: result);
-    }
-  } catch (e) {
-    // Fallback to basic navigation
-    if (Get.context != null) {
-      Navigator.of(Get.context!).maybePop(result);
-    }
+    // Ignore errors from closing non-existent or uninitialized snackbars
   }
 }
 
@@ -46,13 +63,7 @@ void showSnackbarMessage({
   bool isWarning = false,
 }) {
   // Close any existing snackbar safely before showing a new one
-  if (Get.isSnackbarOpen) {
-    try {
-      Get.closeAllSnackbars();
-    } catch (e) {
-      // Ignore errors from closing non-existent snackbars
-    }
-  }
+  safeCloseAllSnackbars();
 
   if (_isSnackbarShowing) {
     // Prevent showing another snackbar while one is active
