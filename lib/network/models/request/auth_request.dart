@@ -50,7 +50,9 @@ class AuthRequest {
     map['LeadCity'] = '';
     map['LeadState'] = '';
     map['LeadCountry'] = 'Nigeria';
-    map['LeadDateOfBirth'] = dateOfBirth ?? DateTime.now().toIso8601String();
+    // Do not synthesize a DOB; only include it if provided by the caller.
+    // Upstream validation should ensure a DOB is present when required.
+    map['LeadDateOfBirth'] = dateOfBirth;
     map['LeadFullName'] = '';
     map['LeadLogin'] = username;
     map['LeadPassword'] = password;
@@ -86,7 +88,8 @@ class AuthRequest {
     map['CustomerCountry'] = "Nigeria";
     map['CustomerPhone'] = phoneNumber;
     map['CustomerEmail'] = email;
-    map['CustomerDateOfBirth'] = dateOfBirth ?? "null";
+    // Only include the provided DOB (null if not supplied). Avoid using a fake string.
+    map['CustomerDateOfBirth'] = dateOfBirth;
     map['CurrencyID'] = 'NGN';
     map['ApprovalDate'] = DateTime.now().toIso8601String();
     map['CustomerSince'] = DateTime.now().toIso8601String();

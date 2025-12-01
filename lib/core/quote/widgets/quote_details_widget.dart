@@ -73,7 +73,7 @@ class QuoteDetailsWidget extends StatelessWidget {
             value: formatAmount(data.premiumDue ?? 0.0),
           ),
           ItemRow(
-            title: 'Vendor/Insurer',
+            title: AppStrings.vendorInsurer.tr,
             value: data.vendorID ?? 'N/A',
           ),
           // Status with color: Completed -> green, Pending -> orange

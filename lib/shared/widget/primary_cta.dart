@@ -28,12 +28,17 @@ class PrimaryCta extends StatelessWidget {
         ),
         onPressed: busy ? null : onTap,
         child: busy
-            ? const SizedBox(
+            ? SizedBox(
                 height: 24,
                 width: 24,
-                child: CircularProgressIndicator(
-                  strokeWidth: 3,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                child: Semantics(
+                  label: 'Loading',
+                  liveRegion: true,
+                  container: true,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 3,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
                 ),
               )
             : Text(

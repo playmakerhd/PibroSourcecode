@@ -34,6 +34,7 @@ import 'package:pibro/core/splash/splash_screen.dart';
 import 'package:pibro/core/auth/view/forgot_password_screen.dart';
 import 'package:pibro/core/auth/view/otp_reset_screen.dart';
 import 'package:pibro/core/auth/view/new_password_screen.dart';
+import 'package:pibro/core/auth/bindings/forgot_password_binding.dart';
 
 class AppRoutes {
   AppRoutes._();
@@ -121,14 +122,17 @@ class AppRoutes {
     GetPage(
       name: forgotPassword,
       page: () => const ForgotPasswordScreen(),
+      binding: ForgotPasswordBinding(),
     ),
     GetPage(
       name: otpReset,
       page: () => const OtpResetScreen(),
+      binding: ForgotPasswordBinding(),
     ),
     GetPage(
       name: newPassword,
       page: () => const NewPasswordScreen(),
+      binding: ForgotPasswordBinding(),
     ),
     GetPage(
       name: policy,

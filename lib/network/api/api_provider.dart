@@ -555,6 +555,17 @@ class ApiProvider extends BaseProvider {
     return CustomMessageResponse(resp);
   }
 
+  // Post endorsement debit note after creating it
+  Future<CustomMessageResponse> callPostClientNoteEndorsement(
+      String invoiceNumber) async {
+    final endpoint =
+        '$_baseApiPath${Endpoints.postClientNote}?token=$_acessToken';
+    final body = {"InvoiceNumber": invoiceNumber};
+    final resp =
+        await makePostCall(Uri.parse(endpoint), jsonEncode(body), false);
+    return CustomMessageResponse(resp);
+  }
+
   Future<CustomMessageResponse> callBookClientNote(
       ClientNoteRequest data) async {
     dynamic endpoint =

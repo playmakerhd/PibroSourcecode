@@ -59,7 +59,9 @@ class QuoteSummaryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final summaryController = Get.put(QuoteSummaryController());
+    final summaryController = Get.isRegistered<QuoteSummaryController>()
+        ? Get.find<QuoteSummaryController>()
+        : Get.put(QuoteSummaryController());
 
     // Try to get data from arguments first, then fallback to storage
     final e = Get.arguments as Map? ?? {};

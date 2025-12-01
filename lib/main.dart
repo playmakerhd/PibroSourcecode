@@ -67,13 +67,9 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       builder: (context, child) {
         final mediaQueryData = MediaQuery.of(context);
-        final scale = mediaQueryData.textScaler.clamp(
-          minScaleFactor: 1.0,
-          maxScaleFactor: 1.1,
-        );
         return MediaQuery(
           data: mediaQueryData.copyWith(
-            textScaler: scale,
+            textScaler: TextScaler.linear(1.0),
           ),
           child: child!,
         );

@@ -70,18 +70,20 @@ class UnifiedEntityResponse {
       };
     } else if (isCustomer && customer != null) {
       return {
-        'CustomerID': customer!.customerID,
-        'CustomerName': entityName,
-        'CustomerFirstName': customer!.customerFirstName,
-        'CustomerLastName': customer!.customerLastName,
-        'CustomerEmail': customer!.customerEmail,
-        'CustomerPhone': customer!.customerPhone,
-        'CustomerAddress1': customer!.customerAddress1,
-        'CustomerCity': customer!.customerCity,
-        'CustomerState': customer!.customerState,
-        'CustomerCountry': customer!.customerCountry,
-        'CustomerDateOfBirth': customer!.customerDateOfBirth,
-        'CustomerTypeID': customer!.customerTypeID,
+        // Use null-aware accessors with sensible defaults so serialization
+        // never throws even when some customer fields are missing.
+        'CustomerID': customer?.customerID ?? '',
+        'CustomerName': entityName ?? '',
+        'CustomerFirstName': customer?.customerFirstName ?? '',
+        'CustomerLastName': customer?.customerLastName ?? '',
+        'CustomerEmail': customer?.customerEmail ?? '',
+        'CustomerPhone': customer?.customerPhone ?? '',
+        'CustomerAddress1': customer?.customerAddress1 ?? '',
+        'CustomerCity': customer?.customerCity ?? '',
+        'CustomerState': customer?.customerState ?? '',
+        'CustomerCountry': customer?.customerCountry ?? '',
+        'CustomerDateOfBirth': customer?.customerDateOfBirth ?? '',
+        'CustomerTypeID': customer?.customerTypeID ?? '',
         'EntityType': 'CUSTOMER',
       };
     }

@@ -5,6 +5,8 @@ import 'package:pibro/constants/app_colors.dart';
 import 'package:pibro/constants/app_images.dart';
 import 'package:pibro/constants/app_styles.dart';
 import 'package:pibro/core/landing/controller/landing_controller.dart';
+import 'package:pibro/network/api/api_provider.dart';
+import 'package:pibro/network/repository/pibro_repository.dart';
 import 'package:pibro/core/landing/views/landing_screen.dart';
 import 'package:pibro/utils/view_utils.dart';
 
@@ -42,9 +44,20 @@ class _SplashScreenState extends State<SplashScreen> {
       }
     }
 
-    // Initialize controller and wait for data
-    print('SplashScreen: Creating/getting LandingController');
-    final controller = Get.put(LandingController());
+    // Ensure API provider and repository are registered for DI/testability
+    if (!Get.isRegistered<ApiProvider>()) {
+      Get.put(ApiProvider());
+    }
+    if (!Get.isRegistered<PibroRepository>()) {
+      Get.put(PibroRepository(appApiProvider: Get.find<ApiProvider>()));
+    }
+
+    // Initialize controller and wait for data (inject repository)
+    print('SplashScreen: Creating/getting LandingController via DI');
+    final controller = Get.isRegistered<LandingController>()
+        ? Get.find<LandingController>()
+        : Get.put(
+            LandingController(pibroRepository: Get.find<PibroRepository>()));
 
     // Force refetch if coming from configuration
     if (widget.forceRefresh) {

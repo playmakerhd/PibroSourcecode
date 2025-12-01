@@ -21,6 +21,7 @@ class CustomerTransactionsController extends GetxController {
   final RxBool loading = false.obs;
   final RxBool shareLoading = false.obs;
   final RxBool statementLoading = false.obs;
+  final RxBool exportLoading = false.obs;
   final RxList<CustomerTransaction> items = <CustomerTransaction>[].obs;
 
   final Rxn<DateTime> from = Rxn<DateTime>();

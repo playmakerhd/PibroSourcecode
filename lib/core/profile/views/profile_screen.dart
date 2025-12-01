@@ -9,6 +9,7 @@ import 'package:pibro/core/profile/controller/profile_controller.dart';
 import 'package:pibro/internalization/app_strings.dart';
 import 'package:pibro/shared/main_header.dart';
 import 'package:pibro/utils/view_utils.dart';
+import 'dart:math' as math;
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -29,48 +30,57 @@ class ProfileScreen extends StatelessWidget {
               height: headerHeight,
               borderWidth: 15,
               hasBackIcon: false,
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Column(
+              child: LayoutBuilder(builder: (ctx, constraints) {
+                final width = constraints.maxWidth;
+                // Compute responsive sizes with sensible minimums and maximums
+                double avatarRadius = (width * 0.15);
+                avatarRadius = avatarRadius.clamp(40.0, 80.0);
+                double primaryFont = (width * 0.05).clamp(14.0, 20.0);
+                double secondaryFont = (width * 0.04).clamp(12.0, 16.0);
+
+                return Column(
                   mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     CircleAvatar(
-                      radius: 60,
+                      radius: avatarRadius,
                       backgroundColor: AppColors.white,
                       backgroundImage: AssetImage(AppImages.dashboard),
                     ),
-                    SizedBox(
-                      height: 10,
-                    ),
-                    Obx(
-                      () => homeController.profileLoading.value
-                          ? LoadingAnimationWidget.waveDots(
-                              color: Colors.white,
-                              size: 50,
-                            )
-                          : Column(
-                              children: [
-                                Text(
-                                  homeController
-                                      .user.value!.customerName!.capitalize!,
-                                  style: Styles.boldTextStyle(
-                                    size: 16,
-                                  ),
-                                  softWrap: true,
-                                ),
-                                Text(
-                                  '${AppStrings.username.tr}: ${homeController.user.value!.customerID!}',
-                                  style: Styles.boldTextStyle(
-                                    size: 14,
-                                  ),
-                                ),
-                              ],
-                            ),
-                    ),
+                    SizedBox(height: math.max(8.0, avatarRadius * 0.12)),
+                    Obx(() {
+                      if (homeController.profileLoading.value) {
+                        return LoadingAnimationWidget.waveDots(
+                          color: Colors.white,
+                          size: math.max(24.0, avatarRadius * 0.6),
+                        );
+                      }
+
+                      final name =
+                          homeController.user.value?.customerName?.capitalize ??
+                              '-';
+                      final id = homeController.user.value?.customerID ?? '-';
+
+                      return Column(
+                        children: [
+                          Text(
+                            name,
+                            style: Styles.boldTextStyle(size: primaryFont),
+                            softWrap: true,
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${AppStrings.username.tr}: $id',
+                            style: Styles.boldTextStyle(size: secondaryFont),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      );
+                    }),
                   ],
-                ),
-              ),
+                );
+              }),
             ),
             Expanded(
               child: ListView(

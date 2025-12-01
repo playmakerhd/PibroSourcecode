@@ -15,6 +15,18 @@ class ClaimDetailsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ClaimController controller = Get.put(ClaimController());
+    final claim = controller.selectedClaim.value;
+    if (claim == null) {
+      // If no claim is selected, navigate back after the current frame
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        try {
+          Get.back();
+        } catch (e) {
+          debugPrint('Error navigating back from ClaimDetailsScreen: $e');
+        }
+      });
+      return const SizedBox.shrink();
+    }
     return Scaffold(
       body: SingleChildScrollView(
         child: Column(
@@ -28,49 +40,44 @@ class ClaimDetailsScreen extends StatelessWidget {
                 children: [
                   ItemRow(
                     title: AppStrings.claimNumber.tr,
-                    value: controller.selectedClaim.value!.brokerClaimID!,
+                    value: claim.brokerClaimID!,
                   ),
                   ItemRow(
                     title: AppStrings.policyNumber.tr,
-                    value: controller.selectedClaim.value!.policyBrokerID,
+                    value: claim.policyBrokerID,
                   ),
                   ItemRow(
                     title: AppStrings.insuranceClass.tr,
-                    value: controller.selectedClaim.value!.businessClassID!,
+                    value: claim.businessClassID,
                   ),
                   ItemRow(
                     title: AppStrings.product.tr,
-                    value: controller.selectedClaim.value!.riskTypeID!,
+                    value: claim.riskTypeID,
                   ),
                   ItemRow(
                     title: AppStrings.incidentDate.tr,
-                    value: formatDate(
-                        controller.selectedClaim.value!.accidentDate!),
+                    value: formatDate(claim.accidentDate!),
                   ),
                   ItemRow(
                     title: AppStrings.claimReportedDate.tr,
-                    value: formatDate(
-                        controller.selectedClaim.value!.customerReportDate!),
+                    value: formatDate(claim.customerReportDate!),
                   ),
                   ItemRow(
                     title: AppStrings.description.tr,
-                    value: controller.selectedClaim.value!.accidentDetails!,
+                    value: claim.accidentDetails!,
                   ),
                   ItemRow(
                     title: AppStrings.claimAmount.tr,
-                    value:
-                        'N${formatAmount(controller.selectedClaim.value!.customerEstimate!)}',
+                    value: 'N${formatAmount(claim.customerEstimate!)}',
                   ),
                   ItemRow(
                     title: AppStrings.settlementAmount.tr,
-                    value:
-                        'N${formatAmount(controller.selectedClaim.value!.dVAmount)}',
+                    value: 'N${formatAmount(claim.dVAmount)}',
                   ),
                   ItemRow(
                     title: AppStrings.status.tr,
-                    value: getClaimStatus(controller.selectedClaim.value!)[0],
-                    valueColor:
-                        getClaimStatus(controller.selectedClaim.value!)[1],
+                    value: getClaimStatus(claim)[0],
+                    valueColor: getClaimStatus(claim)[1],
                   ),
                   Padding(
                     padding: EdgeInsets.symmetric(
@@ -86,10 +93,7 @@ class ClaimDetailsScreen extends StatelessWidget {
                           borderRadius: 10,
                           color: AppColors.primaryColor,
                         ),
-                        if (controller.selectedClaim.value != null &&
-                            controller.selectedClaim.value!.submitClaim !=
-                                null &&
-                            !controller.selectedClaim.value!.submitClaim!)
+                        if (claim.submitClaim == false)
                           Padding(
                             padding: const EdgeInsets.only(left: 20.0),
                             child: Obx(

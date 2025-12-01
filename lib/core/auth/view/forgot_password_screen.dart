@@ -11,7 +11,6 @@ class ForgotPasswordScreen extends GetView<ForgotPasswordController> {
 
   @override
   Widget build(BuildContext context) {
-    Get.put(ForgotPasswordController()); // Ensure controller is initialized
     return AuthBg(
       title: 'Forgot Password ?',
       showBack: false,

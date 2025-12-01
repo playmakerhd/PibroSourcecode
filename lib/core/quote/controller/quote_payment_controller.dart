@@ -417,7 +417,7 @@ class QuotePaymentController extends GetxController {
       // Save updated login data (keep it encrypted for downstream consumers)
       encryptData(
         key: StorageKeys.loginData,
-        value: updatedLoginData.toString(),
+        value: jsonEncode(updatedLoginData),
       );
       await GetStorage().write(StorageKeys.entityType, 'CUSTOMER');
 

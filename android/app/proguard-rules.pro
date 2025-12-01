@@ -30,6 +30,6 @@
 -keepattributes Signature
 -keepattributes Exceptions
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name
+# If you keep the line number information, the following directive
+# hides the original source file name. It is currently enabled below.
 -renamesourcefileattribute SourceFile

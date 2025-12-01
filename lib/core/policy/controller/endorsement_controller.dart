@@ -197,6 +197,8 @@ class EndorsementController extends GetxController {
     startDateCtrl.dispose();
     endDateCtrl.dispose();
     renewalDateCtrl.dispose();
+    contestSubjectController.dispose();
+    contestMessageController.dispose();
     super.dispose();
   }
 
@@ -678,6 +680,16 @@ class EndorsementController extends GetxController {
       if (noteResp.messageResponse.status != AppConstants.responseSuccess) {
         showSnackbarMessage(
             message: noteResp.messageResponse.message, isSuccess: false);
+        paymentLoading.value = false;
+        return;
+      }
+
+      // Post the endorsement client note
+      final invoiceNumber = noteResp.messageResponse.message;
+      final postNoteResp = await repo.postClientNoteEndorsement(invoiceNumber);
+      if (postNoteResp.messageResponse.status != AppConstants.responseSuccess) {
+        showSnackbarMessage(
+            message: postNoteResp.messageResponse.message, isSuccess: false);
         paymentLoading.value = false;
         return;
       }

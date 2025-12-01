@@ -44,6 +44,7 @@ class GetQuoteScreen extends StatelessWidget {
                   height: 20,
                 ),
                 Form(
+                  key: controller.formKey,
                   child: Column(
                     children: [
                       Obx(
@@ -165,8 +166,8 @@ class GetQuoteScreen extends StatelessWidget {
                       // Preferred Insurer dropdown (uses your CustomDropdown)
                       Obx(
                         () => CustomDropdown(
-                          label: 'Select Preferred Insurer',
-                          hint: 'Select Preferred Insurer',
+                          label: AppStrings.vendorInsurer.tr,
+                          hint: AppStrings.vendorInsurer.tr,
                           suffixIcon: Icon(
                             Icons.arrow_drop_down,
                             size: 30,
@@ -192,35 +193,43 @@ class GetQuoteScreen extends StatelessWidget {
                         child: PolicyButton(
                           text: AppStrings.continueText.tr,
                           onPressed: () {
-                            // Validate required fields before continuing
+                            // First validate form fields (start/end date inputs)
+                            final bool isValid =
+                                controller.formKey.currentState?.validate() ??
+                                    false;
+                            if (!isValid) return;
+
+                            // Then validate dropdowns and other required selections
                             if (controller.selectedBusinessPolicy.value ==
                                 null) {
                               showSnackbarMessage(
-                                  message: 'Please select an insurance class',
+                                  message:
+                                      AppStrings.pleaseSelectInsuranceClass.tr,
                                   isSuccess: false);
                               return;
                             }
                             if (controller.selectedRiskTypeID.value == null) {
                               showSnackbarMessage(
-                                  message: 'Please select a product',
+                                  message: AppStrings.pleaseSelectProduct.tr,
                                   isSuccess: false);
                               return;
                             }
                             if (controller.startDate.value == null) {
                               showSnackbarMessage(
-                                  message: 'Please select a start date',
+                                  message: AppStrings.pleaseSelectStartDate.tr,
                                   isSuccess: false);
                               return;
                             }
                             if (controller.endDate.value == null) {
                               showSnackbarMessage(
-                                  message: 'Please select an end date',
+                                  message: AppStrings.pleaseSelectEndDate.tr,
                                   isSuccess: false);
                               return;
                             }
                             if (controller.selectedVendor.value == null) {
                               showSnackbarMessage(
-                                  message: 'Please select a preferred insurer',
+                                  message: AppStrings
+                                      .pleaseSelectPreferredInsurer.tr,
                                   isSuccess: false);
                               return;
                             }
