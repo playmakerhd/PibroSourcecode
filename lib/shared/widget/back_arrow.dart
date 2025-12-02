@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pibro/constants/app_colors.dart';
+import 'package:pibro/utils/view_utils.dart';
 
 class BackArrow extends StatelessWidget {
   const BackArrow({super.key, this.color = AppColors.primaryColor, this.onTap});
@@ -11,7 +12,8 @@ class BackArrow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap ?? Get.back,
+      // Use safeBack by default instead of Get.back
+      onTap: onTap ?? () => safeBack(),
       child: Icon(
         Icons.arrow_back,
         color: color,

@@ -149,7 +149,7 @@ class ProfileController extends GetxController {
                 height: 10,
               ),
               GestureDetector(
-                onTap: Get.back,
+                onTap: () => safeBack(),
                 child: Text(
                   AppStrings.cancel.tr,
                   style: Styles.boldTextStyle(size: 14),

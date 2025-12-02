@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:pibro/constants/app_colors.dart';
 import 'package:pibro/utils/view_utils.dart';
 
@@ -54,7 +53,7 @@ class MainHeader extends StatelessWidget {
           children: [
             hasBackIcon
                 ? GestureDetector(
-                    onTap: onBackPressed ?? Get.back,
+                    onTap: onBackPressed ?? safeBack,
                     child: Padding(
                       padding: const EdgeInsets.only(top: 5.0),
                       child: Icon(

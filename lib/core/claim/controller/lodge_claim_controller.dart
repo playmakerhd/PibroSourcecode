@@ -380,7 +380,7 @@ class LodgeClaimController extends GetxController {
                   ),
                 ),
                 GestureDetector(
-                  onTap: Get.back,
+                  onTap: safeBack,
                   child: Icon(
                     Icons.clear,
                     color: AppColors.faintGrey,

@@ -12,26 +12,50 @@ double queryWidth(BuildContext? context) {
   return context != null ? MediaQuery.of(context).size.width : Get.size.width;
 }
 
-/// Safe navigation back that handles snackbar controller issues
+/// Safe navigation back that DOES NOT use Get.back()
+///
+/// Why?
+/// -----
+/// Get.back() calls into Get's navigation layer which, in this GetX version,
+/// tries to close the "current snackbar" via SnackbarController. If the
+/// controller has not been initialised, you get:
+///
+///   LateInitializationError: Field '_controller' has not been initialized
+///
+/// To avoid this completely, we only use Flutter's Navigator.
 void safeBack({dynamic result}) {
-  try {
-    if (Get.context != null && Navigator.of(Get.context!).canPop()) {
-      Navigator.of(Get.context!).pop(result);
+  // 1. Try using the current context (works anywhere in the UI)
+  final ctx = Get.context;
+  if (ctx != null) {
+    try {
+      final navigator = Navigator.of(ctx);
+      if (navigator.canPop()) {
+        navigator.pop(result);
+      } else {
+        navigator.maybePop(result);
+      }
       return;
+    } catch (_) {
+      // If anything goes wrong, fall through to the global navigator
     }
-  } catch (e) {
-    // Fallback if context-based navigation fails
   }
 
+  // 2. Fallback: use the root navigator directly via Get.key
   try {
-    Get.back(result: result, closeOverlays: false);
-  } catch (e) {
-    if (Get.context != null) {
-      Navigator.of(Get.context!).maybePop(result);
+    final navigator = Get.key.currentState;
+    if (navigator != null && navigator.canPop()) {
+      navigator.pop(result);
+    } else {
+      navigator?.maybePop(result);
     }
+  } catch (_) {
+    // Last resort: do nothing. Back should never crash the app.
   }
 }
 
+/// Central helper for all snackbars in the app.
+/// NOTE: We intentionally do NOT call `Get.closeAllSnackbars()` or
+/// `Get.closeCurrentSnackbar()` here. Let GetX manage the snackbar queue.
 void showSnackbarMessage({
   required String message,
   bool isSuccess = true,
@@ -71,8 +95,12 @@ void showSnackbarMessage({
   );
 }
 
-void showAppDialog(Widget child,
-    {double height = 220, bool dismissible = true, bool willPop = true}) {
+void showAppDialog(
+  Widget child, {
+  double height = 220,
+  bool dismissible = true,
+  bool willPop = true,
+}) {
   Get.dialog(
     barrierDismissible: dismissible,
     Dialog(
@@ -81,7 +109,7 @@ void showAppDialog(Widget child,
         canPop: willPop,
         child: Container(
           height: height,
-          padding: EdgeInsets.symmetric(horizontal: 30),
+          padding: const EdgeInsets.symmetric(horizontal: 30),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppConstants.appRadius),
           ),
@@ -121,8 +149,10 @@ Future<dynamic> showAppBottomSheet({
             );
 
       final Widget sheetBody = Container(
-        height: height,
-        width: sheetWidth,
+        constraints: BoxConstraints(
+          maxHeight: height,
+          maxWidth: sheetWidth,
+        ),
         padding: sheetPadding,
         decoration: BoxDecoration(
           color: AppColors.white,
@@ -136,7 +166,8 @@ Future<dynamic> showAppBottomSheet({
       return PopScope(
         canPop: willPop,
         onPopInvokedWithResult: (didPop, result) {
-          // No need to close snackbars here - let them finish naturally
+          // IMPORTANT: do NOT manually close snackbars here.
+          // Let them finish naturally to avoid touching SnackbarController.
         },
         child: SafeArea(
           top: false,
