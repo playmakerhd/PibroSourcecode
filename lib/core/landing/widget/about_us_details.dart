@@ -28,12 +28,6 @@ class AboutUsDetails extends StatelessWidget {
           title: 'Values',
           text: 'Act like an owner, be a great team, erve family farmers.',
         ),
-        TitleTextColumn(
-          title:
-              'Conceived by Farmers, Built by Innovators and Improved Together',
-          text:
-              'The FBN Network was developed in 2014 by a handful of farmers as an independent, unbiased and objective farmer-driven information source.',
-        ),
       ],
     );
   }

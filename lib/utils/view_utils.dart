@@ -12,12 +12,8 @@ double queryWidth(BuildContext? context) {
   return context != null ? MediaQuery.of(context).size.width : Get.size.width;
 }
 
-bool _isSnackbarShowing = false;
-
 /// Safe navigation back that handles snackbar controller issues
-/// This is a workaround for GetX LateInitializationError in snackbar_controller
 void safeBack({dynamic result}) {
-  // Use Navigator.pop directly to avoid GetX snackbar controller issues
   try {
     if (Get.context != null && Navigator.of(Get.context!).canPop()) {
       Navigator.of(Get.context!).pop(result);
@@ -27,42 +23,12 @@ void safeBack({dynamic result}) {
     // Fallback if context-based navigation fails
   }
 
-  // Fallback: try Get.back but catch any snackbar-related errors
   try {
-    // Manually check and close snackbars before navigation
-    if (Get.isSnackbarOpen) {
-      try {
-        Get.closeAllSnackbars();
-      } catch (_) {
-        // Ignore snackbar closing errors
-      }
-    }
     Get.back(result: result, closeOverlays: false);
   } catch (e) {
-    // Catch specific GetX snackbar controller error
-    if (e.runtimeType.toString() == 'LateInitializationError' &&
-        e.toString().contains('_controller@')) {
-      // This is the snackbar controller error - use Navigator as fallback
-      if (Get.context != null) {
-        Navigator.of(Get.context!).maybePop(result);
-      }
-      return;
-    }
-    // Last resort fallback
     if (Get.context != null) {
       Navigator.of(Get.context!).maybePop(result);
     }
-  }
-}
-
-/// Safe close all snackbars - catches LateInitializationError
-void safeCloseAllSnackbars() {
-  try {
-    if (Get.isSnackbarOpen) {
-      Get.closeAllSnackbars();
-    }
-  } catch (e) {
-    // Ignore errors from closing non-existent or uninitialized snackbars
   }
 }
 
@@ -71,16 +37,6 @@ void showSnackbarMessage({
   bool isSuccess = true,
   bool isWarning = false,
 }) {
-  // Close any existing snackbar safely before showing a new one
-  safeCloseAllSnackbars();
-
-  if (_isSnackbarShowing) {
-    // Prevent showing another snackbar while one is active
-    return;
-  }
-
-  _isSnackbarShowing = true; // Lock
-
   Get.snackbar(
     isWarning
         ? 'Info'
@@ -113,11 +69,6 @@ void showSnackbarMessage({
     isDismissible: true,
     dismissDirection: DismissDirection.horizontal,
   );
-
-  // Release lock after duration + a small buffer (to account for animation)
-  Future.delayed(const Duration(milliseconds: 3500), () {
-    _isSnackbarShowing = false;
-  });
 }
 
 void showAppDialog(Widget child,
@@ -149,24 +100,30 @@ Future<dynamic> showAppBottomSheet({
   bool willPop = true,
   bool isImagePreview = false,
 }) {
-  return Get.bottomSheet(
-    PopScope(
-      canPop: willPop,
-      onPopInvokedWithResult: (didPop, result) {
-        // When the bottom sheet is dismissed by gesture or back button,
-        // this callback helps prevent the GetX snackbar error
-        if (didPop) {
-          // Sheet was already popped, just ensure snackbars are safely closed
-          safeCloseAllSnackbars();
-        }
-      },
-      child: Container(
+  final context = Get.context;
+  if (context == null) {
+    return Future.value();
+  }
+
+  return showModalBottomSheet<dynamic>(
+    context: context,
+    isDismissible: isDismissible,
+    enableDrag: enableDrag,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (sheetContext) {
+      final double sheetWidth = queryWidth(sheetContext);
+      final EdgeInsets sheetPadding = isImagePreview
+          ? EdgeInsets.zero
+          : EdgeInsets.symmetric(
+              horizontal: sheetWidth * 0.08,
+              vertical: 20,
+            );
+
+      final Widget sheetBody = Container(
         height: height,
-        width: queryWidth(null),
-        padding: isImagePreview
-            ? EdgeInsets.zero
-            : EdgeInsets.symmetric(
-                horizontal: Get.size.width * 0.08, vertical: 20),
+        width: sheetWidth,
+        padding: sheetPadding,
         decoration: BoxDecoration(
           color: AppColors.white,
           borderRadius: BorderRadius.vertical(
@@ -174,9 +131,18 @@ Future<dynamic> showAppBottomSheet({
           ),
         ),
         child: SingleChildScrollView(child: child),
-      ),
-    ),
-    isDismissible: isDismissible,
-    enableDrag: enableDrag,
+      );
+
+      return PopScope(
+        canPop: willPop,
+        onPopInvokedWithResult: (didPop, result) {
+          // No need to close snackbars here - let them finish naturally
+        },
+        child: SafeArea(
+          top: false,
+          child: sheetBody,
+        ),
+      );
+    },
   );
 }
