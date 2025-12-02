@@ -174,7 +174,7 @@ class LodgeClaimsScreen extends StatelessWidget {
                                                     (route) =>
                                                         route.settings.name ==
                                                         AppRoutes.claim);
-                                                Get.back();
+                                                safeBack();
                                               },
                                         height: 50,
                                         width: tabIndex == 1
@@ -196,8 +196,6 @@ class LodgeClaimsScreen extends StatelessWidget {
                                         primaryButton,
                                         SizedBox(
                                             width: queryWidth(context) * 0.05),
-
-                                        
                                         if (controller.selectedClaim.value !=
                                                 null &&
                                             controller.selectedClaim.value!

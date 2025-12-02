@@ -100,7 +100,7 @@ class QuotePaymentController extends GetxController {
     // Called by QuotePaymentScreen on navigation events
     QLog.d('WEBVIEW', 'Visited URL', {'sessionId': sessionId, 'url': url});
     if (url.contains("powersoftrd.com/EnterpriseDemo")) {
-      Get.back(); // close webview
+      safeBack(); // close webview
       final ref = url.substring(url.length - 10);
       QLog.d('WEBVIEW', 'Trigger verifyPayment with reference',
           {'reference': ref});

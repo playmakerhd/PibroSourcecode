@@ -542,13 +542,27 @@ class ApiUtils {
     final entityID =
         resolveEntityID(loginCustomerID: loginData.customerID) ?? '';
 
+    print('📝 SALES_QUOTATION: Creating payload...');
+    print('   Customer ID: $entityID');
+    print('   Vendor ID: ${vendorID ?? "ADIC (default)"}');
+    print('   Business Class: $businessClassID');
+    print('   Risk Type: $riskTypeID');
+    print('   Items to insure: ${itemsToInsure.length}');
+
     // Transform items to Sales Quotation format
     final transformedItems = itemsToInsure.map((item) {
-      final detailMemo1 = item['RegNo'] ?? item['EngineNo'] ?? '';
-      final detailMemo2 = item['ChasisId'] ?? '';
-      final detailMemo3 = item['VehicleMake'] ?? '';
+      // Priority order for detail fields:
+      // 1. Explicit vehicle fields (RegNo, EngineNo, etc.)
+      // 2. Fallback to EngineNo if RegNo is empty
+      final detailMemo1 = item['RegNo']?.toString().trim() ??
+          item['EngineNo']?.toString().trim() ??
+          '';
+      final detailMemo2 = item['ChasisId']?.toString().trim() ??
+          item['EngineNo']?.toString().trim() ??
+          '';
+      final detailMemo3 = item['VehicleMake']?.toString().trim() ?? '';
 
-      return {
+      final transformedItem = {
         "ItemsDescription":
             item['description'] ?? item['ItemsDescription'] ?? '',
         "SumInsured": _parseSumInsured(item['Value'] ?? item['value'] ?? '0'),
@@ -558,6 +572,12 @@ class ApiUtils {
         "DetailMemo3": detailMemo3,
         "PolicyItems": item['ScreenShotURL'] ?? item['screenShotURL'] ?? '',
       };
+
+      print('   Item: ${transformedItem["ItemsDescription"]} '
+          '(Value: ${transformedItem["SumInsured"]}, '
+          'DetailMemo1: ${detailMemo1.isNotEmpty ? detailMemo1 : "N/A"})');
+
+      return transformedItem;
     }).toList();
 
     return {

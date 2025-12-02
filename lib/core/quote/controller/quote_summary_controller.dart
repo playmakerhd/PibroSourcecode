@@ -275,7 +275,7 @@ class QuoteSummaryController extends GetxController {
                     children: [
                       PolicyButton(
                         text: 'Cancel',
-                        onPressed: () => Get.back(),
+                        onPressed: () => safeBack(),
                         width: 80,
                         height: 35,
                         bgColor: AppColors.primaryColor,
@@ -320,7 +320,7 @@ class QuoteSummaryController extends GetxController {
         showSnackbarMessage(
             message: response.messageResponse.message, isSuccess: false);
       } else {
-        Get.back(); // Close modal
+        safeBack(); // Close modal
         contestSubjectController.clear();
         contestMessageController.clear();
         showSnackbarMessage(

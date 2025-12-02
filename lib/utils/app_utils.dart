@@ -248,7 +248,7 @@ Future<void> saveConfig(GlobalKey<FormState> formKey,
       } catch (_) {}
 
       if (isProfile) {
-        Get.back();
+        safeBack();
       } else {
         Get.offAllNamed(AppRoutes.splash, arguments: {'forceRefresh': true});
       }

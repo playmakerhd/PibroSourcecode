@@ -59,7 +59,7 @@ class ForgotPasswordScreen extends GetView<ForgotPasswordController> {
             const SizedBox(height: 24),
             _OtherOptions(onTap: controller.toggleOtherOption),
             const SizedBox(height: 24),
-            _BackToLogin(onTap: () => Get.back()),
+            _BackToLogin(onTap: () => safeBack()),
             const SizedBox(height: 30),
           ],
         ),

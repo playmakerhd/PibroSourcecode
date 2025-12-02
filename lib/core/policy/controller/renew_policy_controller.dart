@@ -267,7 +267,7 @@ class RenewPolicyController extends GetxController {
                     children: [
                       PolicyButton(
                         text: 'Cancel',
-                        onPressed: () => Get.back(),
+                        onPressed: () => safeBack(),
                         width: 80,
                         height: 35,
                         bgColor: AppColors.primaryColor,
@@ -312,7 +312,7 @@ class RenewPolicyController extends GetxController {
         showSnackbarMessage(
             message: response.messageResponse.message, isSuccess: false);
       } else {
-        Get.back(); // Close modal
+        safeBack(); // Close modal
         contestSubjectController.clear();
         contestMessageController.clear();
         showSnackbarMessage(
@@ -561,7 +561,7 @@ class RenewPolicyController extends GetxController {
 
   _closeSheet() {
     clearInputData();
-    Get.back();
+    safeBack();
   }
 
   void populateInputFields(ItemToInsure data) {
@@ -600,7 +600,7 @@ class RenewPolicyController extends GetxController {
                     children: [
                       Text('PDF Preview', style: Styles.mediumTextStyle()),
                       GestureDetector(
-                        onTap: () => Get.back(),
+                        onTap: () => safeBack(),
                         child: Icon(Icons.close),
                       ),
                     ],
@@ -942,7 +942,7 @@ class RenewPolicyController extends GetxController {
 
   void checkPaymentStatus(String url) {
     if (url.contains("powersoftrd.com/EnterpriseDemo")) {
-      Get.back();
+      safeBack();
       // showSnackbarMessage(message: 'Your transaction was successful!');
       verifyPayment(url.substring(url.length - 10));
     }
@@ -1443,8 +1443,22 @@ class RenewPolicyController extends GetxController {
           'ItemLocation': item.itemLocation ?? '',
           'ScreenShotURL': item.policyItems ?? '',
           'screenShotURL': item.policyItems ?? '',
+          // Map vehicle-specific detail fields for motor insurance
+          'RegNo': item.detailMemo1 ?? '',
+          'EngineNo': item.detailMemo2 ?? '',
+          'ChasisId': item.detailMemo3 ?? '',
+          'VehicleMake': item.detailMemo4 ?? '',
         };
       }).toList();
+
+      // Get vendor ID from policy underwriters
+      String? vendorID;
+      if (policy.value?.insurancePolicyUnderwriters?.isNotEmpty == true) {
+        vendorID = policy.value?.insurancePolicyUnderwriters?.first.vendorID;
+      }
+
+      print('🔍 RENEWAL: Vendor ID: ${vendorID ?? "ADIC (default)"}');
+      print('🔍 RENEWAL: Items count: ${items.length}');
 
       final payload = ApiUtils.createSalesQuotation(
         businessClassID: policy.value?.businessClassID ?? '',
@@ -1453,6 +1467,7 @@ class RenewPolicyController extends GetxController {
         endDate: endDateController.text,
         renewalDate: renewalDateController.text,
         itemsToInsure: items,
+        vendorID: vendorID,
         premiumDescription:
             'Quotation on policy renewal on ${policy.value?.policyBrokerID ?? ''}',
       );

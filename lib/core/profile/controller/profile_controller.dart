@@ -48,7 +48,6 @@ class ProfileController extends GetxController {
   RxBool obscureNewPassword = true.obs;
   RxBool obscureConfirmPassword = true.obs;
   RxBool isPasswordChangeLoading = false.obs;
-  
 
   get profileLoading => null;
 
@@ -121,7 +120,7 @@ class ProfileController extends GetxController {
           );
         } else {
           clearChangePasswordForm();
-          Get.back();
+          safeBack();
           _showSuccessDialog();
         }
         isPasswordChangeLoading.value = false;
@@ -199,7 +198,7 @@ class ProfileController extends GetxController {
 
   void _closePasswordChangeDialog() {
     clearChangePasswordForm();
-    Get.back();
+    safeBack();
   }
 
   void _openChangePassword() {

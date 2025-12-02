@@ -499,7 +499,7 @@ class GetQuoteController extends GetxController {
                     children: [
                       Text('PDF Preview', style: Styles.mediumTextStyle()),
                       GestureDetector(
-                        onTap: () => Get.back(),
+                        onTap: () => safeBack(),
                         child: Icon(Icons.close),
                       ),
                     ],

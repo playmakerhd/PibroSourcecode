@@ -3,6 +3,7 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:get/get.dart';
 import 'package:pibro/constants/app_styles.dart';
 import 'package:pibro/core/quote/controller/quote_payment_controller.dart';
+import 'package:pibro/utils/view_utils.dart';
 
 class QuotePaymentScreen extends StatelessWidget {
   const QuotePaymentScreen({super.key, required this.paystackUrl});
@@ -16,7 +17,7 @@ class QuotePaymentScreen extends StatelessWidget {
   void _stopLoadingAndPop() {
     final qc = _qc;
     if (qc != null) qc.paymentLoading.value = false;
-    Get.back();
+    safeBack();
   }
 
   void _notifyPaymentStatus(String url) {
@@ -25,7 +26,7 @@ class QuotePaymentScreen extends StatelessWidget {
       qc.checkPaymentStatus(url);
     } else {
       // No controller registered: close and surface error
-      Get.back();
+      safeBack();
       Get.showSnackbar(GetSnackBar(
         message: 'Payment session not available. Please try again.',
         duration: const Duration(seconds: 3),
@@ -41,12 +42,15 @@ class QuotePaymentScreen extends StatelessWidget {
           onTap: _stopLoadingAndPop,
           child: const Icon(Icons.arrow_back),
         ),
-        title: Text('Pay with Paystack', style: Styles.boldTextStyle(size: 20), textAlign: TextAlign.center,)
-      ,
+        title: Text(
+          'Pay with Paystack',
+          style: Styles.boldTextStyle(size: 20),
+          textAlign: TextAlign.center,
+        ),
       ),
       body: InAppWebView(
         initialUrlRequest: URLRequest(url: WebUri.uri(Uri.parse(paystackUrl))),
-        initialSettings:  InAppWebViewSettings(javaScriptEnabled: true),
+        initialSettings: InAppWebViewSettings(javaScriptEnabled: true),
         onUpdateVisitedHistory: (controller, url, androidIsReload) {
           if (url != null) _notifyPaymentStatus(url.toString());
         },

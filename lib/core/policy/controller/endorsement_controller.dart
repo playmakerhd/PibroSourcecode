@@ -262,7 +262,7 @@ class EndorsementController extends GetxController {
         (isNew == true ? newItems : policyItems).add(it);
       }
       clearInputData();
-      Get.back();
+      safeBack();
     }
   }
 
@@ -289,7 +289,7 @@ class EndorsementController extends GetxController {
               child: GestureDetector(
                 onTap: () {
                   clearInputData();
-                  Get.back();
+                  safeBack();
                 },
                 child: const Icon(Icons.clear,
                     size: 30, color: AppColors.primaryColor),
@@ -455,7 +455,7 @@ class EndorsementController extends GetxController {
                     children: [
                       Text('PDF Preview', style: Styles.mediumTextStyle()),
                       GestureDetector(
-                        onTap: () => Get.back(),
+                        onTap: () => safeBack(),
                         child: Icon(Icons.close),
                       ),
                     ],
@@ -604,7 +604,7 @@ class EndorsementController extends GetxController {
 
   void checkPaymentStatus(String url) {
     if (url.contains("powersoftrd.com/EnterpriseDemo")) {
-      Get.back();
+      safeBack();
       verifyPayment(url.substring(url.length - 10));
     }
   }
@@ -774,7 +774,7 @@ class EndorsementController extends GetxController {
                     children: [
                       PolicyButton(
                         text: 'Cancel',
-                        onPressed: () => Get.back(),
+                        onPressed: () => safeBack(),
                         width: 80,
                         height: 35,
                         bgColor: AppColors.primaryColor,
@@ -818,7 +818,7 @@ class EndorsementController extends GetxController {
         showSnackbarMessage(
             message: response.messageResponse.message, isSuccess: false);
       } else {
-        Get.back(); // Close modal
+        safeBack(); // Close modal
         contestSubjectController.clear();
         contestMessageController.clear();
         showSnackbarMessage(
@@ -891,8 +891,22 @@ class EndorsementController extends GetxController {
           'ItemLocation': item.itemLocation ?? '',
           'ScreenShotURL': item.policyItems ?? '',
           'screenShotURL': item.policyItems ?? '',
+          // Map vehicle-specific detail fields for motor insurance
+          'RegNo': item.detailMemo1 ?? '',
+          'EngineNo': item.detailMemo2 ?? '',
+          'ChasisId': item.detailMemo3 ?? '',
+          'VehicleMake': item.detailMemo4 ?? '',
         };
       }).toList();
+
+      // Get vendor ID from policy underwriters
+      String? vendorID;
+      if (policy.value?.insurancePolicyUnderwriters?.isNotEmpty == true) {
+        vendorID = policy.value?.insurancePolicyUnderwriters?.first.vendorID;
+      }
+
+      print('🔍 ENDORSEMENT: Vendor ID: ${vendorID ?? "ADIC (default)"}');
+      print('🔍 ENDORSEMENT: Items count: ${items.length}');
 
       final payload = ApiUtils.createSalesQuotation(
         businessClassID: policy.value?.businessClassID ?? '',
@@ -902,6 +916,7 @@ class EndorsementController extends GetxController {
         renewalDate:
             endDate.value?.add(const Duration(days: 1)).toIso8601String() ?? '',
         itemsToInsure: items,
+        vendorID: vendorID,
         premiumDescription:
             'Quotation on policy endorsement on ${policy.value?.policyBrokerID ?? ''}',
       );

@@ -39,6 +39,15 @@ void safeBack({dynamic result}) {
     }
     Get.back(result: result, closeOverlays: false);
   } catch (e) {
+    // Catch specific GetX snackbar controller error
+    if (e.runtimeType.toString() == 'LateInitializationError' &&
+        e.toString().contains('_controller@')) {
+      // This is the snackbar controller error - use Navigator as fallback
+      if (Get.context != null) {
+        Navigator.of(Get.context!).maybePop(result);
+      }
+      return;
+    }
     // Last resort fallback
     if (Get.context != null) {
       Navigator.of(Get.context!).maybePop(result);
@@ -143,6 +152,14 @@ Future<dynamic> showAppBottomSheet({
   return Get.bottomSheet(
     PopScope(
       canPop: willPop,
+      onPopInvokedWithResult: (didPop, result) {
+        // When the bottom sheet is dismissed by gesture or back button,
+        // this callback helps prevent the GetX snackbar error
+        if (didPop) {
+          // Sheet was already popped, just ensure snackbars are safely closed
+          safeCloseAllSnackbars();
+        }
+      },
       child: Container(
         height: height,
         width: queryWidth(null),

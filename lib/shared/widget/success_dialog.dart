@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pibro/core/profile/widget/profile_button.dart';
 import 'package:pibro/utils/image_factory.dart';
+import 'package:pibro/utils/view_utils.dart';
 import 'package:pibro/constants/app_images.dart';
 import 'package:pibro/constants/app_colors.dart';
 import 'package:pibro/constants/app_styles.dart';
@@ -62,7 +63,7 @@ Future<dynamic> showSuccessDialog({
                   ],
                 ),
                 GestureDetector(
-                  onTap: onPressed ?? () => Get.back(),
+                  onTap: onPressed ?? () => safeBack(),
                   child: ProfileButton(
                     text: 'OK',
                     height: 25,

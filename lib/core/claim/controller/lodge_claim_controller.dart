@@ -348,7 +348,7 @@ class LodgeClaimController extends GetxController {
   closeSheet() {
     isPickingFile.value = false;
     selectedFile.value = null;
-    Get.back();
+    safeBack();
   }
 
   previewImage(String title, String image) {
@@ -718,7 +718,7 @@ class LodgeClaimController extends GetxController {
         claimDocuments.value = claimDocumentsToSend;
         claimDocumentsToSend = [];
         Get.forceAppUpdate();
-        Get.back();
+        safeBack();
       }
       updateLoading.value = false;
       isUploading.value = false;

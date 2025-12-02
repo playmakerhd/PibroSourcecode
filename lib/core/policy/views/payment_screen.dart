@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:pibro/constants/app_styles.dart';
 import 'package:pibro/core/policy/controller/renew_policy_controller.dart';
 import 'package:pibro/core/policy/controller/endorsement_controller.dart';
+import 'package:pibro/utils/view_utils.dart';
 
 class PaymentScreen extends StatelessWidget {
   const PaymentScreen({super.key, required this.paystackUrl});
@@ -31,7 +32,7 @@ class PaymentScreen extends StatelessWidget {
               } else if (renewCtrl != null) {
                 renewCtrl.paymentLoading.value = false;
               }
-              Get.back();
+              safeBack();
             },
             child: Icon(Icons.arrow_back),
           ),
