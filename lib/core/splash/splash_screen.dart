@@ -27,6 +27,12 @@ class _SplashScreenState extends State<SplashScreen> {
     _initializeData();
   }
 
+  @override
+  void dispose() {
+    // Clean up any pending operations
+    super.dispose();
+  }
+
   Future<void> _initializeData() async {
     print(
         'SplashScreen: _initializeData called, forceRefresh: ${widget.forceRefresh}');
@@ -72,13 +78,18 @@ class _SplashScreenState extends State<SplashScreen> {
   void _onSplashEnd() {
     if (!mounted) return;
 
-    setState(() {
-      _canNavigate = true;
-    });
+    try {
+      setState(() {
+        _canNavigate = true;
+      });
 
-    // If data already loaded, navigate now
-    if (_isDataLoaded) {
-      _navigateToLanding();
+      // If data already loaded, navigate now
+      if (_isDataLoaded) {
+        _navigateToLanding();
+      }
+    } catch (e) {
+      // Ignore errors if widget is being disposed
+      print('Error in _onSplashEnd: $e');
     }
   }
 

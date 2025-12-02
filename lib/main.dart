@@ -26,19 +26,14 @@ void main() async {
   PibroLogger.init();
   await initializeDateFormatting('en_US', null);
 
-  // Set up global error handler to catch GetX snackbar controller errors
   FlutterError.onError = (FlutterErrorDetails details) {
-    // Check if this is the GetX LateInitializationError for snackbar controller
     if (details.exception.runtimeType.toString() == 'LateInitializationError' &&
         details.exception.toString().contains('_controller@')) {
-      // Suppress this specific error - it's a known GetX issue when dismissing
-      // bottom sheets/dialogs without having shown a snackbar
       PibroLogger.logger.w(
         'Suppressed GetX snackbar controller error: ${details.exception}',
       );
-      return; // Don't report this error
+      return; 
     }
-    // For all other errors, use the default error handler
     FlutterError.presentError(details);
   };
 
