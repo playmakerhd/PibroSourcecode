@@ -52,9 +52,13 @@ class ContactDetails extends StatelessWidget {
                     ),
                   ),
                 if (controller.companyInfo.value?.companyWebAddress != null)
-                  IconTextRow(
-                    image: AppImages.website,
-                    text: controller.companyInfo.value!.companyWebAddress!,
+                  GestureDetector(
+                    onTap: () => launchAnyUrl(
+                        controller.companyInfo.value!.companyWebAddress!),
+                    child: IconTextRow(
+                      image: AppImages.website,
+                      text: controller.companyInfo.value!.companyWebAddress!,
+                    ),
                   ),
                 SizedBox(
                   height: 30,

@@ -40,6 +40,7 @@ class CustomerTransactionsListScreen extends StatelessWidget {
             onChanged: (from, to) {
               c.from.value = from;
               c.to.value = to;
+              c.setStatementDatesSelected(true);
               c.refreshList();
             },
           ),

@@ -459,7 +459,8 @@ class GetQuoteController extends GetxController {
 
   void populateInputFields(ItemData data) {
     descriptionController.text = data.description!;
-    valueController.text = data.value!;
+    valueController.text =
+        formatNumberWithCommas(double.tryParse(data.value!) ?? 0);
     locationController.text = data.location!;
     selectedImage.value = data.screenShotURL!;
     if (isMotorQuote(selectedBusinessPolicy.value!.businessClassID!)) {

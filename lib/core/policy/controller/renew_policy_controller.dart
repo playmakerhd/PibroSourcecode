@@ -568,7 +568,7 @@ class RenewPolicyController extends GetxController {
 
   void populateInputFields(ItemToInsure data) {
     descriptionController.text = data.itemsDescription ?? '';
-    valueController.text = (data.sumInsured ?? 0).toString();
+    valueController.text = formatNumberWithCommas(data.sumInsured ?? 0);
     locationController.text = data.itemLocation ?? '';
   }
 

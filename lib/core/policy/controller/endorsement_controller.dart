@@ -271,7 +271,7 @@ class EndorsementController extends GetxController {
   void showAddOrUpdateItemSheet({ItemToInsure? data, bool isNew = false}) {
     if (data != null) {
       descCtrl.text = data.itemsDescription ?? '';
-      valueCtrl.text = (data.sumInsured ?? 0).toString();
+      valueCtrl.text = formatNumberWithCommas(data.sumInsured ?? 0);
       locationCtrl.text = data.itemLocation ?? '';
       selectedImage.value = data.policyItems ?? '';
     }
