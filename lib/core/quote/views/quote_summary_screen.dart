@@ -87,7 +87,7 @@ class QuoteSummaryScreen extends StatelessWidget {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const CommonHeader(title: 'Quote Summary', isTransparent: true),
+          const CommonHeader(title: 'Quote Summary', isTransparent: false),
           const LargeLine(height: 0),
           Expanded(
             child: Padding(
@@ -208,7 +208,7 @@ class QuoteSummaryScreen extends StatelessWidget {
                         const SizedBox(height: 30),
                         PolicyButton(
                           text: 'Cancel',
-                          onPressed: () => Get.offNamed(AppRoutes.quoteList),
+                          onPressed: () => Get.offAllNamed(AppRoutes.quoteList),
                           width: 120,
                           bgColor: AppColors.greyColor,
                         ),

@@ -25,6 +25,9 @@ class CustomerTransactionsController extends GetxController {
 
   final Rxn<DateTime> from = Rxn<DateTime>();
   final Rxn<DateTime> to = Rxn<DateTime>();
+  // Tracks whether the statement date range was explicitly selected by the user.
+  // If false, `fetchCustomerStatementBytes` will default to a 6-month window.
+  final RxBool statementDatesSelectedByUser = false.obs;
 
   int _page = 1;
   final int _size = 20;
@@ -195,10 +198,15 @@ class CustomerTransactionsController extends GetxController {
     try {
       statementLoading.value = true;
 
-      // Use selected dates or default to past 6 months
+      // Determine date range for statement:
+      // - If the user has explicitly selected dates, use `from`/`to` (with sensible fallbacks).
+      // - If not selected, default to a 6-month window ending today.
       final now = DateTime.now();
-      final periodFrom = from.value ?? now.subtract(const Duration(days: 180));
-      final periodTo = to.value ?? now;
+      final periodFrom = statementDatesSelectedByUser.value
+          ? (from.value ?? now)
+          : now.subtract(const Duration(days: 180));
+      final periodTo =
+          statementDatesSelectedByUser.value ? (to.value ?? now) : now;
 
       final resp = await repo.viewCustomerStatementReport(
         customerID: customerID,
@@ -221,5 +229,11 @@ class CustomerTransactionsController extends GetxController {
     } finally {
       statementLoading.value = false;
     }
+  }
+
+  /// Call this from the UI when the user explicitly selects or clears statement dates.
+  /// Example: `controller.setStatementDatesSelected(true)` when user picks dates.
+  void setStatementDatesSelected(bool selected) {
+    statementDatesSelectedByUser.value = selected;
   }
 }

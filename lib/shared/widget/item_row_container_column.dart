@@ -6,6 +6,7 @@ class ItemRowContainerColumn extends StatelessWidget {
     super.key,
     required this.id,
     required this.amount,
+    this.settlementAmount,
     required this.dates,
     required this.type,
     required this.status,
@@ -14,6 +15,7 @@ class ItemRowContainerColumn extends StatelessWidget {
 
   final String id;
   final String amount;
+  final String? settlementAmount;
   final String dates;
   final String type;
   final String status;
@@ -49,11 +51,26 @@ class ItemRowContainerColumn extends StatelessWidget {
             ),
           ],
         ),
-        Text(
-          dates,
-          style: Styles.regularTextStyle(
-            size: 12,
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Text(
+                dates,
+                style: Styles.regularTextStyle(
+                  size: 12,
+                ),
+              ),
+            ),
+            Flexible(
+              child: Text(
+                settlementAmount != null ? '$settlementAmount' : '',
+                style: Styles.boldTextStyle(size: 12),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
         ),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,

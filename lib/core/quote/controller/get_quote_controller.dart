@@ -26,6 +26,7 @@ import 'package:pibro/utils/api_utils.dart';
 import 'package:pibro/utils/app_utils.dart';
 import 'package:pibro/utils/validators.dart';
 import 'package:pibro/utils/view_utils.dart';
+import 'package:pibro/utils/number_input_formatter.dart';
 
 class GetQuoteController extends GetxController {
   PibroRepository pibroRepository =
@@ -395,7 +396,7 @@ class GetQuoteController extends GetxController {
           data.vehicleMake = vehicleMakeController.text;
         }
         data.description = descriptionController.text;
-        data.value = valueController.text;
+        data.value = valueController.text.replaceAll(',', '');
         data.location = locationController.text;
         data.subject = selectedRiskTypeID.value!.riskName;
         if (selectedImage.value.isNotEmpty) {
@@ -412,14 +413,14 @@ class GetQuoteController extends GetxController {
                   vehicleMake: vehicleMakeController.text,
                   description: descriptionController.text,
                   location: locationController.text,
-                  value: valueController.text,
+                  value: valueController.text.replaceAll(',', ''),
                   subject: selectedRiskTypeID.value!.riskName,
                   screenShotURL: selectedImage.value,
                 )
               : ItemData(
                   description: descriptionController.text,
                   location: locationController.text,
-                  value: valueController.text,
+                  value: valueController.text.replaceAll(',', ''),
                   subject: selectedRiskTypeID.value!.riskName,
                   screenShotURL: selectedImage.value,
                 ),
@@ -607,6 +608,7 @@ class GetQuoteController extends GetxController {
               validator: (value) =>
                   Validators.requiredValidator(value, AppStrings.value.tr),
               inputType: TextInputType.number,
+              inputFormatters: [ThousandsSeparatorInputFormatter()],
             ),
             CustomInput(
               controller: locationController,

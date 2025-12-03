@@ -32,7 +32,7 @@ void main() async {
       PibroLogger.logger.w(
         'Suppressed GetX snackbar controller error: ${details.exception}',
       );
-      return; 
+      return;
     }
     FlutterError.presentError(details);
   };

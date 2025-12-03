@@ -35,6 +35,7 @@ import 'package:pibro/utils/app_utils.dart';
 import 'package:pibro/shared/widget/success_dialog.dart';
 import 'package:pibro/utils/validators.dart';
 import 'package:pibro/utils/view_utils.dart';
+import 'package:pibro/utils/number_input_formatter.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:screenshot/screenshot.dart';
@@ -468,7 +469,8 @@ class RenewPolicyController extends GetxController {
       if (data != null) {
         removeItemFromList(data, isNew ? newPolicyItems : policyItems);
         data.itemsDescription = descriptionController.text;
-        data.sumInsured = double.parse(valueController.text);
+        data.sumInsured =
+            double.parse(valueController.text.replaceAll(',', ''));
         data.itemLocation = locationController.text;
         if (selectedImage.value.isNotEmpty) {
           data.policyItems = selectedImage.value; // raw base64
@@ -486,7 +488,7 @@ class RenewPolicyController extends GetxController {
             excessAmount: 0.0,
             discount: 0.0,
             itemsDescription: descriptionController.text,
-            sumInsured: double.parse(valueController.text),
+            sumInsured: double.parse(valueController.text.replaceAll(',', '')),
             itemLocation: locationController.text,
             sectionTypeID: 'SECTIONA', // static per contract
             policyItems: selectedImage.value, // raw base64 (may be empty)
@@ -707,6 +709,7 @@ class RenewPolicyController extends GetxController {
               validator: (value) =>
                   Validators.requiredValidator(value, AppStrings.value.tr),
               inputType: TextInputType.number,
+              inputFormatters: [ThousandsSeparatorInputFormatter()],
             ),
             CustomInput(
               controller: locationController,

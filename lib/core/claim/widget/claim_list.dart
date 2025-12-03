@@ -36,6 +36,8 @@ class ClaimList extends StatelessWidget {
                           child: ItemRowContainerColumn(
                             id: claim.brokerClaimID!,
                             amount:
+                                'N${formatAmount(claim.dVAmount ?? 0)}',
+                            settlementAmount:
                                 'N${formatAmount(claim.totalReceived ?? 0)}',
                             dates: formatDate(claim.accidentDate!),
                             type: claim.riskTypeID,

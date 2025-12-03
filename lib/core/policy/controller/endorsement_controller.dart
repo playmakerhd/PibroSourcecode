@@ -14,6 +14,7 @@ import 'package:pibro/utils/api_utils.dart';
 import 'package:pibro/utils/app_utils.dart';
 import 'package:pibro/utils/validators.dart';
 import 'package:pibro/utils/view_utils.dart';
+import 'package:pibro/utils/number_input_formatter.dart';
 import 'package:pibro/shared/custom_input/custom_input.dart';
 import 'package:pibro/core/policy/widget/policy_button.dart';
 import 'package:pibro/internalization/app_strings.dart';
@@ -302,6 +303,7 @@ class EndorsementController extends GetxController {
               validator: (v) =>
                   Validators.requiredValidator(v, AppStrings.value.tr),
               inputType: TextInputType.number,
+              inputFormatters: [ThousandsSeparatorInputFormatter()],
             ),
             CustomInput(
               controller: locationCtrl,
