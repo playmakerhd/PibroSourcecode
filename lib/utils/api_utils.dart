@@ -195,8 +195,7 @@ class ApiUtils {
   }
 
   static Map<String, dynamic> notePayload(ClientNoteRequest requestData) {
-    // PlatformUser user = PlatformUser.fromJson(
-    //     convertToJsonStringQuotes(StorageKeys.profileData));
+    
     PlatformUser user =
         PlatformUser.fromJson(GetStorage().read(StorageKeys.profileData) ?? {});
     return {
@@ -206,14 +205,14 @@ class ApiUtils {
       'InvoiceNumber': requestData.invoiceNumber ?? '',
       'NoteTypeID': 'DBN',
       'PolicyBrokerID': requestData.policyBrokerID,
-      'ActualPolicyBrokerID': 'HOGGNIG/GPA/2017/MAR/10018',
-      'PolicyUnderwriterID': 'NGPA/600021/KD ',
+      'ActualPolicyBrokerID': '',
+      'PolicyUnderwriterID': ' ',
       'PackagePololicyID': null,
       'EndorsementID': null,
       'CustomerID': user.customerID,
-      'VendorID': 'NEM',
-      'BusinessClassID': 'GPA',
-      'RiskTypeID': 'GPA',
+      'VendorID': '',
+      'BusinessClassID': '',
+      'RiskTypeID': '',
       'InvoiceDate': requestData.invoiceDate,
       'StartDate': requestData.startDate,
       'EndDate': requestData.endDate,
@@ -254,8 +253,8 @@ class ApiUtils {
       'NoteFormularDesc': null,
       'CustomerName': 'UNITEX LIMITED',
       'EmployeeID': 'AKINADER',
-      'ReceiptID': '30748',
-      'ReceiptAmount': 42062.0,
+      'ReceiptID': requestData.receiptID ?? '',
+      'ReceiptAmount': requestData.premiumDue ?? 0.0,
       'BankID': null,
       'PaymentDueDate': null,
       'InvoiceDueDate': null,
@@ -302,9 +301,7 @@ class ApiUtils {
     };
   }
 
-  /// Build the EndorseInsurancePolicy payload:
-  /// Only override fields the user can change on the Endorsement screen
-  /// (End date, Renewal date, ItemsToInsure). All else pulled from the policy.
+
   static Map<String, dynamic> endorsementPayload({
     required PolicyData policy,
     required DateTime startDate, // read-only (today)

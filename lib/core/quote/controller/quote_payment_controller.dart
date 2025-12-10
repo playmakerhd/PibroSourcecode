@@ -684,6 +684,8 @@ class QuotePaymentController extends GetxController {
       }
 
       // Debit note: create → book → post
+      // Include generated receipt id so the debit note references the posted receipt
+      clientNoteReq.receiptID = receiptReq.receiptID;
       clientNoteReq.policyBrokerID = newPolicyId;
       clientNoteReq.startDate = startDate.toIso8601String();
       clientNoteReq.endDate = endDate.toIso8601String();

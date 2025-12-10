@@ -1093,6 +1093,9 @@ class RenewPolicyController extends GetxController {
   }
 
   Future<void> createClientNote() async {
+    // Ensure the generated receipt ID (from create/post receipt flow) is attached
+    // to the client note so the debit note references the correct receipt.
+    clientNoteRequest.receiptID = createReceiptRequest.receiptID;
     clientNoteRequest.policyBrokerID = policy.value!.policyBrokerID;
     clientNoteRequest.startDate = startDate.value!.toIso8601String();
     clientNoteRequest.endDate = endDate.value!.toIso8601String();

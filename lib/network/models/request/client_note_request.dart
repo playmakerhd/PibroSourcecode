@@ -8,6 +8,7 @@ class ClientNoteRequest {
     this.sumInsured,
     this.premiumDue,
     this.invoiceNumber,
+    this.receiptID,
   });
 
   late String? policyBrokerID;
@@ -18,4 +19,5 @@ class ClientNoteRequest {
   late double? sumInsured;
   late double? premiumDue;
   late String? invoiceNumber;
+  late String? receiptID;
 }

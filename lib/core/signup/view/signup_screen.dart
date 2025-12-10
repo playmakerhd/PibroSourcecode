@@ -125,7 +125,7 @@ class SignupScreen extends StatelessWidget {
                     final t = controller.selectedAccountType.value;
 
                     // For Individual accounts, show First Name and Last Name separately
-                    if (t == 'Individual') {
+                    if (t == 'INDIVIDUAL') {
                       return Column(
                         children: [
                           CustomInput(
@@ -149,7 +149,7 @@ class SignupScreen extends StatelessWidget {
                     }
 
                     // For Company and Joint Account, show single name field
-                    final nameHint = t == 'Company'
+                    final nameHint = t == 'CORPORATE'
                         ? AppStrings.companyName.tr
                         : AppStrings.accountName.tr;
                     return CustomInput(
@@ -176,9 +176,9 @@ class SignupScreen extends StatelessWidget {
                   // Date of Birth / Date of Incorporation / Primary Holder DOB
                   Obx(() {
                     final t = controller.selectedAccountType.value;
-                    final dobHint = t == 'Company'
+                    final dobHint = t == 'CORPORATE'
                         ? AppStrings.dateOfIncorporation.tr
-                        : t == 'Joint Account'
+                        : t == 'JOINT'
                             ? AppStrings.primaryHolderDob.tr
                             : AppStrings.dob.tr;
 
