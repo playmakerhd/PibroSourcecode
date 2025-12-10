@@ -105,14 +105,6 @@ class ApiProvider extends BaseProvider {
     return CustomMessageResponse(responseData!);
   }
 
-  Future<CustomMessageResponse> callSignUpApi(AuthRequest body) async {
-    final responseData = await makePostCall(
-      Uri.parse('$_baseApiPath${Endpoints.signup}?token=$_acessToken'),
-      json.encode(body.toSignUpJson()),
-      false,
-    );
-    return CustomMessageResponse(responseData);
-  }
 
   // ---------- Lead Management ----------
   // {baseUrl}/CreateLeadInformation?token={token}

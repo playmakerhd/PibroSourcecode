@@ -56,8 +56,8 @@ class AppStrings extends Translations {
   static const String dob = 'dob';
   static const String accountType = 'accountType';
   static const String individual = 'individual';
-  static const String company = 'company';
-  static const String jointAccount = 'jointAccount';
+  static const String corporate = 'corporate';
+  static const String joint = 'joint';
   static const String companyName = 'companyName';
   static const String accountName = 'accountName';
   static const String dateOfIncorporation = 'dateOfIncorporation';

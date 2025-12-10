@@ -58,9 +58,9 @@ class SignupScreen extends StatelessWidget {
                   Obx(() {
                     final value = controller.selectedAccountType.value;
                     final isSelected = [
-                      value == 'Individual',
-                      value == 'Company',
-                      value == 'Joint Account',
+                      value == 'INDIVIDUAL',
+                      value == 'CORPORATE',
+                      value == 'JOINT',
                     ];
 
                     return Container(
@@ -74,13 +74,13 @@ class SignupScreen extends StatelessWidget {
                         onPressed: (index) {
                           switch (index) {
                             case 0:
-                              controller.setAccountType('Individual');
+                              controller.setAccountType('INDIVIDUAL');
                               break;
                             case 1:
-                              controller.setAccountType('Company');
+                              controller.setAccountType('CORPORATE');
                               break;
                             case 2:
-                              controller.setAccountType('Joint Account');
+                              controller.setAccountType('JOINT');
                               break;
                           }
                         },
@@ -100,11 +100,11 @@ class SignupScreen extends StatelessWidget {
                           ),
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 14),
-                            child: Text(AppStrings.company.tr),
+                            child: Text(AppStrings.corporate.tr),
                           ),
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 14),
-                            child: Text(AppStrings.jointAccount.tr),
+                            child: Text(AppStrings.joint.tr),
                           ),
                         ],
                       ),

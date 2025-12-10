@@ -29,7 +29,7 @@ class SignupController extends GetxController {
   RxBool obscurePassword = true.obs;
   RxBool loading = false.obs;
   Rx<DateTime?> selectedDateOfBirth = Rx<DateTime?>(null);
-  RxString selectedAccountType = 'Individual'.obs;
+  RxString selectedAccountType = 'INDIVIDUAL'.obs;
 
   void updateObscure() {
     obscurePassword.value = !obscurePassword.value;
@@ -77,7 +77,7 @@ class SignupController extends GetxController {
         final String? firstName;
         final String? lastName;
 
-        if (selectedAccountType.value == 'Individual') {
+        if (selectedAccountType.value == 'INDIVIDUAL') {
           username = '${firstNameController.text}${lastNameController.text}'
               .toUpperCase();
           firstName = firstNameController.text;
@@ -125,7 +125,7 @@ class SignupController extends GetxController {
           GetStorage().write(StorageKeys.userEmail, emailController.text);
 
           // Store profile data with Lead ID
-          final displayName = selectedAccountType.value == 'Individual'
+          final displayName = selectedAccountType.value == 'INDIVIDUAL'
               ? '${firstNameController.text} ${lastNameController.text}'
               : nameController.text;
 

@@ -36,9 +36,6 @@ class PibroRepository {
   Future<CustomMessageResponse> login(AuthRequest body) async =>
       appApiProvider.callLoginApi(body);
 
-  Future<CustomMessageResponse> signUp(AuthRequest body) async =>
-      appApiProvider.callSignUpApi(body);
-
   // ---------- Lead Management ----------
   Future<CustomMessageResponse> createLead(AuthRequest body) async =>
       appApiProvider.callCreateLeadApi(body);
