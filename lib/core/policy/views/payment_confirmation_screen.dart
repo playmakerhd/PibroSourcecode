@@ -200,12 +200,10 @@ class PaymentConfirmationScreen extends StatelessWidget {
                 children: [
                   PolicyButton(
                     text: AppStrings.ok.tr,
-                    onPressed: () {
-                      // if (Get.isRegistered<HomeController>()) {
-                      //   try {
-                      //     Get.delete<HomeController>();
-                      //   } catch (_) {}
-                      // }
+                    onPressed: () async {
+                      try {
+                        await homeController.getProfile();
+                      } catch (_) {}
                       Get.offAllNamed(AppRoutes.main);
                     },
                     height: 50,

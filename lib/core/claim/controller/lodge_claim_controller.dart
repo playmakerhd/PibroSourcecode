@@ -150,6 +150,12 @@ class LodgeClaimController extends GetxController {
       // saveAndContinue_.value = saveAndContinue;
       submitLoading.value = true;
       try {
+        // Refresh reported/lodgement date to ensure it's >= accident date
+        if (!isEdit) {
+          lodgementDate.value = DateTime.now();
+          lodgementDateController.text = lodgementDate.value!.toIso8601String();
+        }
+
         final ClaimRequest requestData = ClaimRequest(
           accidentDate: occurenceDate.value!.toIso8601String(),
           accidentDetails: narrationController.text,

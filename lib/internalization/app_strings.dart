@@ -141,6 +141,9 @@ class AppStrings extends Translations {
   static const String detailsBelow = 'detailsBelow';
   static const String insuranceCertificate = 'insuranceCertificate';
   static const String insuranceCertificateSaved = 'insuranceCertificateSaved';
+  static const String renewActivePolicy = 'renewActivePolicy';
+  static const String renewActivePolicyMessage = 'renewActivePolicyMessage';
+  static const String exit = 'exit';
 
   // Quote
   static const String lifeInsurance = 'lifeInsurance';

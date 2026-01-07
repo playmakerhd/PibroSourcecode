@@ -24,6 +24,8 @@ class SignupController extends GetxController {
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController dateOfBirthController = TextEditingController();
   final TextEditingController dobController = TextEditingController();
+  final TextEditingController stateController = TextEditingController();
+  final TextEditingController addressController = TextEditingController();
   final GlobalKey<FormState> signupFormKey = GlobalKey<FormState>();
 
   RxBool obscurePassword = true.obs;
@@ -99,6 +101,8 @@ class SignupController extends GetxController {
             firstName: firstName,
             lastName: lastName,
             accountType: selectedAccountType.value,
+            state: stateController.text,
+            address: addressController.text,
           ),
         );
 
@@ -136,6 +140,10 @@ class SignupController extends GetxController {
             'CustomerName': displayName,
             'CustomerFirstName': firstName ?? nameController.text,
             'CustomerLastName': lastName ?? '',
+            'CustomerState': stateController.text,
+            'CustomerAddress1': addressController.text,
+            'CustomerDateOfBirth':
+                selectedDateOfBirth.value?.toIso8601String() ?? '',
           });
 
           // Store entity type

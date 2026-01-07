@@ -202,6 +202,10 @@ class EnglishStrings {
           'Configuration data is incorrect. Please set the correct service URL and token.',
       AppStrings.insuranceCertificate: 'Insurance Certificate',
       AppStrings.insuranceCertificateSaved: 'Insurance certificate saved to:',
+      AppStrings.renewActivePolicy: 'Renew Active Policy',
+      AppStrings.renewActivePolicyMessage:
+          'You are about to renew an active policy. Would you like to continue?',
+      AppStrings.exit: 'Exit',
     };
   }
 }

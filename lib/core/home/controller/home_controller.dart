@@ -8,6 +8,7 @@ import 'package:pibro/network/models/response/customer_policy_response.dart';
 import 'package:pibro/network/repository/pibro_repository.dart';
 import 'package:pibro/utils/app_utils.dart';
 import 'package:pibro/utils/view_utils.dart';
+import 'package:pibro/shared/widget/confirmation_dialog.dart';
 
 class HomeController extends GetxController {
   PibroRepository pibroRepository =
@@ -158,10 +159,36 @@ class HomeController extends GetxController {
   }
 
   void navigateToRenewPolicyScreen() {
-    Get.toNamed(
-      AppRoutes.renewPolicy,
-      arguments: selectedPolicy.value,
-    );
+    // Check if the policy is active
+    final policy = selectedPolicy.value;
+    if (policy != null) {
+      final policyStatus = getPolicyStatus(
+        policy.policyEndDate ?? DateTime.now().toString(),
+        policy.approved ?? false,
+      );
+
+      // If policy is active, show confirmation dialog
+      if (policyStatus.status == AppStrings.active.tr) {
+        showConfirmationDialog(
+          title: AppStrings.renewActivePolicy.tr,
+          message: AppStrings.renewActivePolicyMessage.tr,
+          confirmText: AppStrings.continueText.tr,
+          cancelText: AppStrings.exit.tr,
+          onConfirm: () {
+            Get.toNamed(
+              AppRoutes.renewPolicy,
+              arguments: selectedPolicy.value,
+            );
+          },
+        );
+      } else {
+        // For expired or pending policies, navigate directly
+        Get.toNamed(
+          AppRoutes.renewPolicy,
+          arguments: selectedPolicy.value,
+        );
+      }
+    }
   }
 
   void navigateToLodgeClaimScreen() {

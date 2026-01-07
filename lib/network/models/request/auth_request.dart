@@ -9,6 +9,8 @@ class AuthRequest {
     this.firstName,
     this.lastName,
     this.accountType,
+    this.state,
+    this.address,
   });
 
   late String username;
@@ -20,6 +22,8 @@ class AuthRequest {
   String? firstName;
   String? lastName;
   String? accountType;
+  String? state;
+  String? address;
 
   Map<String, dynamic> toJson() {
     final map = <String, dynamic>{};
@@ -46,9 +50,9 @@ class AuthRequest {
         (username.split(' ').length > 1 ? username.split(' ').last : '');
     map['LeadEmail'] = email;
     map['LeadPhone'] = phoneNumber;
-    map['LeadAddress1'] = '';
+    map['LeadAddress1'] = address ?? '';
     map['LeadCity'] = '';
-    map['LeadState'] = '';
+    map['LeadState'] = state ?? '';
     map['LeadCountry'] = 'Nigeria';
     map['LeadDateOfBirth'] = dateOfBirth ?? DateTime.now().toIso8601String();
     map['LeadFullName'] = username;
@@ -71,6 +75,4 @@ class AuthRequest {
     ];
     return map;
   }
-
- 
 }

@@ -201,6 +201,26 @@ class SignupScreen extends StatelessWidget {
                     );
                   }),
 
+                  // State
+                  CustomInput(
+                    hint: AppStrings.state.tr,
+                    controller: controller.stateController,
+                    validator: (value) => Validators.requiredValidator(
+                      value,
+                      AppStrings.state.tr,
+                    ),
+                  ),
+
+                  // Address
+                  CustomInput(
+                    hint: AppStrings.address.tr,
+                    controller: controller.addressController,
+                    validator: (value) => Validators.requiredValidator(
+                      value,
+                      AppStrings.address.tr,
+                    ),
+                  ),
+
                   // Password
                   Obx(
                     () => CustomInput(

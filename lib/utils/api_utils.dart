@@ -88,7 +88,7 @@ class ApiUtils {
       'CompanyID': user.companyID ?? '',
       'DivisionID': user.divisionID ?? '',
       'DepartmentID': user.departmentID ?? '',
-      'ReceiptID': receiptId, // Empty for CREATE, populated for POST
+      'ReceiptID': receiptId,
       'ReceiptTypeID': requestData.channel?.capitalizeFirst ?? 'Online',
       'ReceiptClassID': 'Customer',
       'CheckNumber': requestData.checkNumber!,
@@ -193,7 +193,6 @@ class ApiUtils {
   }
 
   static Map<String, dynamic> notePayload(ClientNoteRequest requestData) {
-    
     PlatformUser user =
         PlatformUser.fromJson(GetStorage().read(StorageKeys.profileData) ?? {});
     return {
@@ -299,7 +298,6 @@ class ApiUtils {
     };
   }
 
-
   static Map<String, dynamic> endorsementPayload({
     required PolicyData policy,
     required DateTime startDate, // read-only (today)
@@ -378,6 +376,23 @@ class ApiUtils {
   }
 
   static Map<String, dynamic> createClaim(ClaimRequest requestData) {
+    // Short: parse and ensure AccidentDate has a time part (use current time when missing)
+    final parsed = DateTime.tryParse(requestData.accidentDate);
+    String accidentDateIso = requestData.accidentDate;
+    if (parsed != null) {
+      final hasTime = requestData.accidentDate.contains(':');
+      final isMidnight =
+          parsed.hour == 0 && parsed.minute == 0 && parsed.second == 0;
+      if (!hasTime || isMidnight) {
+        final now = DateTime.now();
+        accidentDateIso = DateTime(parsed.year, parsed.month, parsed.day,
+                now.hour, now.minute, now.second)
+            .toIso8601String();
+      } else {
+        accidentDateIso = parsed.toIso8601String();
+      }
+    }
+
     return {
       "CompanyID": requestData.policy.companyID,
       "DivisionID": requestData.policy.divisionID,
@@ -395,7 +410,7 @@ class ApiUtils {
       "VendorID": requestData.policy.vendorID,
       "StartDate": requestData.policy.policyStartDate,
       "EndDate": requestData.policy.policyEndDate,
-      "AccidentDate": requestData.accidentDate,
+      "AccidentDate": accidentDateIso,
       "AccidentDetails": requestData.accidentDetails,
       "ThirdPartyInvolved": null,
       "ThirdPartyClaimNo": null,
