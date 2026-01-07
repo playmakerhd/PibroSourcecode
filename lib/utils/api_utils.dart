@@ -124,9 +124,7 @@ class ApiUtils {
       'Approved': false,
       'ApprovedBy': null,
       'ApprovedDate': null,
-      'EnteredBy': user.customerFullName ??
-          user.customerName ??
-          '${user.customerFirstName ?? ''} ${user.customerLastName ?? ''}',
+      'EnteredBy': 'Admin',
       'BatchControlNumber': null,
       'BatchControlTotal': null,
       'Signature': null,

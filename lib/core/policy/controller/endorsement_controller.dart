@@ -646,6 +646,15 @@ class EndorsementController extends GetxController {
         ..amount = receiptAmount?.toDouble()
         ..channel = 'Card';
 
+      // Log the full receipt payload
+      print('📋 CREATE_RECEIPT_PAYLOAD: ${jsonEncode({
+            'checkNumber': receiptReq.checkNumber,
+            'transactionDate': receiptReq.transactionDate,
+            'systemDate': receiptReq.systemDate,
+            'amount': receiptReq.amount,
+            'channel': receiptReq.channel,
+          })}');
+
       // Create receipt
       final createResp = await repo.createReceipt(receiptReq);
       if (createResp.messageResponse.status != AppConstants.responseSuccess) {
