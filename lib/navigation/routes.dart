@@ -32,8 +32,7 @@ import 'package:pibro/core/quote/views/quotes_list_screen.dart';
 import 'package:pibro/core/signup/view/signup_screen.dart';
 import 'package:pibro/core/splash/splash_screen.dart';
 import 'package:pibro/core/auth/view/forgot_password_screen.dart';
-import 'package:pibro/core/auth/view/otp_reset_screen.dart';
-import 'package:pibro/core/auth/view/new_password_screen.dart';
+import 'package:pibro/core/auth/view/reset_password_screen.dart';
 
 class AppRoutes {
   AppRoutes._();
@@ -50,8 +49,7 @@ class AppRoutes {
 
   // Forgot Password Flow
   static const String forgotPassword = '/forgot-password';
-  static const String otpReset = '/otp-reset';
-  static const String newPassword = '/new-password';
+  static const String resetPassword = '/reset-password';
 
   static const String policy = '/policy';
   static const String renewPolicy = '/renew-policy';
@@ -123,12 +121,8 @@ class AppRoutes {
       page: () => const ForgotPasswordScreen(),
     ),
     GetPage(
-      name: otpReset,
-      page: () => const OtpResetScreen(),
-    ),
-    GetPage(
-      name: newPassword,
-      page: () => const NewPasswordScreen(),
+      name: resetPassword,
+      page: () => const ResetPasswordScreen(),
     ),
     GetPage(
       name: policy,

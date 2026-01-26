@@ -153,10 +153,29 @@ class ConfigurationScreen extends StatelessWidget {
 }
 
 /// QR Scanner Bottom Sheet Widget
-class _QRScannerBottomSheet extends StatelessWidget {
+class _QRScannerBottomSheet extends StatefulWidget {
   final void Function(String) onScanned;
 
   const _QRScannerBottomSheet({required this.onScanned});
+
+  @override
+  State<_QRScannerBottomSheet> createState() => _QRScannerBottomSheetState();
+}
+
+class _QRScannerBottomSheetState extends State<_QRScannerBottomSheet> {
+  late final MobileScannerController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = MobileScannerController();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -203,13 +222,14 @@ class _QRScannerBottomSheet extends StatelessWidget {
               child: Stack(
                 children: [
                   MobileScanner(
+                    controller: _controller,
                     onDetect: (BarcodeCapture capture) {
                       final List<Barcode> barcodes = capture.barcodes;
                       if (barcodes.isNotEmpty &&
                           barcodes.first.rawValue != null) {
                         final code = barcodes.first.rawValue!;
                         print("Scanned value: $code");
-                        onScanned(code);
+                        widget.onScanned(code);
                         Navigator.of(context).pop();
                       }
                     },

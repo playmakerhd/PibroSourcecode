@@ -69,7 +69,7 @@ class CustomButton extends StatelessWidget {
                       size: fontSize,
                       color: textColor ??
                           (isOutline || !enabled
-                              ? AppColors.primaryColor
+                              ? AppColors.white
                               : AppColors.white),
                     ),
                     overflow: TextOverflow.ellipsis,

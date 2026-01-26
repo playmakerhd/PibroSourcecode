@@ -158,12 +158,8 @@ class _QRScannerBottomSheetState extends State<_QRScannerBottomSheet> {
       facing: CameraFacing.back,
       torchEnabled: false,
     );
-    // Try to start the camera and surface any errors
-    try {
-      _controller.start();
-    } catch (e) {
-      _errorMessage = 'Camera initialization error: $e';
-    }
+    // MobileScanner widget will automatically start the controller
+    // Do not call _controller.start() manually to avoid "controllerAlreadyInitialized" error
   }
 
   @override

@@ -118,7 +118,8 @@ class ForgotPasswordController extends GetxController {
             message: 'A 6-digit code has been sent to your registered email',
             isSuccess: true);
         startResendTimer(); // Start timer when OTP is sent
-        Get.toNamed(AppRoutes.otpReset, arguments: {'username': customerId});
+        Get.toNamed(AppRoutes.resetPassword,
+            arguments: {'username': customerId});
       } else {
         _snack(
             res.messageResponse.message.isNotEmpty
@@ -146,7 +147,7 @@ class ForgotPasswordController extends GetxController {
             message: 'A 6-digit code has been sent to your registered email',
             isSuccess: true);
         startResendTimer(); // Start timer when OTP is sent
-        Get.toNamed(AppRoutes.otpReset,
+        Get.toNamed(AppRoutes.resetPassword,
             arguments: {'email': email, 'phone': phone});
       } else {
         _snack('Check your details and try again', isError: true);
@@ -216,62 +217,6 @@ class ForgotPasswordController extends GetxController {
                 ? res.messageResponse.message
                 : 'Failed to resend code',
             isError: true);
-      }
-    } catch (e) {
-      _snack('Network error: $e', isError: true);
-    } finally {
-      isBusy.value = false;
-    }
-  }
-
-  /// Resend code from new password screen and navigate back to OTP screen
-  Future<void> resendFromNewPassword() async {
-    try {
-      isBusy.value = true;
-      CustomMessageResponse res;
-
-      if (usedEmailPhone.value) {
-        final email = Get.arguments?['email'] as String? ?? '';
-        final phone = Get.arguments?['phone'] as String? ?? '';
-        if (email.isEmpty || phone.isEmpty) {
-          _snack('Email and phone required to resend', isError: true);
-          return;
-        }
-        res = await _repo.resetCustomerEmailPhonePasswordOtp(
-            email: email, phone: phone);
-
-        if (res.messageResponse.status == AppConstants.responseSuccess) {
-          showSnackbarMessage(
-              message: 'A new code has been sent to your email',
-              isSuccess: true);
-          startResendTimer(); // Restart timer when new code is sent
-          Get.offNamed(AppRoutes.otpReset,
-              arguments: {'email': email, 'phone': phone});
-        } else {
-          _snack('Check your details and try again', isError: true);
-        }
-      } else {
-        final username =
-            Get.arguments?['username'] as String? ?? lastCustomerId ?? '';
-        if (username.isEmpty) {
-          _snack('Username required to resend', isError: true);
-          return;
-        }
-        res = await _repo.resetCustomerPasswordOtp(username);
-
-        if (res.messageResponse.status == AppConstants.responseSuccess) {
-          showSnackbarMessage(
-              message: 'A new code has been sent to your email',
-              isSuccess: true);
-          startResendTimer(); // Restart timer when new code is sent
-          Get.offNamed(AppRoutes.otpReset, arguments: {'username': username});
-        } else {
-          _snack(
-              res.messageResponse.message.isNotEmpty
-                  ? res.messageResponse.message
-                  : 'Failed to resend code',
-              isError: true);
-        }
       }
     } catch (e) {
       _snack('Network error: $e', isError: true);
