@@ -1,4 +1,4 @@
-package com.example.pibro
+package com.powersoft.pibro
 
 import io.flutter.embedding.android.FlutterActivity
 

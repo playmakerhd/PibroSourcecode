@@ -5,6 +5,7 @@ import 'package:pibro/core/claim/controller/lodge_claim_controller.dart';
 import 'package:pibro/internalization/app_strings.dart';
 import 'package:pibro/shared/item_row_container.dart';
 import 'package:pibro/shared/title_value_row.dart';
+import 'package:pibro/utils/app_utils.dart';
 
 class InsurersTab extends StatelessWidget {
   const InsurersTab({super.key});
@@ -57,17 +58,17 @@ class InsurersTab extends StatelessWidget {
                             TitleValueRow(
                               isTextBolder: true,
                               title: '${AppStrings.total.tr}:',
-                              value: displayAmount(underwriter.dvAmount),
+                              value: formatAmount(underwriter.dvAmount ?? 0),
                             ),
                             TitleValueRow(
                               isTextBolder: true,
                               title: '${AppStrings.amountPaid.tr}:',
-                              value: displayAmount(underwriter.receiptAmount),
+                              value: formatAmount(underwriter.receiptAmount ?? 0),
                             ),
                             TitleValueRow(
                               isTextBolder: true,
                               title: '${AppStrings.balanceDue.tr}:',
-                              value: displayAmount(underwriter.balanceDue),
+                              value: formatAmount(underwriter.balanceDue ?? 0),
                             ),
                           ],
                         ),

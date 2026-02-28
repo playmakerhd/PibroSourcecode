@@ -237,13 +237,14 @@ class EndorsementController extends GetxController {
     }
   }
 
-  void addOrUpdateItem({ItemToInsure? data, bool? isNew}) {
+  void addOrUpdateItem({ItemToInsure? data, bool isNew = false}) {
     if (addItemFormKey.currentState!.validate()) {
       if (data != null) {
         // Update existing
         (isNew == true ? newItems : policyItems).remove(data);
         data.itemsDescription = descCtrl.text;
-        data.sumInsured = double.tryParse(valueCtrl.text) ?? 0;
+        data.sumInsured =
+            double.tryParse(valueCtrl.text.replaceAll(',', '')) ?? 0;
         data.itemLocation = locationCtrl.text;
         data.policyItems = selectedImage.value;
         (isNew == true ? newItems : policyItems).add(data);
@@ -256,7 +257,7 @@ class EndorsementController extends GetxController {
           manualNumbering: '1',
           brokingSlipItemCount: 0,
           itemsDescription: descCtrl.text,
-          sumInsured: double.tryParse(valueCtrl.text) ?? 0,
+          sumInsured: double.tryParse(valueCtrl.text.replaceAll(',', '')) ?? 0,
           itemLocation: locationCtrl.text,
           policyItems: selectedImage.value,
         );

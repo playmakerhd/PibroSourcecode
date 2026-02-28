@@ -1,0 +1,6 @@
+# Copy this file to key.properties and fill with your real signing values.
+# storeFile can be absolute or relative to android/app (for this setup, put the keystore in android/).
+storePassword=YOUR_STORE_PASSWORD
+keyPassword=YOUR_KEY_PASSWORD
+keyAlias=upload
+storeFile=../upload-keystore.jks

@@ -59,7 +59,7 @@ class InsurersScreen extends StatelessWidget {
                                 ),
                                 TitleValueRow(
                                   title: '${AppStrings.apportionment.tr}:',
-                                  value: 'N${item.apportionment!.toString()}',
+                                  value: item.apportionment!.toString(),
                                 ),
                               ],
                             ),

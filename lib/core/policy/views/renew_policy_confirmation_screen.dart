@@ -104,7 +104,7 @@ class RenewPolicyConfirmationScreen extends StatelessWidget {
                       return Column(
                         children: [
                           DetailRow(
-                            title: 'Charges (NGN):',
+                            title: 'Paystack Charges (NGN):',
                             value: formatAmount(appliedCharge),
                           ),
                           DetailRow(
