@@ -174,7 +174,6 @@ class LodgeClaimsScreen extends StatelessWidget {
                                                     (route) =>
                                                         route.settings.name ==
                                                         AppRoutes.claim);
-                                                safeBack();
                                               },
                                         height: 50,
                                         width: tabIndex == 1

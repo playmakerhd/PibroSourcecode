@@ -17,51 +17,66 @@ class PolicyDetailsScreen extends StatelessWidget {
     final HomeController controller = Get.find<HomeController>();
     final policy = controller.selectedPolicy.value;
 
+    // If there's no selected policy, go back to previous screen after this frame
+    if (policy == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        try {
+          if (Get.isOverlaysOpen) {
+            // just pop the current route
+            Get.back();
+          } else {
+            Get.back();
+          }
+        } catch (_) {
+          // ignore errors from popping
+        }
+      });
+      return const SizedBox.shrink();
+    }
+
     return Scaffold(
       backgroundColor: AppColors.tileColor,
-      floatingActionButton: (policy != null &&
-              getPolicyStatus(policy.policyEndDate ?? '', policy.approved)
-                      .status ==
-                  AppStrings.expired.tr)
-          ? PolicyButton(
-              text: AppStrings.renew.tr,
-              onPressed: controller.navigateToRenewPolicyScreen,
-              bgColor: AppColors.primaryColor,
-              isExpanded: false,
-              width: 120,
-            )
-          : Padding(
-              padding: EdgeInsets.only(
-                  left: queryWidth(context) * 0.05,
-                  right: queryWidth(context) * 0.05,
-                  bottom: 10),
-              child: Row(
-                children: [
-                  PolicyButton(
-                    text: AppStrings.renew.tr,
-                    onPressed: controller.navigateToRenewPolicyScreen,
-                    isExpanded: true,
-                  ),
-                  SizedBox(width: 7),
-                  if (policy != null &&
-                      getPolicyStatus(
+      floatingActionButton:
+          getPolicyStatus(policy.policyEndDate ?? '', policy.approved).status ==
+                  AppStrings.expired.tr
+              ? PolicyButton(
+                  text: AppStrings.renew.tr,
+                  onPressed: controller.navigateToRenewPolicyScreen,
+                  bgColor: AppColors.primaryColor,
+                  isExpanded: false,
+                  width: 120,
+                )
+              : Padding(
+                  padding: EdgeInsets.only(
+                      left: queryWidth(context) * 0.05,
+                      right: queryWidth(context) * 0.05,
+                      bottom: 10),
+                  child: Row(
+                    children: [
+                      PolicyButton(
+                        text: AppStrings.renew.tr,
+                        onPressed: controller.navigateToRenewPolicyScreen,
+                        isExpanded: true,
+                      ),
+                      SizedBox(width: 7),
+                      if (getPolicyStatus(
                                   policy.policyEndDate ?? '', policy.approved)
                               .status ==
                           AppStrings.active.tr)
-                    PolicyButton(
-                      text: AppStrings.endorse.tr,
-                      onPressed: controller.navigateToEndorsePolicyScreen,
-                      isExpanded: true,
-                    ),
-                  SizedBox(width: 7),
-                  PolicyButton(
-                    text: AppStrings.claim.tr,
-                    onPressed: controller.navigateToLodgeClaimScreen,
-                    isExpanded: true,
+                        PolicyButton(
+                          text: AppStrings.endorse.tr,
+                          onPressed: controller.navigateToEndorsePolicyScreen,
+                          isExpanded: true,
+                        ),
+                      SizedBox(width: 7),
+                      PolicyButton(
+                        text: AppStrings.claim.tr,
+                        onPressed: controller.navigateToLodgeClaimScreen,
+                        isExpanded: true,
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            ),
+                ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       body: SafeArea(
         bottom: false,
@@ -74,7 +89,7 @@ class PolicyDetailsScreen extends StatelessWidget {
               CommonHeader(
                 title: AppStrings.policyDetail.tr,
               ),
-              PolicyDetailsWidget(data: controller.selectedPolicy.value!),
+              PolicyDetailsWidget(data: policy),
             ],
           ),
         ),

@@ -19,10 +19,11 @@ class CustomerTransactionDetailScreen extends StatelessWidget {
   const CustomerTransactionDetailScreen({super.key});
 
   static final ScreenshotController _shot = ScreenshotController();
-  static final RxBool _exportLoading = false.obs;
+  // export loading moved to controller
 
   Future<void> _exportToPdf(BuildContext context, CustomerTransaction t) async {
-    _exportLoading.value = true;
+    final ctrl = Get.put(CustomerTransactionsController());
+    ctrl.exportLoading.value = true;
     try {
       final Uint8List? bytes = await _shot.capture();
       if (bytes == null) {
@@ -73,7 +74,10 @@ class CustomerTransactionDetailScreen extends StatelessWidget {
       showSnackbarMessage(
           message: 'Failed to create PDF: $e', isSuccess: false);
     } finally {
-      _exportLoading.value = false;
+      final ctrl = Get.isRegistered<CustomerTransactionsController>()
+          ? Get.find<CustomerTransactionsController>()
+          : Get.put(CustomerTransactionsController());
+      ctrl.exportLoading.value = false;
     }
   }
 
@@ -147,13 +151,18 @@ class CustomerTransactionDetailScreen extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Obx(() => PolicyButton(
-                    text: 'Export PDF',
-                    onPressed: () => _onExportPressed(context, t),
-                    isExpanded: true,
-                    bgColor: AppColors.primaryColor,
-                    loading: _exportLoading.value,
-                  )),
+              Obx(() {
+                final ctrl = Get.isRegistered<CustomerTransactionsController>()
+                    ? Get.find<CustomerTransactionsController>()
+                    : Get.put(CustomerTransactionsController());
+                return PolicyButton(
+                  text: 'Export PDF',
+                  onPressed: () => _onExportPressed(context, t),
+                  isExpanded: true,
+                  bgColor: AppColors.primaryColor,
+                  loading: ctrl.exportLoading.value,
+                );
+              }),
               const SizedBox(width: 12),
               Obx(() => PolicyButton(
                     text: 'Share',

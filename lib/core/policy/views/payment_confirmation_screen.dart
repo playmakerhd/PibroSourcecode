@@ -19,7 +19,9 @@ class PaymentConfirmationScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final RenewPolicyController controller = Get.put(RenewPolicyController());
-    final HomeController homeController = Get.find<HomeController>();
+    final HomeController homeController = Get.isRegistered<HomeController>()
+        ? Get.find<HomeController>()
+        : Get.put(HomeController());
 
     final Map args = (Get.arguments as Map?) ?? {};
     final String overrideStart = (args['newStartDate'] ?? '').toString();

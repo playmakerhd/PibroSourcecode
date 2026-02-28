@@ -198,6 +198,8 @@ class EndorsementController extends GetxController {
     startDateCtrl.dispose();
     endDateCtrl.dispose();
     renewalDateCtrl.dispose();
+    contestSubjectController.dispose();
+    contestMessageController.dispose();
     super.dispose();
   }
 

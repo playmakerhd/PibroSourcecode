@@ -52,6 +52,8 @@ class GetQuoteController extends GetxController {
   Rxn<DateTime> endDate = Rxn<DateTime>();
   final TextEditingController endDateController = TextEditingController();
   final GlobalKey<FormState> addItemFormKey = GlobalKey<FormState>();
+  // Form key for the main get-quote form so we can call validate() before proceeding
+  final GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
   final TextEditingController regNoController = TextEditingController();
   final TextEditingController chasisIdController = TextEditingController();

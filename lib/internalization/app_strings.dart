@@ -90,6 +90,12 @@ class AppStrings extends Translations {
   static const String policySummary = 'policySummary';
   static const String insuranceClass = 'insuranceClass';
   static const String product = 'product';
+  static const String pleaseSelectInsuranceClass = 'pleaseSelectInsuranceClass';
+  static const String pleaseSelectProduct = 'pleaseSelectProduct';
+  static const String pleaseSelectStartDate = 'pleaseSelectStartDate';
+  static const String pleaseSelectEndDate = 'pleaseSelectEndDate';
+  static const String pleaseSelectPreferredInsurer =
+      'pleaseSelectPreferredInsurer';
   static const String premiumDue = 'premiumDue';
   static const String startDate = 'startDate';
   static const String oldStartDate = 'oldStartDate';
@@ -130,6 +136,7 @@ class AppStrings extends Translations {
   static const String submit = 'submit';
   static const String view = 'view';
   static const String insurer = 'insurer';
+  static const String vendorInsurer = 'vendorInsurer';
   static const String apportionment = 'apportionment';
   static const String noData = 'noData';
   static const String renewPolicySuccess = 'renewPolicySuccess';
