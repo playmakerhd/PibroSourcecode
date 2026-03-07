@@ -40,6 +40,139 @@ class ServiceConfigScreen extends StatelessWidget {
                   // autovalidateMode: AutovalidateMode.onUserInteraction,
                   child: Column(
                     children: [
+                      // Environment Dropdown Section
+                      Obx(() {
+                        if (controller.isLoadingEnvironments.value) {
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 20),
+                            padding: const EdgeInsets.all(16),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Text(
+                                  AppStrings.loadingEnvironments.tr,
+                                  style: Styles.regularTextStyle(
+                                    color: AppColors.hintColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+
+                        if (controller.availableEnvironments.isEmpty) {
+                          return const SizedBox.shrink();
+                        }
+
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 20),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                              color: AppColors.greyColor,
+                              width: 1,
+                            ),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              isExpanded: true,
+                              hint: Text(
+                                AppStrings.selectEnvironment.tr,
+                                style: Styles.regularTextStyle(
+                                  color: AppColors.hintColor,
+                                ),
+                              ),
+                              value: controller.selectedEnvironment.value?.name,
+                              items:
+                                  controller.availableEnvironments.map((env) {
+                                return DropdownMenuItem<String>(
+                                  value: env.name,
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        env.name,
+                                        style: Styles.semiBoldTextStyle(
+                                          size: 15,
+                                        ),
+                                      ),
+                                      if (env.description != null)
+                                        Text(
+                                          env.description!,
+                                          style: Styles.regularTextStyle(
+                                            size: 12,
+                                            color: AppColors.hintColor,
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                );
+                              }).toList(),
+                              onChanged: (String? value) {
+                                if (value != null) {
+                                  final selectedEnv = controller
+                                      .availableEnvironments
+                                      .firstWhere((env) => env.name == value);
+                                  controller.onEnvironmentSelected(selectedEnv);
+                                }
+                              },
+                            ),
+                          ),
+                        );
+                      }),
+
+                      // Divider with "OR MANUAL ENTRY"
+                      Obx(() {
+                        if (controller.availableEnvironments.isEmpty) {
+                          return const SizedBox.shrink();
+                        }
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 20),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Divider(
+                                  color: AppColors.greyColor,
+                                  thickness: 1,
+                                ),
+                              ),
+                              Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 16),
+                                child: Text(
+                                  AppStrings.orManualEntry.tr,
+                                  style: Styles.regularTextStyle(
+                                    size: 12,
+                                    color: AppColors.hintColor,
+                                  ),
+                                ),
+                              ),
+                              Expanded(
+                                child: Divider(
+                                  color: AppColors.greyColor,
+                                  thickness: 1,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
+
+                      // Manual Input Fields
                       CustomInput(
                         hint: AppStrings.enterServiceUrl.tr,
                         controller: controller.serviceURLController,

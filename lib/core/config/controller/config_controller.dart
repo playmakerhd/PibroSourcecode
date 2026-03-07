@@ -67,12 +67,6 @@ class ConfigController extends GetxController {
       selectedEnvironment.value = environment;
       serviceURLController.text = environment.url;
       tokenController.text = environment.token;
-      // Auto-save when environment is selected from dropdown
-      saveConfig(
-        configFormKey,
-        url: environment.url,
-        token: environment.token,
-      );
     }
   }
 
