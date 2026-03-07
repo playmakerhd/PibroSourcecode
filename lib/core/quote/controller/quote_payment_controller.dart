@@ -1081,7 +1081,7 @@ class QuotePaymentController extends GetxController {
       } else if (raw is String && raw.isNotEmpty) {
         decoded = Map<String, dynamic>.from(jsonDecode(raw));
       }
-      final fallback = decoded?['quoteID'] ?? decoded?['caseId'];
+      final fallback = decoded['quoteID'] ?? decoded['caseId'];
       if (fallback != null && fallback.toString().trim().isNotEmpty) {
         return fallback.toString().trim();
       }
