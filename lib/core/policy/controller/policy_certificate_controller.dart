@@ -36,16 +36,16 @@ class PolicyCertificateController extends GetxController {
         return;
       }
 
-      var _policyBrokerID =
+      var policyBrokerID0 =
           (policyBrokerID ?? _safeString(_tryGetField('policyBrokerID')))
               .trim();
 
       // Sanitize the policyBrokerID to avoid accidental path separators
-      _policyBrokerID = _policyBrokerID.replaceAll(RegExp(r'[\/]+'), '_');
+      policyBrokerID0 = policyBrokerID0.replaceAll(RegExp(r'[\/]+'), '_');
 
       final dir = await getApplicationDocumentsDirectory();
       final fileName =
-          'insurance_certificate_${_policyBrokerID}_${DateTime.now().millisecondsSinceEpoch}.pdf';
+          'insurance_certificate_${policyBrokerID0}_${DateTime.now().millisecondsSinceEpoch}.pdf';
       final file = File('${dir.path}/$fileName');
 
       // Ensure the parent directory exists before writing
@@ -80,19 +80,19 @@ class PolicyCertificateController extends GetxController {
     try {
       certificateLoading.value = true;
 
-      final _policyBrokerID =
+      final policyBrokerID0 =
           (policyBrokerID ?? _safeString(_tryGetField('policyBrokerID')))
               .trim();
-      final _customerID =
+      final customerID0 =
           (customerID ?? _safeString(_tryGetField('customerID'))).trim();
 
-      if (_policyBrokerID.isEmpty || _customerID.isEmpty) {
+      if (policyBrokerID0.isEmpty || customerID0.isEmpty) {
         return null;
       }
 
       final resp = await _repo.viewInsuranceCertificate(
-        policyBrokerID: _policyBrokerID,
-        customerID: _customerID,
+        policyBrokerID: policyBrokerID0,
+        customerID: customerID0,
       );
 
       final status = resp.messageResponse.status;

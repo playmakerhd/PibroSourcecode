@@ -77,6 +77,9 @@ class AppStrings extends Translations {
   static const String enterServiceUrl = 'enterServiceUrl';
   static const String enterToken = 'enterToken';
   static const String scanQR = 'scanQR';
+  static const String selectEnvironment = 'selectEnvironment';
+  static const String orManualEntry = 'orManualEntry';
+  static const String loadingEnvironments = 'loadingEnvironments';
 
   // Api
   static const String genericErrorMessage = 'genericErrorMessage';

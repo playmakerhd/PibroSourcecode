@@ -1,0 +1,37 @@
+[
+  {
+    "name": "DEMO",
+    "url": "https://powersoftrd.com/PibroApi/Api",
+    "token": "HoggApiToken"
+  },
+  {
+    "name": "Firstbank Insurance Brokers",
+    "url": "http://fbninsurancebrokerserp.com/PibroApi/Api",
+    "token": "PibroApiToken"
+  },
+  {
+    "name": "Fengate",
+    "url": "https://powersofterp.com/PibroApifengate/Api",
+    "token": "PibroApiToken"
+  },
+  {
+    "name": "HOGG ROBINSON NIGERIA",
+    "url": "http://108.181.196.32/PibroApi/Api",
+    "token": "PibroApiToken"
+  },
+  {
+    "name": "TRUEBOND",
+    "url": "https://powersofterp.com/PibroApiTruebond/Api",
+    "token": "PibroApiToken"
+  },
+  {
+    "name": "UTIB",
+    "url": "https://powersofterp.com/PibroApiUTIB/Api",
+    "token": "PibroApiToken"
+  },
+  {
+    "name": "BOI",
+    "url": "https://powersoftrd.com/PibroApiBOI/Api",
+    "token": "PibroApiToken"
+  }
+]

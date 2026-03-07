@@ -7,7 +7,7 @@ import 'package:pibro/constants/app_styles.dart';
 import 'package:pibro/core/landing/controller/landing_controller.dart';
 import 'package:pibro/network/api/api_provider.dart';
 import 'package:pibro/network/repository/pibro_repository.dart';
-import 'package:pibro/core/landing/views/landing_screen.dart';
+import 'package:pibro/navigation/routes.dart';
 import 'package:pibro/utils/view_utils.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -107,7 +107,7 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   void _navigateToLanding() {
-    Get.off(() => LandingScreen());
+    Get.offNamed(AppRoutes.landing);
   }
 
   @override
@@ -134,10 +134,7 @@ class _SplashScreenState extends State<SplashScreen> {
       duration: const Duration(milliseconds: 3000),
       animationDuration: const Duration(milliseconds: 1000),
       onAnimationEnd: _onSplashEnd,
-      // Avoid showing an empty Container (black/blank) after animation —
-      // show the landing screen as the default next screen. The splash
-      // callbacks still handle navigation as a fallback.
-      nextScreen: LandingScreen(),
+      nextScreen: const SizedBox.shrink(),
     );
   }
 }

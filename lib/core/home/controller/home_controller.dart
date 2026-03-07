@@ -132,7 +132,7 @@ class HomeController extends GetxController {
     // }
   }
 
-  clickRenewPolicyInHomeScreen() {
+  void clickRenewPolicyInHomeScreen() {
     if (policies.isNotEmpty) {
       isRenewPolicyClicked.value = true;
       displayPolicies.value = policies;

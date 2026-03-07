@@ -49,25 +49,25 @@ class ProfileController extends GetxController {
   RxBool obscureConfirmPassword = true.obs;
   RxBool isPasswordChangeLoading = false.obs;
 
-  get profileLoading => null;
+  Null get profileLoading => null;
 
-  updateOldObscure() {
+  void updateOldObscure() {
     obscureOldPassword.value = !obscureOldPassword.value;
   }
 
-  updateNewObscure() {
+  void updateNewObscure() {
     obscureNewPassword.value = !obscureNewPassword.value;
   }
 
-  updateConfirmObscure() {
+  void updateConfirmObscure() {
     obscureConfirmPassword.value = !obscureConfirmPassword.value;
   }
 
-  updateEmailNotification(bool value) {
+  void updateEmailNotification(bool value) {
     emailEnabled.value = value;
   }
 
-  updateSMSNotification(bool value) {
+  void updateSMSNotification(bool value) {
     smsEnabled.value = value;
   }
 

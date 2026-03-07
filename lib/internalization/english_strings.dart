@@ -81,6 +81,9 @@ class EnglishStrings {
       AppStrings.enterServiceUrl: 'Enter Service URL',
       AppStrings.enterToken: 'Enter Token',
       AppStrings.scanQR: 'Scan QR Code',
+      AppStrings.selectEnvironment: 'Select Environment',
+      AppStrings.orManualEntry: 'OR ENTER MANUALLY',
+      AppStrings.loadingEnvironments: 'Loading configurations...',
 
       // Api
       AppStrings.genericErrorMessage:

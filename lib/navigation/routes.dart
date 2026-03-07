@@ -10,6 +10,7 @@ import 'package:pibro/core/landing/views/about_us_screen.dart';
 import 'package:pibro/core/landing/views/contact_us_screen.dart';
 import 'package:pibro/core/landing/views/faq_screen.dart';
 import 'package:pibro/core/landing/views/landing_screen.dart';
+import 'package:pibro/core/landing/bindings/landing_binding.dart';
 import 'package:pibro/core/login/view/login_screen.dart';
 import 'package:pibro/core/main_screen/view/main_screen.dart';
 import 'package:pibro/core/policy/views/payment_confirmation_screen.dart';
@@ -212,6 +213,7 @@ class AppRoutes {
     GetPage(
       name: landing,
       page: () => LandingScreen(),
+      binding: LandingBinding(),
     ),
     GetPage(
       name: serviceConfig,

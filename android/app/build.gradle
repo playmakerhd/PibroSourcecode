@@ -16,6 +16,10 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 }
 
+def isReleaseBuildRequested = gradle.startParameter.taskNames.any {
+    it.toLowerCase().contains("release")
+}
+
 android {
     namespace = "com.powersoft.pibro"
     compileSdk = 36
@@ -63,7 +67,7 @@ android {
 
             if (keystorePropertiesFile.exists()) {
                 signingConfig = signingConfigs.release
-            } else {
+            } else if (isReleaseBuildRequested) {
                 throw new GradleException("Missing android/key.properties. Create it from android/key.properties.example before building release.")
             }
         }

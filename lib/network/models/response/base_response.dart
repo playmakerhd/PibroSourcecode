@@ -37,13 +37,13 @@ abstract class CustomBaseResponse {
     }
   }
 
-  getResponseBody() {
+  dynamic getResponseBody() {
     if (data.response?.bodyBytes != null) {
       return json.decode(utf8.decode(data.response!.bodyBytes));
     }
   }
 
-  getRawBody() {
+  String getRawBody() {
     // if(data.response?.body.toString().contains('The resource you are looking for has been removed, had its name changed, or is temporarily unavailable')) {
 
     //   return;

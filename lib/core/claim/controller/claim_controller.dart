@@ -48,12 +48,12 @@ class ClaimController extends GetxController {
     }
   }
 
-  selectClaim(PolicyClaim data) {
+  void selectClaim(PolicyClaim data) {
     selectedClaim.value = data;
     Get.toNamed(AppRoutes.claimDetail);
   }
 
-  navigateToEditScreen() {
+  void navigateToEditScreen() {
     Get.toNamed(AppRoutes.lodgeClaims, arguments: selectedClaim.value);
   }
 

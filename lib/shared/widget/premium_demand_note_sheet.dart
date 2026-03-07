@@ -61,6 +61,7 @@ class _PremiumDemandNoteBottomSheetState
   Uint8List? _pdfBytes;
   bool _saveLoading = false;
   bool _shareLoading = false;
+  final GlobalKey _shareButtonKey = GlobalKey();
 
   @override
   void initState() {
@@ -122,6 +123,35 @@ class _PremiumDemandNoteBottomSheetState
         bytes[3] == 0x46;
   }
 
+  Rect _shareOriginRect() {
+    final shareRenderObject =
+        _shareButtonKey.currentContext?.findRenderObject();
+    if (shareRenderObject is RenderBox &&
+        shareRenderObject.hasSize &&
+        shareRenderObject.size.width > 0 &&
+        shareRenderObject.size.height > 0) {
+      final offset = shareRenderObject.localToGlobal(Offset.zero);
+      return offset & shareRenderObject.size;
+    }
+
+    final rootRenderObject = context.findRenderObject();
+    if (rootRenderObject is RenderBox &&
+        rootRenderObject.hasSize &&
+        rootRenderObject.size.width > 0 &&
+        rootRenderObject.size.height > 0) {
+      final rootOffset = rootRenderObject.localToGlobal(Offset.zero);
+      return Rect.fromLTWH(
+        rootOffset.dx + (rootRenderObject.size.width / 2),
+        rootOffset.dy + (rootRenderObject.size.height / 2),
+        1,
+        1,
+      );
+    }
+
+    final screenSize = MediaQuery.of(context).size;
+    return Rect.fromLTWH(screenSize.width / 2, screenSize.height / 2, 1, 1);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -155,23 +185,27 @@ class _PremiumDemandNoteBottomSheetState
                       ),
                     ),
                     const SizedBox(width: 8),
-                    ElevatedButton.icon(
-                      onPressed: isLoading || hasError || _pdfBytes == null
-                          ? null
-                          : () async {
-                              await _sharePdf();
-                            },
-                      icon: _shareLoading
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.share),
-                      label: Text(_shareLoading ? 'Preparing...' : 'Share'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryColor,
-                        foregroundColor: Colors.white,
+                    Container(
+                      key: _shareButtonKey,
+                      child: ElevatedButton.icon(
+                        onPressed: isLoading || hasError || _pdfBytes == null
+                            ? null
+                            : () async {
+                                await _sharePdf();
+                              },
+                        icon: _shareLoading
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : const Icon(Icons.share),
+                        label: Text(_shareLoading ? 'Preparing...' : 'Share'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primaryColor,
+                          foregroundColor: Colors.white,
+                        ),
                       ),
                     ),
                   ],
@@ -355,8 +389,11 @@ class _PremiumDemandNoteBottomSheetState
       await tempFile.writeAsBytes(_pdfBytes!, flush: true);
 
       // Use share_plus to open system share sheet
-      await Share.shareXFiles([XFile(tempFile.path)],
-          text: 'Premium Demand Note - ${widget.quoteID}');
+      await Share.shareXFiles(
+        [XFile(tempFile.path)],
+        text: 'Premium Demand Note - ${widget.quoteID}',
+        sharePositionOrigin: _shareOriginRect(),
+      );
     } catch (e) {
       print('Error sharing premium demand note: $e');
       showSnackbarMessage(

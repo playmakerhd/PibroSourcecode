@@ -33,7 +33,7 @@ dependencies:
   firebase_core: ^4.2.1
   firebase_messaging: ^16.0.4
   flutter_local_notifications: ^18.0.1
-  mobile_scanner: ^5.2.3
+  mobile_scanner: ^7.2.0
   
 
 dev_dependencies:
@@ -52,6 +52,7 @@ flutter:
 
   assets:
     - assets/images/
+    - assets/config/
 
   fonts:
     - family: Poppins
