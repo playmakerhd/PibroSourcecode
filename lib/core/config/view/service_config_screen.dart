@@ -250,7 +250,7 @@ class _QRScannerBottomSheetState extends State<_QRScannerBottomSheet> {
                   MobileScanner(
                     controller: _controller,
                     onDetect: _handleDetected,
-                    errorBuilder: (context, error, child) {
+                    errorBuilder: (context, error) {
                       // Display error inside scanner area
                       return Center(
                         child: Text(
