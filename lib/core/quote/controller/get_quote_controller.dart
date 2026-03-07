@@ -302,8 +302,9 @@ class GetQuoteController extends GetxController {
       }
 
       // Extract SumInsured and PremiumDue from response
-      final premium = _parseDouble(quoteData['PremiumDue']) ?? 0.0;
-      final sumInsured = _parseDouble(quoteData['SumInsured']) ?? 0.0;
+      final parsedQuoteData = quoteData ?? const <String, dynamic>{};
+      final premium = _parseDouble(parsedQuoteData['PremiumDue']) ?? 0.0;
+      final sumInsured = _parseDouble(parsedQuoteData['SumInsured']) ?? 0.0;
 
       print('🔍 QUOTATION: Premium Due: $premium');
       print('🔍 QUOTATION: Sum Insured: $sumInsured');
