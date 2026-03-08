@@ -62,11 +62,15 @@ class ConfigController extends GetxController {
     }
   }
 
-  void onEnvironmentSelected(ConfigEnvironment? environment) {
+  void onEnvironmentSelected(ConfigEnvironment? environment,
+      {bool autoSave = true}) {
     if (environment != null) {
       selectedEnvironment.value = environment;
       serviceURLController.text = environment.url;
       tokenController.text = environment.token;
+      if (autoSave) {
+        saveConfigData();
+      }
     }
   }
 

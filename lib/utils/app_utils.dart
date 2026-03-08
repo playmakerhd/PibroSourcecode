@@ -14,6 +14,8 @@ import 'package:pibro/core/login/model/login_data.dart';
 import 'package:pibro/internalization/app_strings.dart';
 import 'package:pibro/navigation/routes.dart';
 import 'package:pibro/network/models/platform_user/platform_user.dart';
+import 'package:pibro/network/api/api_provider.dart';
+import 'package:pibro/network/repository/pibro_repository.dart';
 import 'package:pibro/network/models/response/customer_policy_claims_response.dart';
 import 'package:pibro/utils/view_utils.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -245,6 +247,14 @@ Future<void> saveConfig(GlobalKey<FormState> formKey,
       } catch (_) {}
       try {
         Get.delete<SupportController>(force: true);
+      } catch (_) {}
+      // Ensure subsequent splash calls rebuild API dependencies from
+      // the newly saved environment config.
+      try {
+        Get.delete<PibroRepository>(force: true);
+      } catch (_) {}
+      try {
+        Get.delete<ApiProvider>(force: true);
       } catch (_) {}
 
       if (isProfile) {

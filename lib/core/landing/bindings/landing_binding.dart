@@ -17,9 +17,11 @@ class LandingBinding extends Bindings {
       );
     }
 
-    Get.lazyPut<LandingController>(
-      () => LandingController(pibroRepository: Get.find<PibroRepository>()),
-      fenix: true,
-    );
+    if (!Get.isRegistered<LandingController>()) {
+      Get.lazyPut<LandingController>(
+        () => LandingController(pibroRepository: Get.find<PibroRepository>()),
+        fenix: true,
+      );
+    }
   }
 }

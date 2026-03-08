@@ -1,4 +1,3 @@
-import 'package:another_flutter_splash_screen/another_flutter_splash_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pibro/constants/app_colors.dart';
@@ -26,40 +25,51 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
+    _startSplashTimer();
     _initializeData();
   }
 
   @override
   void dispose() {
-    // Clean up any pending operations
     super.dispose();
   }
 
-  Future<void> _initializeData() async {
-    print(
-        'SplashScreen: _initializeData called, forceRefresh: ${widget.forceRefresh}');
+  void _startSplashTimer() {
+    Future.delayed(const Duration(milliseconds: 3000), () {
+      if (!mounted) return;
+      _onSplashEnd();
+    });
+  }
 
+  Future<void> _initializeData() async {
     // If force refresh is requested, delete existing controller to ensure fresh data
     if (widget.forceRefresh) {
-      print(
-          'SplashScreen: Force refresh requested, deleting existing controller');
       try {
         Get.delete<LandingController>(force: true);
       } catch (_) {
         // Controller might not exist, that's fine
       }
+      try {
+        Get.delete<PibroRepository>(force: true);
+      } catch (_) {
+        // Dependency might not exist, that's fine
+      }
+      try {
+        Get.delete<ApiProvider>(force: true);
+      } catch (_) {
+        // Dependency might not exist, that's fine
+      }
     }
 
     // Ensure API provider and repository are registered for DI/testability
-    if (!Get.isRegistered<ApiProvider>()) {
+    if (widget.forceRefresh || !Get.isRegistered<ApiProvider>()) {
       Get.put(ApiProvider());
     }
-    if (!Get.isRegistered<PibroRepository>()) {
+    if (widget.forceRefresh || !Get.isRegistered<PibroRepository>()) {
       Get.put(PibroRepository(appApiProvider: Get.find<ApiProvider>()));
     }
 
     // Initialize controller and wait for data (inject repository)
-    print('SplashScreen: Creating/getting LandingController via DI');
     final controller = Get.isRegistered<LandingController>()
         ? Get.find<LandingController>()
         : Get.put(
@@ -67,14 +77,10 @@ class _SplashScreenState extends State<SplashScreen> {
 
     // Force refetch if coming from configuration
     if (widget.forceRefresh) {
-      print('SplashScreen: Resetting cached company info');
       controller.companyInfo.value = null; // Reset cached data
     }
 
-    print(
-        'SplashScreen: Calling fetchCompanyInfo with forceRefresh: ${widget.forceRefresh}');
     await controller.fetchCompanyInfo(forceRefresh: widget.forceRefresh);
-    print('SplashScreen: fetchCompanyInfo completed');
 
     if (!mounted) return;
 
@@ -102,39 +108,58 @@ class _SplashScreenState extends State<SplashScreen> {
       }
     } catch (e) {
       // Ignore errors if widget is being disposed
-      print('Error in _onSplashEnd: $e');
+      debugPrint('SplashScreen _onSplashEnd error: $e');
     }
   }
 
   void _navigateToLanding() {
-    Get.offNamed(AppRoutes.landing);
+    if (!mounted) return;
+
+    // Add a small delay to ensure GetX bindings are fully initialized
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (!mounted) return;
+
+      try {
+        Get.offNamed(AppRoutes.landing);
+      } catch (e, stackTrace) {
+        debugPrint('SplashScreen navigation error: $e');
+        debugPrint('$stackTrace');
+        // Retry navigation after a short delay
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (mounted) {
+            Get.offAllNamed(AppRoutes.landing);
+          }
+        });
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return FlutterSplashScreen.scale(
-      backgroundImage: Image.asset(
-        AppImages.splash,
-        fit: BoxFit.cover,
-      ),
-      backgroundColor: Colors.white,
-      childWidget: Align(
-        alignment: Alignment.bottomCenter,
-        child: SizedBox(
-          height: 25,
-          width: queryWidth(context),
-          child: Center(
-            child: Text(
-              'powered by @ Powersoft Integrated Solutions Ltd',
-              style: Styles.boldTextStyle(size: 11, color: AppColors.white),
+    return Scaffold(
+      body: Container(
+        width: queryWidth(context),
+        height: queryHeight(context),
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage(AppImages.splash),
+            fit: BoxFit.cover,
+          ),
+        ),
+        child: Align(
+          alignment: Alignment.bottomCenter,
+          child: SizedBox(
+            height: 25,
+            width: queryWidth(context),
+            child: Center(
+              child: Text(
+                'powered by @ Powersoft Integrated Solutions Ltd',
+                style: Styles.boldTextStyle(size: 11, color: AppColors.white),
+              ),
             ),
           ),
         ),
       ),
-      duration: const Duration(milliseconds: 3000),
-      animationDuration: const Duration(milliseconds: 1000),
-      onAnimationEnd: _onSplashEnd,
-      nextScreen: const SizedBox.shrink(),
     );
   }
 }
