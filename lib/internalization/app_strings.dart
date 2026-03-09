@@ -80,6 +80,11 @@ class AppStrings extends Translations {
   static const String selectEnvironment = 'selectEnvironment';
   static const String orManualEntry = 'orManualEntry';
   static const String loadingEnvironments = 'loadingEnvironments';
+  static const String searchEnvironments = 'searchEnvironments';
+  static const String demo = 'demo';
+  static const String enterManually = 'enterManually';
+  static const String manualConfiguration = 'manualConfiguration';
+  static const String noEnvironmentsFound = 'noEnvironmentsFound';
 
   // Api
   static const String genericErrorMessage = 'genericErrorMessage';

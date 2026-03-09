@@ -40,7 +40,7 @@ class ServiceConfigScreen extends StatelessWidget {
                   // autovalidateMode: AutovalidateMode.onUserInteraction,
                   child: Column(
                     children: [
-                      // Environment Dropdown Section
+                      // Search Bar and DEMO Button Row
                       Obx(() {
                         if (controller.isLoadingEnvironments.value) {
                           return Container(
@@ -72,12 +72,125 @@ class ServiceConfigScreen extends StatelessWidget {
                           return const SizedBox.shrink();
                         }
 
+                        return Column(
+                          children: [
+                            // Search bar and DEMO button
+                            Row(
+                              children: [
+                                // Search TextField
+                                Expanded(
+                                  child: Container(
+                                    height: 50,
+                                    decoration: BoxDecoration(
+                                      border: Border.all(
+                                        color: AppColors.greyColor,
+                                        width: 1,
+                                      ),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: TextField(
+                                      controller: controller.searchController,
+                                      style: Styles.regularTextStyle(),
+                                      decoration: InputDecoration(
+                                        hintText:
+                                            AppStrings.searchEnvironments.tr,
+                                        hintStyle: Styles.regularTextStyle(
+                                          color: AppColors.hintColor,
+                                        ),
+                                        prefixIcon: Icon(
+                                          Icons.search,
+                                          color: AppColors.hintColor,
+                                        ),
+                                        suffixIcon: Obx(() {
+                                          if (controller
+                                              .searchQuery.value.isEmpty) {
+                                            return const SizedBox.shrink();
+                                          }
+                                          return IconButton(
+                                            icon: Icon(
+                                              Icons.clear,
+                                              color: AppColors.hintColor,
+                                            ),
+                                            onPressed: () {
+                                              controller.searchController
+                                                  .clear();
+                                            },
+                                          );
+                                        }),
+                                        border: InputBorder.none,
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                          horizontal: 16,
+                                          vertical: 15,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                // DEMO Button
+                                GestureDetector(
+                                  onTap: controller.onDemoSelected,
+                                  child: Container(
+                                    height: 50,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 20,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primaryColor,
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        AppStrings.demo.tr,
+                                        style: Styles.semiBoldTextStyle(
+                                          color: AppColors.white,
+                                          size: 15,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                          ],
+                        );
+                      }),
+
+                      // Filtered Environment List (shown only when searching)
+                      Obx(() {
+                        final filtered = controller.filteredEnvironments;
+                        if (controller.searchQuery.value.isEmpty) {
+                          return const SizedBox.shrink();
+                        }
+
+                        if (filtered.isEmpty) {
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 20),
+                            padding: const EdgeInsets.all(24),
+                            child: Column(
+                              children: [
+                                Icon(
+                                  Icons.search_off,
+                                  size: 48,
+                                  color: AppColors.hintColor,
+                                ),
+                                const SizedBox(height: 12),
+                                Text(
+                                  AppStrings.noEnvironmentsFound.tr,
+                                  style: Styles.regularTextStyle(
+                                    color: AppColors.hintColor,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+
                         return Container(
                           margin: const EdgeInsets.only(bottom: 20),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 4,
-                          ),
                           decoration: BoxDecoration(
                             border: Border.all(
                               color: AppColors.greyColor,
@@ -85,108 +198,45 @@ class ServiceConfigScreen extends StatelessWidget {
                             ),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: DropdownButtonHideUnderline(
-                            child: DropdownButton<String>(
-                              isExpanded: true,
-                              hint: Text(
-                                AppStrings.selectEnvironment.tr,
-                                style: Styles.regularTextStyle(
+                          child: ListView.separated(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: filtered.length,
+                            separatorBuilder: (context, index) => Divider(
+                              height: 1,
+                              color: AppColors.greyColor,
+                            ),
+                            itemBuilder: (context, index) {
+                              final env = filtered[index];
+                              return ListTile(
+                                onTap: () {
+                                  controller.onEnvironmentSelected(env);
+                                },
+                                title: Text(
+                                  env.name,
+                                  style: Styles.semiBoldTextStyle(
+                                    size: 15,
+                                  ),
+                                ),
+                                subtitle: env.description != null
+                                    ? Text(
+                                        env.description!,
+                                        style: Styles.regularTextStyle(
+                                          size: 12,
+                                          color: AppColors.hintColor,
+                                        ),
+                                      )
+                                    : null,
+                                trailing: Icon(
+                                  Icons.arrow_forward_ios,
+                                  size: 16,
                                   color: AppColors.hintColor,
                                 ),
-                              ),
-                              value: controller.selectedEnvironment.value?.name,
-                              items:
-                                  controller.availableEnvironments.map((env) {
-                                return DropdownMenuItem<String>(
-                                  value: env.name,
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Text(
-                                        env.name,
-                                        style: Styles.semiBoldTextStyle(
-                                          size: 15,
-                                        ),
-                                      ),
-                                      if (env.description != null)
-                                        Text(
-                                          env.description!,
-                                          style: Styles.regularTextStyle(
-                                            size: 12,
-                                            color: AppColors.hintColor,
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                );
-                              }).toList(),
-                              onChanged: (String? value) {
-                                if (value != null) {
-                                  final selectedEnv = controller
-                                      .availableEnvironments
-                                      .firstWhere((env) => env.name == value);
-                                  controller.onEnvironmentSelected(selectedEnv);
-                                }
-                              },
-                            ),
+                              );
+                            },
                           ),
                         );
                       }),
-
-                      // Divider with "OR MANUAL ENTRY"
-                      Obx(() {
-                        if (controller.availableEnvironments.isEmpty) {
-                          return const SizedBox.shrink();
-                        }
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 20),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Divider(
-                                  color: AppColors.greyColor,
-                                  thickness: 1,
-                                ),
-                              ),
-                              Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 16),
-                                child: Text(
-                                  AppStrings.orManualEntry.tr,
-                                  style: Styles.regularTextStyle(
-                                    size: 12,
-                                    color: AppColors.hintColor,
-                                  ),
-                                ),
-                              ),
-                              Expanded(
-                                child: Divider(
-                                  color: AppColors.greyColor,
-                                  thickness: 1,
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      }),
-
-                      // Manual Input Fields
-                      CustomInput(
-                        hint: AppStrings.enterServiceUrl.tr,
-                        controller: controller.serviceURLController,
-                        validator: (value) =>
-                            Validators.requiredValidator(value, 'Service URL'),
-                        isReducedBorderRadius: true,
-                      ),
-                      CustomInput(
-                        hint: AppStrings.enterToken.tr,
-                        controller: controller.tokenController,
-                        validator: (value) =>
-                            Validators.requiredValidator(value, 'Token'),
-                        isReducedBorderRadius: true,
-                      ),
                       SizedBox(
                         height: queryHeight(context) * 0.05,
                       ),
@@ -251,10 +301,38 @@ class ServiceConfigScreen extends StatelessWidget {
                           ),
                         ),
                       ),
+                      // Manual Entry Button
                       GestureDetector(
-                        onTap: controller.saveConfigData,
+                        onTap: () {
+                          // Show manual entry dialog
+                          final tempUrlController = TextEditingController();
+                          final tempTokenController = TextEditingController();
+                          final dialogFormKey = GlobalKey<FormState>();
+
+                          showDialog(
+                            context: context,
+                            builder: (context) => _ManualEntryDialog(
+                              urlController: tempUrlController,
+                              tokenController: tempTokenController,
+                              formKey: dialogFormKey,
+                              onSave: () {
+                                if (dialogFormKey.currentState!.validate()) {
+                                  controller.saveManualConfig(
+                                    tempUrlController.text.trim(),
+                                    tempTokenController.text.trim(),
+                                  );
+                                  Navigator.of(context).pop();
+                                }
+                              },
+                            ),
+                          ).then((_) {
+                            // Clean up temp controllers
+                            tempUrlController.dispose();
+                            tempTokenController.dispose();
+                          });
+                        },
                         child: ProfileButton(
-                          text: AppStrings.save.tr,
+                          text: AppStrings.enterManually.tr,
                         ),
                       ),
                     ],
@@ -537,6 +615,105 @@ class _QRScannerBottomSheetState extends State<_QRScannerBottomSheet> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Manual Entry Dialog Widget
+class _ManualEntryDialog extends StatelessWidget {
+  final TextEditingController urlController;
+  final TextEditingController tokenController;
+  final GlobalKey<FormState> formKey;
+  final VoidCallback onSave;
+
+  const _ManualEntryDialog({
+    required this.urlController,
+    required this.tokenController,
+    required this.formKey,
+    required this.onSave,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        child: Form(
+          key: formKey,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header with title and close button
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      AppStrings.manualConfiguration.tr,
+                      style: Styles.semiBoldTextStyle(
+                        size: 18,
+                        color: AppColors.primaryColor,
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(
+                        Icons.close,
+                        color: AppColors.hintColor,
+                      ),
+                      onPressed: () => Navigator.of(context).pop(),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                // Service URL Input
+                CustomInput(
+                  hint: AppStrings.enterServiceUrl.tr,
+                  controller: urlController,
+                  validator: (value) =>
+                      Validators.requiredValidator(value, 'Service URL'),
+                  isReducedBorderRadius: true,
+                ),
+                // Token Input
+                CustomInput(
+                  hint: AppStrings.enterToken.tr,
+                  controller: tokenController,
+                  validator: (value) =>
+                      Validators.requiredValidator(value, 'Token'),
+                  isReducedBorderRadius: true,
+                ),
+                const SizedBox(height: 20),
+                // Save Button
+                GestureDetector(
+                  onTap: onSave,
+                  child: Container(
+                    width: double.infinity,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryColor,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Center(
+                      child: Text(
+                        AppStrings.save.tr,
+                        style: Styles.semiBoldTextStyle(
+                          color: AppColors.white,
+                          size: 15,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

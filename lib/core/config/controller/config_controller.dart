@@ -13,11 +13,40 @@ class ConfigController extends GetxController {
 
   final TextEditingController serviceURLController = TextEditingController();
   final TextEditingController tokenController = TextEditingController();
+  final TextEditingController searchController = TextEditingController();
 
-  // Dropdown properties
+  // Environment properties
   var availableEnvironments = <ConfigEnvironment>[].obs;
   var selectedEnvironment = Rxn<ConfigEnvironment>();
   var isLoadingEnvironments = false.obs;
+  var searchQuery = ''.obs;
+
+  // Filtered environments (excluding DEMO, shown only when searching)
+  List<ConfigEnvironment> get filteredEnvironments {
+    final query = searchQuery.value.toLowerCase().trim();
+    if (query.isEmpty) {
+      return [];
+    }
+    return availableEnvironments.where((env) {
+      // Exclude DEMO from search results
+      if (env.name.toUpperCase() == 'DEMO') return false;
+      // Filter by name or description
+      final nameMatch = env.name.toLowerCase().contains(query);
+      final descMatch = env.description?.toLowerCase().contains(query) ?? false;
+      return nameMatch || descMatch;
+    }).toList();
+  }
+
+  // Get DEMO environment
+  ConfigEnvironment? get demoEnvironment {
+    try {
+      return availableEnvironments.firstWhere(
+        (env) => env.name.toUpperCase() == 'DEMO',
+      );
+    } catch (e) {
+      return null;
+    }
+  }
 
   void saveConfigData() {
     saveConfig(
@@ -34,6 +63,10 @@ class ConfigController extends GetxController {
     super.onInit();
     loadExistingConfig();
     fetchEnvironments();
+    // Listen to search text changes
+    searchController.addListener(() {
+      searchQuery.value = searchController.text;
+    });
   }
 
   void loadExistingConfig() {
@@ -80,10 +113,24 @@ class ConfigController extends GetxController {
     tokenController.clear();
   }
 
+  void onDemoSelected() {
+    final demo = demoEnvironment;
+    if (demo != null) {
+      onEnvironmentSelected(demo, autoSave: true);
+    }
+  }
+
+  void saveManualConfig(String url, String token) {
+    serviceURLController.text = url;
+    tokenController.text = token;
+    saveConfigData();
+  }
+
   @override
   void dispose() {
     serviceURLController.dispose();
     tokenController.dispose();
+    searchController.dispose();
     super.dispose();
   }
 }

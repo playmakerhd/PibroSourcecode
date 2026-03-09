@@ -84,6 +84,11 @@ class EnglishStrings {
       AppStrings.selectEnvironment: 'Select Environment',
       AppStrings.orManualEntry: 'OR ENTER MANUALLY',
       AppStrings.loadingEnvironments: 'Loading configurations...',
+      AppStrings.searchEnvironments: 'Search environments',
+      AppStrings.demo: 'DEMO',
+      AppStrings.enterManually: 'Enter Service URL',
+      AppStrings.manualConfiguration: 'Manual Configuration',
+      AppStrings.noEnvironmentsFound: 'No environments match your search',
 
       // Api
       AppStrings.genericErrorMessage:
