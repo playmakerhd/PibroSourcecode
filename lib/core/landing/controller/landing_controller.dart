@@ -33,9 +33,9 @@ class LandingController extends GetxController {
   }
 
   String getWelcomeText() {
-    if (companyInfo.value?.companyName != null &&
-        companyInfo.value!.companyName!.isNotEmpty) {
-      return 'WELCOME TO\n${companyInfo.value!.companyName}\nSELF SERVICE';
+    final name = companyInfo.value?.companyName?.trim();
+    if (name != null && name.isNotEmpty) {
+      return 'WELCOME TO\n${name.toUpperCase()}\nSELF SERVICE';
     }
     return 'WELCOME TO\nPOWER INSURANCE BROKERAGE\nSELF SERVICE';
   }
