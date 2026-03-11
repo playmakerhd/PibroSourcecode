@@ -26,7 +26,7 @@ class NotificationItemRow extends StatelessWidget {
         Switch(
           value: value,
           onChanged: onChanged,
-          activeColor: AppColors.primaryColor,
+          activeThumbColor: AppColors.primaryColor,
           inactiveTrackColor: AppColors.primaryColor.withValues(alpha: 0.2),
         ),
       ],

@@ -10,9 +10,10 @@ class ThousandsSeparatorInputFormatter extends TextInputFormatter {
     if (n.text.isEmpty) return n;
     final cleaned = n.text.replaceAll(RegExp(r'[^\d.]'), '');
     if (cleaned.isEmpty) return o;
-    if (cleaned == '.')
+    if (cleaned == '.') {
       return TextEditingValue(
           text: '0.', selection: TextSelection.collapsed(offset: 2));
+    }
     final parts = cleaned.split('.');
     if (parts.length > 2) return o;
     final num = double.tryParse(cleaned);

@@ -1095,7 +1095,7 @@ class QuotePaymentController extends GetxController {
     try {
       final dynamic de = e;
       final dynamic resp = (de as dynamic).response;
-      final dynamic data = resp != null ? resp.data : null;
+      final dynamic data = resp?.data;
       final msgFromResp = _messageFromData(data);
       if (msgFromResp != null && msgFromResp.trim().isNotEmpty) {
         return msgFromResp;

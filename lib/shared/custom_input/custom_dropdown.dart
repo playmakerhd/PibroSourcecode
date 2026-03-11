@@ -57,7 +57,7 @@ class _CustomDropdownState extends State<CustomDropdown> {
     );
 
     Widget textField = DropdownButtonFormField<dynamic>(
-      value: widget.dropDownValue,
+      initialValue: widget.dropDownValue,
       autovalidateMode: AutovalidateMode.onUserInteraction,
       hint: Text(widget.hint!,
           style: Styles.regularTextStyle(

@@ -171,7 +171,7 @@ class RenewPolicyController extends GetxController {
     }
   }
 
-  continueRenew() {
+  void continueRenew() {
     if (renewFormKey.currentState!.validate()) {
       getPremiumAmount();
     }
@@ -500,7 +500,7 @@ class RenewPolicyController extends GetxController {
     }
   }
 
-  addData(ItemToInsure data, bool isNew) {
+  void addData(ItemToInsure data, bool isNew) {
     isNew ? newPolicyItems.add(data) : policyItems.add(data);
   }
 
@@ -561,7 +561,7 @@ class RenewPolicyController extends GetxController {
     }
   }
 
-  _closeSheet() {
+  void _closeSheet() {
     clearInputData();
     safeBack();
   }

@@ -18,8 +18,9 @@ import 'package:path_provider/path_provider.dart';
 /// tiny helper to choose amount color from transaction number prefix
 Color amountColorFromTxn(BuildContext context, String? txnNo) {
   final s = (txnNo ?? '').toUpperCase().trim();
-  if (s.startsWith('RN') || s.startsWith('INV'))
+  if (s.startsWith('RN') || s.startsWith('INV')) {
     return Colors.red; // Receipt -> outflow
+  }
   if (s.startsWith('DBN')) return Colors.green; // Debit Note -> inflow
   return Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87;
 }

@@ -134,7 +134,7 @@ class ApiProvider extends BaseProvider {
       '$_baseApiPath${Endpoints.convertLeadToCustomer}?LeadID=$leadID&token=$_acessToken',
     );
     final responseData = await makePostCall(endpoint, '', false);
-    return CustomMessageResponse(responseData!);
+    return CustomMessageResponse(responseData);
   }
 
   Future<CustomMessageResponse> callChangePasswordApi(

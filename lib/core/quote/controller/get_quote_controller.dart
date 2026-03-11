@@ -432,7 +432,7 @@ class GetQuoteController extends GetxController {
     }
   }
 
-  addData(ItemData data) {
+  void addData(ItemData data) {
     items.add(data);
   }
 
@@ -451,7 +451,7 @@ class GetQuoteController extends GetxController {
     selectedImage.value = '';
   }
 
-  _closeSheet() {
+  void _closeSheet() {
     clearInputData();
     // Use Navigator.pop instead of Get.back() to avoid snackbar controller conflict
     if (Get.context != null) {
