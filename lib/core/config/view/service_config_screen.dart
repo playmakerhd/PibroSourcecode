@@ -74,61 +74,10 @@ class ServiceConfigScreen extends StatelessWidget {
 
                         return Column(
                           children: [
-                            // Search bar and DEMO button
+                            // DEMO button top-right
                             Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
                               children: [
-                                // Search TextField
-                                Expanded(
-                                  child: Container(
-                                    height: 50,
-                                    decoration: BoxDecoration(
-                                      border: Border.all(
-                                        color: AppColors.greyColor,
-                                        width: 1,
-                                      ),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: TextField(
-                                      controller: controller.searchController,
-                                      style: Styles.regularTextStyle(),
-                                      decoration: InputDecoration(
-                                        hintText:
-                                            AppStrings.searchEnvironments.tr,
-                                        hintStyle: Styles.regularTextStyle(
-                                          color: AppColors.hintColor,
-                                        ),
-                                        prefixIcon: Icon(
-                                          Icons.search,
-                                          color: AppColors.hintColor,
-                                        ),
-                                        suffixIcon: Obx(() {
-                                          if (controller
-                                              .searchQuery.value.isEmpty) {
-                                            return const SizedBox.shrink();
-                                          }
-                                          return IconButton(
-                                            icon: Icon(
-                                              Icons.clear,
-                                              color: AppColors.hintColor,
-                                            ),
-                                            onPressed: () {
-                                              controller.searchController
-                                                  .clear();
-                                            },
-                                          );
-                                        }),
-                                        border: InputBorder.none,
-                                        contentPadding:
-                                            const EdgeInsets.symmetric(
-                                          horizontal: 16,
-                                          vertical: 15,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                // DEMO Button
                                 GestureDetector(
                                   onTap: controller.onDemoSelected,
                                   child: Container(
@@ -152,6 +101,51 @@ class ServiceConfigScreen extends StatelessWidget {
                                   ),
                                 ),
                               ],
+                            ),
+                            const SizedBox(height: 12),
+                            // Search TextField on its own row
+                            Container(
+                              height: 50,
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: AppColors.greyColor,
+                                  width: 1,
+                                ),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: TextField(
+                                controller: controller.searchController,
+                                style: Styles.regularTextStyle(),
+                                decoration: InputDecoration(
+                                  hintText: AppStrings.searchEnvironments.tr,
+                                  hintStyle: Styles.regularTextStyle(
+                                    color: AppColors.hintColor,
+                                  ),
+                                  prefixIcon: Icon(
+                                    Icons.search,
+                                    color: AppColors.hintColor,
+                                  ),
+                                  suffixIcon: Obx(() {
+                                    if (controller.searchQuery.value.isEmpty) {
+                                      return const SizedBox.shrink();
+                                    }
+                                    return IconButton(
+                                      icon: Icon(
+                                        Icons.clear,
+                                        color: AppColors.hintColor,
+                                      ),
+                                      onPressed: () {
+                                        controller.searchController.clear();
+                                      },
+                                    );
+                                  }),
+                                  border: InputBorder.none,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 15,
+                                  ),
+                                ),
+                              ),
                             ),
                             const SizedBox(height: 16),
                           ],
@@ -304,32 +298,14 @@ class ServiceConfigScreen extends StatelessWidget {
                       // Manual Entry Button
                       GestureDetector(
                         onTap: () {
-                          // Show manual entry dialog
-                          final tempUrlController = TextEditingController();
-                          final tempTokenController = TextEditingController();
-                          final dialogFormKey = GlobalKey<FormState>();
-
                           showDialog(
                             context: context,
                             builder: (context) => _ManualEntryDialog(
-                              urlController: tempUrlController,
-                              tokenController: tempTokenController,
-                              formKey: dialogFormKey,
-                              onSave: () {
-                                if (dialogFormKey.currentState!.validate()) {
-                                  controller.saveManualConfig(
-                                    tempUrlController.text.trim(),
-                                    tempTokenController.text.trim(),
-                                  );
-                                  Navigator.of(context).pop();
-                                }
+                              onSave: (url, token) {
+                                controller.saveManualConfig(url, token);
                               },
                             ),
-                          ).then((_) {
-                            // Clean up temp controllers
-                            tempUrlController.dispose();
-                            tempTokenController.dispose();
-                          });
+                          );
                         },
                         child: ProfileButton(
                           text: AppStrings.enterManually.tr,
@@ -621,18 +597,38 @@ class _QRScannerBottomSheetState extends State<_QRScannerBottomSheet> {
 }
 
 /// Manual Entry Dialog Widget
-class _ManualEntryDialog extends StatelessWidget {
-  final TextEditingController urlController;
-  final TextEditingController tokenController;
-  final GlobalKey<FormState> formKey;
-  final VoidCallback onSave;
+class _ManualEntryDialog extends StatefulWidget {
+  final void Function(String url, String token) onSave;
 
   const _ManualEntryDialog({
-    required this.urlController,
-    required this.tokenController,
-    required this.formKey,
     required this.onSave,
   });
+
+  @override
+  State<_ManualEntryDialog> createState() => _ManualEntryDialogState();
+}
+
+class _ManualEntryDialogState extends State<_ManualEntryDialog> {
+  final TextEditingController _urlController = TextEditingController();
+  final TextEditingController _tokenController = TextEditingController();
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
+  @override
+  void dispose() {
+    _urlController.dispose();
+    _tokenController.dispose();
+    super.dispose();
+  }
+
+  void _onSavePressed() {
+    if (_formKey.currentState?.validate() ?? false) {
+      widget.onSave(
+        _urlController.text.trim(),
+        _tokenController.text.trim(),
+      );
+      Navigator.of(context).pop();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -643,7 +639,7 @@ class _ManualEntryDialog extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(24),
         child: Form(
-          key: formKey,
+          key: _formKey,
           child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -675,7 +671,7 @@ class _ManualEntryDialog extends StatelessWidget {
                 // Service URL Input
                 CustomInput(
                   hint: AppStrings.enterServiceUrl.tr,
-                  controller: urlController,
+                  controller: _urlController,
                   validator: (value) =>
                       Validators.requiredValidator(value, 'Service URL'),
                   isReducedBorderRadius: true,
@@ -683,7 +679,7 @@ class _ManualEntryDialog extends StatelessWidget {
                 // Token Input
                 CustomInput(
                   hint: AppStrings.enterToken.tr,
-                  controller: tokenController,
+                  controller: _tokenController,
                   validator: (value) =>
                       Validators.requiredValidator(value, 'Token'),
                   isReducedBorderRadius: true,
@@ -691,7 +687,7 @@ class _ManualEntryDialog extends StatelessWidget {
                 const SizedBox(height: 20),
                 // Save Button
                 GestureDetector(
-                  onTap: onSave,
+                  onTap: _onSavePressed,
                   child: Container(
                     width: double.infinity,
                     height: 50,
