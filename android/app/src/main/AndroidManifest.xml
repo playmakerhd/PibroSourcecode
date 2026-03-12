@@ -4,13 +4,7 @@
     <!-- For Android 9 and below. maxSdkVersion ensures this is only applied to older versions. -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
 
-    <!-- 
-      For Android 13+, if you were accessing media. Not strictly needed for PDFs, 
-      but good to be aware of. We will handle storage permission in code.
-    -->
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
-
+    
     <queries>
         <!-- If your app checks for SMS support -->
         <intent>
