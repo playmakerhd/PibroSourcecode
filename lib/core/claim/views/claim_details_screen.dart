@@ -29,6 +29,9 @@ class ClaimDetailsScreen extends StatelessWidget {
     }
     return Scaffold(
       body: SingleChildScrollView(
+        padding: EdgeInsets.only(
+          bottom: queryBottomInset(context) + 24,
+        ),
         child: Column(
           children: [
             CommonHeader(

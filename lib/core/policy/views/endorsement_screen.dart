@@ -22,6 +22,9 @@ class EndorsementScreen extends StatelessWidget {
         top: false,
         bottom: false,
         child: SingleChildScrollView(
+          padding: EdgeInsets.only(
+            bottom: queryBottomInset(context) + 24,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

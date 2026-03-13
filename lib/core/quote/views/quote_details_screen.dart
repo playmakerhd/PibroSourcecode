@@ -21,14 +21,19 @@ class QuoteDetailsScreen extends StatelessWidget {
       backgroundColor: AppColors.tileColor,
       floatingActionButton: isCompleted
           ? null
-          : PolicyButton(
-              height: 40,
-              width: 180,
-              text: AppStrings.makePayment.tr,
-              bgColor: AppColors.primaryColor,
-              onPressed: () {
-                controller.navigateToQuoteSummaryForPayment();
-              },
+          : Padding(
+              padding: EdgeInsets.only(
+                bottom: queryBottomInset(context) + 10,
+              ),
+              child: PolicyButton(
+                height: 40,
+                width: 180,
+                text: AppStrings.makePayment.tr,
+                bgColor: AppColors.primaryColor,
+                onPressed: () {
+                  controller.navigateToQuoteSummaryForPayment();
+                },
+              ),
             ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       body: SafeArea(
@@ -38,6 +43,9 @@ class QuoteDetailsScreen extends StatelessWidget {
           height: queryHeight(context),
           width: queryWidth(context),
           child: ListView(
+            padding: EdgeInsets.only(
+              bottom: queryBottomInset(context) + 104,
+            ),
             children: [
               CommonHeader(
                 title: AppStrings.quoteDetail.tr,

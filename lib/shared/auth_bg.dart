@@ -34,6 +34,9 @@ class AuthBg extends StatelessWidget {
           width: queryWidth(context),
           color: AppColors.white,
           child: ListView(
+            padding: EdgeInsets.only(
+              bottom: queryBottomInset(context) + 16,
+            ),
             children: [
               Stack(
                 children: [

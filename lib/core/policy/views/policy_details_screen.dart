@@ -39,18 +39,24 @@ class PolicyDetailsScreen extends StatelessWidget {
       floatingActionButton:
           getPolicyStatus(policy.policyEndDate ?? '', policy.approved).status ==
                   AppStrings.expired.tr
-              ? PolicyButton(
-                  text: AppStrings.renew.tr,
-                  onPressed: controller.navigateToRenewPolicyScreen,
-                  bgColor: AppColors.primaryColor,
-                  isExpanded: false,
-                  width: 120,
+              ? Padding(
+                  padding: EdgeInsets.only(
+                    bottom: queryBottomInset(context) + 10,
+                  ),
+                  child: PolicyButton(
+                    text: AppStrings.renew.tr,
+                    onPressed: controller.navigateToRenewPolicyScreen,
+                    bgColor: AppColors.primaryColor,
+                    isExpanded: false,
+                    width: 120,
+                  ),
                 )
               : Padding(
                   padding: EdgeInsets.only(
-                      left: queryWidth(context) * 0.05,
-                      right: queryWidth(context) * 0.05,
-                      bottom: 10),
+                    left: queryWidth(context) * 0.05,
+                    right: queryWidth(context) * 0.05,
+                    bottom: queryBottomInset(context) + 10,
+                  ),
                   child: Row(
                     children: [
                       PolicyButton(
@@ -85,6 +91,9 @@ class PolicyDetailsScreen extends StatelessWidget {
           height: queryHeight(context),
           width: queryWidth(context),
           child: ListView(
+            padding: EdgeInsets.only(
+              bottom: queryBottomInset(context) + 104,
+            ),
             children: [
               CommonHeader(
                 title: AppStrings.policyDetail.tr,

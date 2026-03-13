@@ -8,6 +8,7 @@ import 'package:pibro/shared/empty_data.dart';
 import 'package:pibro/shared/item_row_container.dart';
 import 'package:pibro/shared/widget/item_row_container_column.dart';
 import 'package:pibro/utils/app_utils.dart';
+import 'package:pibro/utils/view_utils.dart';
 
 class ClaimList extends StatelessWidget {
   const ClaimList({super.key});
@@ -22,11 +23,14 @@ class ClaimList extends StatelessWidget {
                 color: AppColors.primaryColor,
                 size: 100,
               )
-            : controller.policyClaims.isEmpty 
+            : controller.policyClaims.isEmpty
                 ? EmptyData()
                 : ListView.builder(
                     itemCount: controller.policyClaims.length,
-                    padding: EdgeInsets.only(top: 30, bottom: 100),
+                    padding: EdgeInsets.only(
+                      top: 30,
+                      bottom: queryBottomInset(context) + 100,
+                    ),
                     itemBuilder: (BuildContext context, int index) {
                       final PolicyClaim claim = controller.policyClaims[index];
                       return GestureDetector(
@@ -35,8 +39,7 @@ class ClaimList extends StatelessWidget {
                           isLarge: true,
                           child: ItemRowContainerColumn(
                             id: claim.brokerClaimID!,
-                            amount:
-                                'N${formatAmount(claim.dVAmount ?? 0)}',
+                            amount: 'N${formatAmount(claim.dVAmount ?? 0)}',
                             settlementAmount:
                                 'N${formatAmount(claim.totalReceived ?? 0)}',
                             dates: formatDate(claim.accidentDate!),

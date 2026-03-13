@@ -32,6 +32,9 @@ class HomeScreen extends StatelessWidget {
               await controller.getProfile();
             },
             child: ListView(
+              padding: EdgeInsets.only(
+                bottom: queryBottomInset(context) + 24,
+              ),
               children: [
                 SizedBox(
                   height: headerHeight + 60,
@@ -182,7 +185,7 @@ class HomeScreen extends StatelessWidget {
                       ],
                     ),
                     Padding(
-                      padding: EdgeInsets.only(top: 60, bottom: 60),
+                      padding: EdgeInsets.only(top: 60, bottom: 36),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [

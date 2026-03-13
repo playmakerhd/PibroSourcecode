@@ -12,6 +12,25 @@ double queryWidth(BuildContext? context) {
   return context != null ? MediaQuery.of(context).size.width : Get.size.width;
 }
 
+double queryBottomInset(
+  BuildContext? context, {
+  bool includeKeyboard = false,
+}) {
+  if (context == null) {
+    return 0;
+  }
+
+  final mediaQuery = MediaQuery.of(context);
+  final double keyboardInset =
+      includeKeyboard ? mediaQuery.viewInsets.bottom : 0;
+
+  if (keyboardInset > 0) {
+    return keyboardInset;
+  }
+
+  return mediaQuery.padding.bottom;
+}
+
 /// Safe navigation back that DOES NOT use Get.back()
 ///
 /// Why?
@@ -140,7 +159,15 @@ Future<dynamic> showAppBottomSheet({
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     builder: (sheetContext) {
+      final mediaQuery = MediaQuery.of(sheetContext);
       final double sheetWidth = queryWidth(sheetContext);
+      final double keyboardInset = mediaQuery.viewInsets.bottom;
+      final double availableHeight =
+          mediaQuery.size.height - mediaQuery.padding.top - keyboardInset - 12;
+      final double effectiveMaxHeight =
+          availableHeight > 0 && availableHeight < height
+              ? availableHeight
+              : height;
       final EdgeInsets sheetPadding = isImagePreview
           ? EdgeInsets.zero
           : EdgeInsets.symmetric(
@@ -150,7 +177,7 @@ Future<dynamic> showAppBottomSheet({
 
       final Widget sheetBody = Container(
         constraints: BoxConstraints(
-          maxHeight: height,
+          maxHeight: effectiveMaxHeight,
           maxWidth: sheetWidth,
         ),
         padding: sheetPadding,
@@ -160,7 +187,10 @@ Future<dynamic> showAppBottomSheet({
             top: Radius.circular(AppConstants.appRadius),
           ),
         ),
-        child: SingleChildScrollView(child: child),
+        child: SingleChildScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          child: child,
+        ),
       );
 
       return PopScope(
@@ -169,9 +199,15 @@ Future<dynamic> showAppBottomSheet({
           // IMPORTANT: do NOT manually close snackbars here.
           // Let them finish naturally to avoid touching SnackbarController.
         },
-        child: SafeArea(
-          top: false,
-          child: sheetBody,
+        child: AnimatedPadding(
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOut,
+          padding: EdgeInsets.only(bottom: keyboardInset),
+          child: SafeArea(
+            top: false,
+            bottom: keyboardInset == 0,
+            child: sheetBody,
+          ),
         ),
       );
     },

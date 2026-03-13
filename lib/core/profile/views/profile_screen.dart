@@ -84,7 +84,10 @@ class ProfileScreen extends StatelessWidget {
             ),
             Expanded(
               child: ListView(
-                padding: EdgeInsets.symmetric(vertical: 30),
+                padding: EdgeInsets.only(
+                  top: 30,
+                  bottom: queryBottomInset(context) + 30,
+                ),
                 children: controller.profileMenus
                     .map(
                       (menu) => GestureDetector(

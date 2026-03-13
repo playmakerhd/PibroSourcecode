@@ -24,6 +24,9 @@ class InfoScreen extends StatelessWidget {
           height: queryHeight(context),
           width: queryWidth(context),
           child: ListView(
+            padding: EdgeInsets.only(
+              bottom: queryBottomInset(context) + 16,
+            ),
             children: [
               CommonHeader(
                 title: AppStrings.myInfo.tr,
@@ -93,9 +96,6 @@ class InfoScreen extends StatelessWidget {
                   InfoContainer(
                     title: AppStrings.address.tr,
                     value: controller.user.value?.customerAddress1,
-                  ),
-                  SizedBox(
-                    height: 20,
                   ),
                 ],
               ),
