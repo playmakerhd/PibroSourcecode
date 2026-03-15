@@ -6,6 +6,7 @@ import 'package:pibro/core/claim/widget/claim_list.dart';
 import 'package:pibro/internalization/app_strings.dart';
 import 'package:pibro/navigation/routes.dart';
 import 'package:pibro/shared/common_header.dart';
+import 'package:pibro/utils/view_utils.dart';
 
 class ClaimScreen extends StatelessWidget {
   const ClaimScreen({super.key});
@@ -14,15 +15,20 @@ class ClaimScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final ClaimController controller = Get.put(ClaimController());
     return Scaffold(
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: AppColors.primaryColor,
-        shape: const CircleBorder(),
-        child: const Icon(
-          Icons.add,
-          size: 50,
-          color: AppColors.white,
+      floatingActionButton: Padding(
+        padding: EdgeInsets.only(
+          bottom: queryBottomInset(context) + 8,
         ),
-        onPressed: () => Get.toNamed(AppRoutes.lodgeClaims),
+        child: FloatingActionButton(
+          backgroundColor: AppColors.primaryColor,
+          shape: const CircleBorder(),
+          child: const Icon(
+            Icons.add,
+            size: 50,
+            color: AppColors.white,
+          ),
+          onPressed: () => Get.toNamed(AppRoutes.lodgeClaims),
+        ),
       ),
       body: RefreshIndicator(
         onRefresh: controller.getCustomerClaims,

@@ -5,6 +5,7 @@ import 'package:pibro/core/quote/widgets/quote_list.dart';
 import 'package:pibro/internalization/app_strings.dart';
 import 'package:pibro/navigation/routes.dart';
 import 'package:pibro/shared/common_header.dart';
+import 'package:pibro/utils/view_utils.dart';
 
 class QuoteListScreen extends StatelessWidget {
   const QuoteListScreen({super.key});
@@ -12,15 +13,20 @@ class QuoteListScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: AppColors.primaryColor,
-        shape: const CircleBorder(),
-        child: const Icon(
-          Icons.add,
-          size: 50,
-          color: AppColors.white,
+      floatingActionButton: Padding(
+        padding: EdgeInsets.only(
+          bottom: queryBottomInset(context) + 8,
         ),
-        onPressed: () => Get.toNamed(AppRoutes.getQuote),
+        child: FloatingActionButton(
+          backgroundColor: AppColors.primaryColor,
+          shape: const CircleBorder(),
+          child: const Icon(
+            Icons.add,
+            size: 50,
+            color: AppColors.white,
+          ),
+          onPressed: () => Get.toNamed(AppRoutes.getQuote),
+        ),
       ),
       body: Column(
         children: [

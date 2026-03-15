@@ -31,6 +31,7 @@ class PaymentConfirmationScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.white,
       body: SingleChildScrollView(
+        padding: EdgeInsets.only(bottom: queryBottomInset(context) + 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

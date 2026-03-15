@@ -27,6 +27,7 @@ class EndorsementConfirmationScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.white,
       body: SingleChildScrollView(
+        padding: EdgeInsets.only(bottom: queryBottomInset(context) + 16),
         child: Screenshot(
           controller: c.screenshotController,
           child: Column(

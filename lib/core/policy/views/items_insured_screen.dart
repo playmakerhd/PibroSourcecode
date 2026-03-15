@@ -10,6 +10,7 @@ import 'package:pibro/shared/item_row_container.dart';
 import 'package:pibro/shared/title_value_row.dart';
 import 'package:pibro/utils/app_utils.dart';
 import 'package:printing/printing.dart';
+import 'package:pibro/utils/view_utils.dart';
 
 class ItemsInsuredScreen extends StatelessWidget {
   const ItemsInsuredScreen({super.key, required this.itemsInsured});
@@ -28,6 +29,8 @@ class ItemsInsuredScreen extends StatelessWidget {
             child: itemsInsured.isEmpty
                 ? EmptyData()
                 : ListView.builder(
+                    padding:
+                        EdgeInsets.only(bottom: queryBottomInset(context) + 24),
                     itemCount: itemsInsured.length,
                     itemBuilder: (BuildContext context, int index) {
                       ItemToInsure item = itemsInsured[index];
@@ -53,8 +56,8 @@ class ItemsInsuredScreen extends StatelessWidget {
                                 ),
                                 TitleValueRow(
                                   title: '${AppStrings.value.tr}(NGN):',
-                                  value:
-                                      (formatAmount(item.sumInsured ?? 0)).toString(),
+                                  value: (formatAmount(item.sumInsured ?? 0))
+                                      .toString(),
                                 ),
                                 // Always show something in the image area for consistent layout
                                 if (item.policyItems != null &&

@@ -5,6 +5,7 @@ import 'package:pibro/network/models/response/customer_policy_response.dart';
 import 'package:pibro/shared/item_row_container.dart';
 import 'package:pibro/shared/widget/item_row_container_column.dart';
 import 'package:pibro/utils/app_utils.dart';
+import 'package:pibro/utils/view_utils.dart';
 
 class PolicyList extends StatelessWidget {
   const PolicyList({super.key});
@@ -36,7 +37,8 @@ class PolicyList extends StatelessWidget {
 
           return ListView.builder(
             itemCount: items.length,
-            padding: EdgeInsets.only(top: 30, bottom: 50),
+            padding: EdgeInsets.only(
+                top: 30, bottom: queryBottomInset(context) + 50),
             itemBuilder: (BuildContext context, int index) {
               final PolicyData policy = items[index];
               return GestureDetector(

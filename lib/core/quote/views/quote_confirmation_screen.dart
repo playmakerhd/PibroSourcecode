@@ -14,6 +14,7 @@ import 'package:pibro/shared/common_header.dart';
 import 'package:pibro/shared/widget/large_line.dart';
 import 'package:pibro/utils/app_utils.dart';
 import 'package:screenshot/screenshot.dart';
+import 'package:pibro/utils/view_utils.dart';
 
 class QuoteConfirmationScreen extends StatelessWidget {
   // Helper to format date strings to 'MMM dd, yyyy'
@@ -128,7 +129,8 @@ class QuoteConfirmationScreen extends StatelessWidget {
             const LargeLine(height: 0),
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
+                padding: EdgeInsets.fromLTRB(
+                    16, 16, 16, queryBottomInset(context) + 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [

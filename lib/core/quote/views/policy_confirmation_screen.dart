@@ -65,6 +65,8 @@ class PolicyConfirmationScreen extends StatelessWidget {
             ),
             Expanded(
               child: SingleChildScrollView(
+                padding:
+                    EdgeInsets.only(bottom: queryBottomInset(context) + 16),
                 child: Padding(
                   padding: EdgeInsets.symmetric(
                     horizontal: queryWidth(context) * 0.05,

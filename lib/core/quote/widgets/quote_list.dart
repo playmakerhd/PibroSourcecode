@@ -8,6 +8,7 @@ import 'package:pibro/shared/empty_data.dart';
 import 'package:pibro/shared/item_row_container.dart';
 import 'package:pibro/shared/widget/item_row_container_column.dart';
 import 'package:pibro/utils/app_utils.dart';
+import 'package:pibro/utils/view_utils.dart';
 
 class QuoteList extends StatelessWidget {
   const QuoteList({super.key});
@@ -26,7 +27,10 @@ class QuoteList extends StatelessWidget {
                 ? EmptyData()
                 : ListView.builder(
                     itemCount: controller.quotes.length,
-                    padding: EdgeInsets.only(top: 30, bottom: 20),
+                    padding: EdgeInsets.only(
+                      top: 30,
+                      bottom: queryBottomInset(context) + 100,
+                    ),
                     itemBuilder: (BuildContext context, int index) {
                       final SalesQuotationResponse quote =
                           controller.quotes[index];

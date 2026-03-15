@@ -113,7 +113,8 @@ class CustomerTransactionsListScreen extends StatelessWidget {
                   return false;
                 },
                 child: ListView.builder(
-                  padding: const EdgeInsets.only(top: 20, bottom: 100),
+                  padding: EdgeInsets.only(
+                      top: 20, bottom: queryBottomInset(context) + 100),
                   itemCount: c.items.length + 1,
                   itemBuilder: (_, i) {
                     if (i == c.items.length) {

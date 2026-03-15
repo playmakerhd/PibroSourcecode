@@ -18,7 +18,7 @@ class TransactionsHubScreen extends StatelessWidget {
         context: context,
         removeTop: false,
         child: ListView(
-          padding: EdgeInsets.zero,
+          padding: EdgeInsets.only(bottom: queryBottomInset(context) + 24),
           children: [
             CommonHeader(title: 'Transactions'),
             SizedBox(height: 200),

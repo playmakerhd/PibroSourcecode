@@ -25,6 +25,7 @@ class ItemsToInsureScreen extends StatelessWidget {
         height: queryHeight(context),
         width: queryWidth(context),
         child: SingleChildScrollView(
+          padding: EdgeInsets.only(bottom: queryBottomInset(context) + 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

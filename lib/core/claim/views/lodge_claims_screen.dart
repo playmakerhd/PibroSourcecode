@@ -128,8 +128,9 @@ class LodgeClaimsScreen extends StatelessWidget {
                                     .tabScreens[controller.tabIndex.value - 1],
                               ),
                               Padding(
-                                padding: const EdgeInsets.only(
-                                    top: 40.0, bottom: 50),
+                                padding: EdgeInsets.only(
+                                    top: 40.0,
+                                    bottom: queryBottomInset(context) + 50),
                                 child: Center(
                                   child: Obx(() {
                                     // Build the primary action button (Continue/Save/Close)

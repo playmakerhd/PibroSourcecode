@@ -91,7 +91,8 @@ class QuoteSummaryScreen extends StatelessWidget {
           const LargeLine(height: 0),
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 2),
+              padding: EdgeInsets.fromLTRB(
+                  18, 2, 18, queryBottomInset(context) + 16),
               child: ListView(
                 children: [
                   DetailRow(title: 'Customer ID:', value: customerId),

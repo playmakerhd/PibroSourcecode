@@ -9,6 +9,7 @@ import 'package:pibro/shared/empty_data.dart';
 import 'package:pibro/shared/item_row_container.dart';
 import 'package:pibro/shared/title_value_row.dart';
 import 'package:pibro/utils/app_utils.dart';
+import 'package:pibro/utils/view_utils.dart';
 import 'package:printing/printing.dart';
 
 class QuoteItemsScreen extends StatelessWidget {
@@ -28,6 +29,8 @@ class QuoteItemsScreen extends StatelessWidget {
             child: itemsInsured.isEmpty
                 ? EmptyData()
                 : ListView.builder(
+                    padding:
+                        EdgeInsets.only(bottom: queryBottomInset(context) + 24),
                     itemCount: itemsInsured.length,
                     itemBuilder: (BuildContext context, int index) {
                       QuotationItem item = itemsInsured[index];

@@ -6,6 +6,7 @@ import 'package:pibro/network/models/response/customer_policy_response.dart';
 import 'package:pibro/shared/common_header.dart';
 import 'package:pibro/shared/item_row_container.dart';
 import 'package:pibro/shared/title_value_row.dart';
+import 'package:pibro/utils/view_utils.dart';
 
 class InsurersScreen extends StatelessWidget {
   const InsurersScreen({super.key, required this.writers});
@@ -40,6 +41,8 @@ class InsurersScreen extends StatelessWidget {
                     ),
                   )
                 : ListView.builder(
+                    padding:
+                        EdgeInsets.only(bottom: queryBottomInset(context) + 24),
                     itemCount: writers.length,
                     itemBuilder: (BuildContext context, int index) {
                       InsurancePolicyUnderwriter item = writers[index];

@@ -58,6 +58,7 @@ class EndorsementSummaryScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.white,
       body: SingleChildScrollView(
+        padding: EdgeInsets.only(bottom: queryBottomInset(context) + 24),
         child: Column(
           children: [
             const CommonHeader(title: 'Endorsement Summary'),
