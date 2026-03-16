@@ -22,7 +22,10 @@ class LandingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final LandingController controller = Get.find<LandingController>();
-    final SupportController supportController = Get.put(SupportController());
+    final SupportController supportController =
+        Get.isRegistered<SupportController>()
+            ? Get.find<SupportController>()
+            : Get.put(SupportController());
     return Scaffold(
       key: scaffoldKey,
       endDrawer: Drawer(
@@ -210,7 +213,7 @@ class LandingScreen extends StatelessWidget {
                     textAlign: TextAlign.center,
                     style: Styles.regularTextStyle(
                       size: 12,
-                      color: AppColors.primaryColor.withOpacity(0.9),
+                      color: AppColors.primaryColor.withValues(alpha: 0.9),
                     ),
                   ),
                 ),

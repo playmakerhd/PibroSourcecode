@@ -9,14 +9,40 @@ import 'package:pibro/constants/app_colors.dart';
 import 'package:pibro/constants/app_constants.dart';
 import 'package:pibro/constants/storage_keys.dart';
 import 'package:pibro/core/config/view/service_config_screen.dart';
+import 'package:pibro/core/landing/controller/landing_controller.dart';
 import 'package:pibro/core/main_screen/view/main_screen.dart';
 import 'package:pibro/core/services/firebase_messaging_service.dart';
 import 'package:pibro/core/splash/splash_screen.dart';
 import 'package:pibro/firebase_options.dart';
 import 'package:pibro/internalization/app_strings.dart';
 import 'package:pibro/navigation/routes.dart';
+import 'package:pibro/network/api/api_provider.dart';
+import 'package:pibro/network/repository/pibro_repository.dart';
 import 'package:pibro/utils/app_utils.dart';
 import 'package:pibro/utils/pibro_logger.dart';
+
+class AppBinding extends Bindings {
+  @override
+  void dependencies() {
+    if (!Get.isRegistered<ApiProvider>()) {
+      Get.lazyPut<ApiProvider>(() => ApiProvider(), fenix: true);
+    }
+
+    if (!Get.isRegistered<PibroRepository>()) {
+      Get.lazyPut<PibroRepository>(
+        () => PibroRepository(appApiProvider: Get.find<ApiProvider>()),
+        fenix: true,
+      );
+    }
+
+    if (!Get.isRegistered<LandingController>()) {
+      Get.lazyPut<LandingController>(
+        () => LandingController(pibroRepository: Get.find<PibroRepository>()),
+        fenix: true,
+      );
+    }
+  }
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -70,6 +96,7 @@ class MyApp extends StatelessWidget {
     SystemChrome.setPreferredOrientations(orientations);
     return GetMaterialApp(
       title: AppConstants.appName,
+      initialBinding: AppBinding(),
       locale: AppConstants.engLocale,
       getPages: AppRoutes.routes,
       supportedLocales: const <Locale>[AppConstants.engLocale],

@@ -3,9 +3,8 @@ import 'package:get/get.dart';
 import 'package:pibro/constants/app_colors.dart';
 import 'package:pibro/constants/app_images.dart';
 import 'package:pibro/constants/app_styles.dart';
+import 'package:pibro/core/landing/bindings/landing_binding.dart';
 import 'package:pibro/core/landing/controller/landing_controller.dart';
-import 'package:pibro/network/api/api_provider.dart';
-import 'package:pibro/network/repository/pibro_repository.dart';
 import 'package:pibro/navigation/routes.dart';
 import 'package:pibro/utils/view_utils.dart';
 
@@ -42,38 +41,12 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _initializeData() async {
-    // If force refresh is requested, delete existing controller to ensure fresh data
-    if (widget.forceRefresh) {
-      try {
-        Get.delete<LandingController>(force: true);
-      } catch (_) {
-        // Controller might not exist, that's fine
-      }
-      try {
-        Get.delete<PibroRepository>(force: true);
-      } catch (_) {
-        // Dependency might not exist, that's fine
-      }
-      try {
-        Get.delete<ApiProvider>(force: true);
-      } catch (_) {
-        // Dependency might not exist, that's fine
-      }
+    if (!Get.isRegistered<LandingController>()) {
+      LandingBinding().dependencies();
     }
 
-    // Ensure API provider and repository are registered for DI/testability
-    if (widget.forceRefresh || !Get.isRegistered<ApiProvider>()) {
-      Get.put(ApiProvider());
-    }
-    if (widget.forceRefresh || !Get.isRegistered<PibroRepository>()) {
-      Get.put(PibroRepository(appApiProvider: Get.find<ApiProvider>()));
-    }
-
-    // Initialize controller and wait for data (inject repository)
-    final controller = Get.isRegistered<LandingController>()
-        ? Get.find<LandingController>()
-        : Get.put(
-            LandingController(pibroRepository: Get.find<PibroRepository>()));
+    // Resolve controller from app/route bindings and fetch company data.
+    final controller = Get.find<LandingController>();
 
     // Force refetch if coming from configuration
     if (widget.forceRefresh) {
@@ -115,7 +88,6 @@ class _SplashScreenState extends State<SplashScreen> {
   void _navigateToLanding() {
     if (!mounted) return;
 
-    // Add a small delay to ensure GetX bindings are fully initialized
     Future.delayed(const Duration(milliseconds: 100), () {
       if (!mounted) return;
 
