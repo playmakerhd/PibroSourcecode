@@ -1419,7 +1419,7 @@ class RenewPolicyController extends GetxController {
   String _nextManualNumbering() {
     int maxNum = 199; // start from 200 as baseline if none exists
     for (final it in [...policyItems, ...newPolicyItems]) {
-      final n = int.tryParse(it.manualNumbering?.toString() ?? '') ?? 0;
+      final n = int.tryParse(it.manualNumbering.toString() ?? '') ?? 0;
       if (n > maxNum) maxNum = n;
     }
     return (maxNum + 1).toString();

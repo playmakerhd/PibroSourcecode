@@ -301,16 +301,9 @@ class GetQuoteController extends GetxController {
         }
       }
 
-      if (quoteData == null) {
-        print('❌ API: Could not parse quotation data');
-        showSnackbarMessage(
-            message: 'Could not parse quotation details', isSuccess: false);
-        return;
-      }
-
       // Extract SumInsured and PremiumDue from response
-      final premium = _parseDouble(quoteData['PremiumDue']) ?? 0.0;
-      final sumInsured = _parseDouble(quoteData['SumInsured']) ?? 0.0;
+      final premium = _parseDouble(quoteData?['PremiumDue']) ?? 0.0;
+      final sumInsured = _parseDouble(quoteData?['SumInsured']) ?? 0.0;
 
       print('🔍 QUOTATION: Premium Due: $premium');
       print('🔍 QUOTATION: Sum Insured: $sumInsured');
