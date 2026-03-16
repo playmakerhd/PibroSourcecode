@@ -207,6 +207,16 @@ class GetQuoteScreen extends StatelessWidget {
                                   controller.formKey.currentState?.validate() ??
                                       false;
                               if (!isValid) return;
+                        Padding(
+                          padding: const EdgeInsets.only(top: 40.0),
+                          child: PolicyButton(
+                            text: AppStrings.continueText.tr,
+                            onPressed: () {
+                              // First validate form fields (start/end date inputs)
+                              final bool isValid =
+                                  controller.formKey.currentState?.validate() ??
+                                      false;
+                              if (!isValid) return;
 
                               // Then validate dropdowns and other required selections
                               if (controller.selectedBusinessPolicy.value ==
@@ -243,7 +253,57 @@ class GetQuoteScreen extends StatelessWidget {
                                     isSuccess: false);
                                 return;
                               }
+                              // Then validate dropdowns and other required selections
+                              if (controller.selectedBusinessPolicy.value ==
+                                  null) {
+                                showSnackbarMessage(
+                                    message: AppStrings
+                                        .pleaseSelectInsuranceClass.tr,
+                                    isSuccess: false);
+                                return;
+                              }
+                              if (controller.selectedRiskTypeID.value == null) {
+                                showSnackbarMessage(
+                                    message: AppStrings.pleaseSelectProduct.tr,
+                                    isSuccess: false);
+                                return;
+                              }
+                              if (controller.startDate.value == null) {
+                                showSnackbarMessage(
+                                    message:
+                                        AppStrings.pleaseSelectStartDate.tr,
+                                    isSuccess: false);
+                                return;
+                              }
+                              if (controller.endDate.value == null) {
+                                showSnackbarMessage(
+                                    message: AppStrings.pleaseSelectEndDate.tr,
+                                    isSuccess: false);
+                                return;
+                              }
+                              if (controller.selectedVendor.value == null) {
+                                showSnackbarMessage(
+                                    message: AppStrings
+                                        .pleaseSelectPreferredInsurer.tr,
+                                    isSuccess: false);
+                                return;
+                              }
 
+                              controller.navigateToItemsToInsure();
+                            },
+                            height: 50,
+                            width: queryWidth(context) * 0.7,
+                            bgColor: AppColors.primaryColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
                               controller.navigateToItemsToInsure();
                             },
                             height: 50,

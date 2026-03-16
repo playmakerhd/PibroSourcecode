@@ -11,14 +11,17 @@ class MainScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final MainController controller = Get.put(MainController());
     return Scaffold(
-      bottomNavigationBar: Obx(
-        () => BottomNavigationBar(
-          items: controller.bottomNavs,
-          currentIndex: controller.currentIndex.value,
-          onTap: controller.updateBottomTab,
-          selectedLabelStyle: Styles.boldTextStyle(size: 12),
-          unselectedLabelStyle:
-              Styles.boldTextStyle(color: AppColors.greyColor, size: 12),
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Obx(
+          () => BottomNavigationBar(
+            items: controller.bottomNavs,
+            currentIndex: controller.currentIndex.value,
+            onTap: controller.updateBottomTab,
+            selectedLabelStyle: Styles.boldTextStyle(size: 12),
+            unselectedLabelStyle:
+                Styles.boldTextStyle(color: AppColors.greyColor, size: 12),
+          ),
         ),
       ),
       body: Obx(
