@@ -141,6 +141,7 @@ Future<dynamic> showAppBottomSheet({
     backgroundColor: Colors.transparent,
     builder: (sheetContext) {
       final double sheetWidth = queryWidth(sheetContext);
+      final double bottomInset = MediaQuery.of(sheetContext).viewInsets.bottom;
       final EdgeInsets sheetPadding = isImagePreview
           ? EdgeInsets.zero
           : EdgeInsets.symmetric(
@@ -169,9 +170,14 @@ Future<dynamic> showAppBottomSheet({
           // IMPORTANT: do NOT manually close snackbars here.
           // Let them finish naturally to avoid touching SnackbarController.
         },
-        child: SafeArea(
-          top: false,
-          child: sheetBody,
+        child: AnimatedPadding(
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOut,
+          padding: EdgeInsets.only(bottom: bottomInset),
+          child: SafeArea(
+            top: false,
+            child: sheetBody,
+          ),
         ),
       );
     },
